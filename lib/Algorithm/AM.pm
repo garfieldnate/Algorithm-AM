@@ -1,4 +1,4 @@
-package AM::Parallel;
+package Algorithm::AM;
 
 use 5.016002;
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 our $VERSION = '1.00';
 
 require XSLoader;
-XSLoader::load('AM::Parallel', $VERSION);
+XSLoader::load('Algorithm::AM', $VERSION);
 
 use Carp;
 use Symbol;
@@ -73,19 +73,19 @@ $import{'bigcmp'} =
    }';
 
 ## Other variables to be exported some day
-## $import{'@itemcontextchain'} = 
+## $import{'@itemcontextchain'} =
 ##   'local *main::itemcontextchain = \@itemcontextchain';
 ## $import{'@datatocontext'} =
 ##   'local *main::datatocontext = \@datatocontext';
-## $import{'%itemcontextchainhead'} = 
+## $import{'%itemcontextchainhead'} =
 ##   'local *main::itemcontextchainhead = \%itemcontextchainhead';
-## $import{'%subtooutcome'} = 
+## $import{'%subtooutcome'} =
 ##   'local *main::subtooutcome = \%subtooutcome';
 ## $import{'%contextsize'} =
 ##   'local *main::contextsize = \%contextsize';
 ## $import{'%pointers'} =
 ##   'local *main::pointers = \%pointers';
-## $import{'%gang'} = 
+## $import{'%gang'} =
 ##   'local *main::gang = \%gang';
 
 sub new {
@@ -215,7 +215,7 @@ sub new {
     my($outcome, $data, $spec) = split /$bigsep/, $_, 3;
     $spec ||= $data;
     my $l;
-    
+
     push @outcome, $outcome;
     push @spec, $spec;
     $l = length $spec;
@@ -229,7 +229,7 @@ sub new {
     }
     print STDERR "Data file: ", scalar(@data), "\r";
 ##    last if $specifyFreq and ($specifyFreq == @data);
-    
+
   }
   close DATASET;
   print STDERR "\n";
@@ -455,43 +455,43 @@ sub new {
 
     if (exists $opts{-beginhook}) {
       $beginhook = $opts{-beginhook};
-    } 
+    }
     unless (defined $beginhook) {
       s/&\$beginhook\(\)//;
     }
     if (exists $opts{-begintesthook}) {
       $begintesthook = $opts{-begintesthook};
-    } 
+    }
     unless (defined $begintesthook) {
       s/&\$begintesthook\(\)//;
     }
     if (exists $opts{-beginrepeathook}) {
       $beginrepeathook = $opts{-beginrepeathook};
-    } 
+    }
     unless (defined $beginrepeathook) {
       s/&\$beginrepeathook\(\)//;
     }
     if (exists $opts{-datahook}) {
       $datahook = $opts{-datahook};
-    } 
+    }
     unless (defined $datahook) {
       s/next unless &\$datahook\(\$i\)//;
     }
     if (exists $opts{-endrepeathook}) {
       $endrepeathook = $opts{-endrepeathook};
-    } 
+    }
     unless (defined $endrepeathook) {
       s/&\$endrepeathook\(\)//;
     }
     if (exists $opts{-endtesthook}) {
       $endtesthook = $opts{-endtesthook};
-    } 
+    }
     unless (defined $endtesthook) {
       s/&\$endtesthook\(\)//;
     }
     if (exists $opts{-endhook}) {
       $endhook = $opts{-endhook};
-    } 
+    }
     unless (defined $endhook) {
       s/&\$endhook\(\)//;
     }
@@ -835,20 +835,20 @@ __END__
 
 =head1 NAME
 
-AM::Parallel - Perl extension for Analogical Modeling using a parallel
+Algorithm::AM - Perl extension for Analogical Modeling using a parallel
 algorithm
 
 =head1 SYNOPSIS
 
-  use AM::Parallel;
+  use Algorithm::AM;
 
-  $p = AM::Parallel->new('finnverb', -commas => 'no');
+  $p = Algorithm::AM->new('finnverb', -commas => 'no');
   $p->();
 
 =head1 DESCRIPTION
 
 Analogical Modeling is an exemplar-based way to model language usage.
-C<AM::Parallel> is a Perl module which analyzes data sets using
+C<Algorithm::AM> is a Perl module which analyzes data sets using
 Analogical Modeling.
 
 How to create data sets is not explained here.  See the appendices in
@@ -871,12 +871,13 @@ handle more variables and large data sets.  It breaks the
 supracontextual lattice into the direct product of four smaller ones,
 which the algorithm manipulates individually before recombining them.
 Because these lattices could be manipulated in parallel, using the
-right hardware, the module is named C<AM::Parallel>.
+right hardware, the module was named C<AM::Parallel>. Later it was
+renamed C<Algorithm::AM> to fit better into the CPAN ecostystem.
 
 To provide more flexibility and to more closely follow "the Perl way",
 the C core is now an XSUB wrapped within a Perl module.  Instead of
 specifying a configuration file, parameters are passed to the C<new()>
-function of C<AM::Parallel>.  The core functionality of the module has
+function of C<Algorithm::AM>.  The core functionality of the module has
 been stripped down; the only reports available are the statistical
 summary, the analogical set, and the gang listings.  However,
 L<hooks|/"USING HOOKS"> are provided for users to create their own reports.
@@ -890,7 +891,7 @@ module with the least amount of trouble.
 
 =head1 PROJECTS
 
-C<AM::Parallel> assumes the existence of a I<project>, a directory
+C<Algorithm::AM> assumes the existence of a I<project>, a directory
 containing the data set, the test set, and the outcome file (named,
 not surprisingly, F<data>, F<test>, and F<outcome>).  Once the project
 is initialized, the user can set various parameters and run the
@@ -904,7 +905,7 @@ the data set functions as the test set.
 
 A project is initialized using the syntax
 
-I<$p> = B<AM::Parallel>-E<gt>B<new>(I<directory>, B<-commas> =>
+I<$p> = B<Algorithm::AM>-E<gt>B<new>(I<directory>, B<-commas> =>
 I<commas>, ?I<options>?);
 
 The first parameter must be the name of the directory where the files
@@ -1001,11 +1002,11 @@ Any other value will revert to the default.  Default: C<no>.
 So, the minimal invocation to initialize a project would be something
 like
 
-  $p = AM::Parallel->new('finnverb', -commas => 'no');
+  $p = Algorithm::AM->new('finnverb', -commas => 'no');
 
 while something fancier might be
 
-  $p = AM::Parallel->new('negpre', -commas => 'yes',
+  $p = Algorithm::AM->new('negpre', -commas => 'yes',
                          -probability => 0.2, -repeat => 5,
 			 -skipset => 'no', -gangs => 'summary');
 
@@ -1020,7 +1021,7 @@ initialization time, use the following:
   $p->();
 
 Yep, that's all there is to it.  The call to C<new()> in
-C<AM::Parallel> returns a reference to a subroutine, so to run it all
+C<Algorithm::AM> returns a reference to a subroutine, so to run it all
 you need to do is dereference it.
 
 Of course, you can override the defaults.  Any of the options set at
@@ -1046,7 +1047,7 @@ Or you can play with the probabilities:
 =head2 Output
 
 Output from the program is appended to the file F<amcpresults> in the
-project directory by default.  Internally, C<AM::Parallel> opens
+project directory by default.  Internally, C<Algorithm::AM> opens
 F<amcpresults> at the beginning each run and selects its file handle
 to be current, so that the output of all C<print()> statements gets
 directed to it.  Directing output elsewhere is possible, but you can't
@@ -1080,11 +1081,11 @@ is set greater than one.
 
 =head1 USING HOOKS
 
-C<AM::Parallel> provides I<power> and I<flexibility>.  The I<power> is
+C<Algorithm::AM> provides I<power> and I<flexibility>.  The I<power> is
 in the C code; the I<flexibility> is in the I<hooks> provided for the
 user to interact with the algorithm at various stages.
 
-=head2 Hook Placement in C<AM::Parallel>
+=head2 Hook Placement in C<Algorithm::AM>
 
 Hooks are just references to subroutines that can be passed to the
 project at run time; the subroutine references can be either named or
@@ -1163,11 +1164,11 @@ This hook is called for each data item considered during a test item
 run.  Unlike other hooks, which receive no arguments, this hook is
 passed the index of the data item under consideration.  The value of
 this index ranges from one less than the number of data items to 0
-(data items are considered in reverse order in C<AM::Parallel> for
+(data items are considered in reverse order in C<Algorithm::AM> for
 various reasons not gone into here).
 
 The index passed is not a copy but the actual index variable used in
-C<AM::Parallel>; be careful not to change it -- for example, by
+C<Algorithm::AM>; be careful not to change it -- for example, by
 assigning to C<$_[0]> -- unless that is what is intended.
 
 This hook should return a true value (in the Perl sense of true) if
@@ -1231,7 +1232,7 @@ the F<data> file.  If there is a "short" version and a "long" version
 of each outcome, C<@outcomelist> contains the "long" version.
 
 Outcomes are assigned positive integer values; outcome 0 is reserved
-for internal use of C<AM::Parallel>.  (You'll have to look at the
+for internal use of C<Algorithm::AM>.  (You'll have to look at the
 source code and its documentation for further details, which most
 likely you won't need.)
 
@@ -1241,7 +1242,7 @@ Example: File F<finnverb/outcome> is as follows:
   B a-oi
   C tV-si
 
-During initialization, C<AM::Parallel> makes a series of assignments
+During initialization, C<Algorithm::AM> makes a series of assignments
 equivalent to the following:
 
   @outcomelist = ('', 'V-i', 'a-oi', 'tV-si');
@@ -1269,7 +1270,7 @@ Example: Line 80 of file F<finnverb/data> is as follows:
 
   C MU0=SR0=TA MURTA
 
-During initialization, C<AM::Parallel> makes a series of assignments
+During initialization, C<Algorithm::AM> makes a series of assignments
 equivalent to the following:
 
   $outcome[79] = 3;
@@ -1328,7 +1329,7 @@ within a hook.  You can only do this (easily) using the C<-repeat>
 option at run time.  This is because typically you want each test item
 to be subjected to the same number of repetitions.  (But if for some
 reason you really want to do this, you can increase C<$pass> so that
-C<AM::Parallel> will skip some passes.  You're on your own figuring
+C<Algorithm::AM> will skip some passes.  You're on your own figuring
 out which hook to put this in.)
 
 =item $datacap
@@ -1336,7 +1337,7 @@ out which hook to put this in.)
 This variable determines how many data items will be considered.  It
 is initially set to C<scalar @data>.  However, if it is set smaller,
 only the first C<$datacap> items in the F<data> file will be
-considered.  C<AM::Parallel> automatically truncates C<$datacap> if it
+considered.  C<Algorithm::AM> automatically truncates C<$datacap> if it
 isn't an integer, so you don't have to.
 
 Example: It is often of interest to see how results change as the
@@ -1369,7 +1370,7 @@ at initialization time; otherwise, calling the hook has no effect.
 Before looking at these variables, it is important to know what they
 contain.
 
-C<AM::Parallel> works with really big integers, much larger than what
+C<Algorithm::AM> works with really big integers, much larger than what
 32 bits can hold.  The XSUB uses a special internal format for storing
 them.  (You can read all about it in the usual place: the source code
 and its documentation.)  However, when the XSUB has finished its
@@ -1434,7 +1435,7 @@ For another example using these variables, see C<-endtesthook>.
 =head3 Variables Useful for Formatting
 
 You may want to create your own reports.  These variables can help
-your formatting.  (They are also used by C<AM::Parallel> to format the
+your formatting.  (They are also used by C<Algorithm::AM> to format the
 standard reports.)
 
 =over 4
@@ -1525,7 +1526,7 @@ for each test item.  Here's one way to do it:
         printf "$oformat  %7.3f%%\n",
 	  $outcomelist[$i],
 	  100 * $testPct[$i]/$valid;
-      }  
+      }
     }
     printf "\nCorrect prediction occurred %7.3f%% (%i/5) of the time\n",
       100 * $correct / 5,
@@ -1593,7 +1594,7 @@ Here's one way to do it:
 
 =item Project not specified
 
-No project was specified in the call to C<< AM::Parallel->new >>.  An
+No project was specified in the call to C<< Algorithm::AM->new >>.  An
 empty subroutine is returned (so that batch scripts do not break).
 
 =item Project %s has no data file

@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>AM::Parallel - Perl extension for Analogical Modeling using a parallel
+<title>Algorithm::AM - Perl extension for Analogical Modeling using a parallel
 algorithm</title>
 <link rel="stylesheet" href="../../../Active.css" type="text/css" />
 <link rev="made" href="mailto:" />
@@ -10,7 +10,7 @@ algorithm</title>
 <body style="background-color: white">
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;AM::Parallel - Perl extension for Analogical Modeling using a parallel
+<big><strong><span class="block">&nbsp;Algorithm::AM - Perl extension for Analogical Modeling using a parallel
 algorithm</span></strong></big>
 </td></tr>
 </table>
@@ -39,7 +39,7 @@ algorithm</span></strong></big>
 	<li><a href="#using_hooks">USING HOOKS</a></li>
 	<ul>
 
-		<li><a href="#hook_placement_in_am__parallel">Hook Placement in <code>AM::Parallel</code></a></li>
+		<li><a href="#hook_placement_in_am__parallel">Hook Placement in <code>Algorithm::AM</code></a></li>
 		<li><a href="#hook_variables">Hook Variables</a></li>
 		<ul>
 
@@ -69,23 +69,23 @@ algorithm</span></strong></big>
 
 <hr />
 <h1><a name="name">NAME</a></h1>
-<p>AM::Parallel - Perl extension for Analogical Modeling using a parallel
+<p>Algorithm::AM - Perl extension for Analogical Modeling using a parallel
 algorithm</p>
 <p>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
-  use AM::Parallel;</pre>
+  use Algorithm::AM;</pre>
 <pre>
-  $p = AM::Parallel-&gt;new('finnverb', -commas =&gt; 'no');
+  $p = Algorithm::AM-&gt;new('finnverb', -commas =&gt; 'no');
   $p-&gt;();</pre>
 <p>
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
 <p>Analogical Modeling is an exemplar-based way to model language usage.
-<code>AM::Parallel</code> is a Perl module which analyzes data sets using
+<code>Algorithm::AM</code> is a Perl module which analyzes data sets using
 Analogical Modeling.</p>
 <p>How to create data sets is not explained here.  See the appendices in
 the ``red book'', <em>Analogical Modeling: An exemplar-based approach to
@@ -106,11 +106,12 @@ handle more variables and large data sets.  It breaks the
 supracontextual lattice into the direct product of four smaller ones,
 which the algorithm manipulates individually before recombining them.
 Because these lattices could be manipulated in parallel, using the
-right hardware, the module is named <code>AM::Parallel</code>.</p>
+right hardware, the module was named <code>AM::Parallel</code>. It was
+later renamed to <code>Algorithm::AM</code> to fit the CPAN ecosystem better.</p>
 <p>To provide more flexibility and to more closely follow ``the Perl way'',
 the C core is now an XSUB wrapped within a Perl module.  Instead of
 specifying a configuration file, parameters are passed to the <code>new()</code>
-function of <code>AM::Parallel</code>.  The core functionality of the module has
+function of <code>Algorithm::AM</code>.  The core functionality of the module has
 been stripped down; the only reports available are the statistical
 summary, the analogical set, and the gang listings.  However,
 <a href="#using_hooks">hooks</a> are provided for users to create their own reports.
@@ -124,7 +125,7 @@ module with the least amount of trouble.</p>
 </p>
 <hr />
 <h1><a name="projects">PROJECTS</a></h1>
-<p><code>AM::Parallel</code> assumes the existence of a <em>project</em>, a directory
+<p><code>Algorithm::AM</code> assumes the existence of a <em>project</em>, a directory
 containing the data set, the test set, and the outcome file (named,
 not surprisingly, <em>data</em>, <em>test</em>, and <em>outcome</em>).  Once the project
 is initialized, the user can set various parameters and run the
@@ -136,7 +137,7 @@ the data set functions as the test set.</p>
 </p>
 <h2><a name="initializing_a_project">Initializing a Project</a></h2>
 <p>A project is initialized using the syntax</p>
-<p><em>$p</em> = <strong>AM::Parallel</strong>-&gt;<strong>new</strong>(<em>directory</em>, <strong>-commas</strong> =&gt;
+<p><em>$p</em> = <strong>Algorithm::AM</strong>-&gt;<strong>new</strong>(<em>directory</em>, <strong>-commas</strong> =&gt;
 <em>commas</em>, ?<em>options</em>?);</p>
 <p>The first parameter must be the name of the directory where the files
 are.  It can be an absolute or a relative path.  The following
@@ -224,10 +225,10 @@ pointers they contain.
 <p>So, the minimal invocation to initialize a project would be something
 like</p>
 <pre>
-  $p = AM::Parallel-&gt;new('finnverb', -commas =&gt; 'no');</pre>
+  $p = Algorithm::AM-&gt;new('finnverb', -commas =&gt; 'no');</pre>
 <p>while something fancier might be</p>
 <pre>
-  $p = AM::Parallel-&gt;new('negpre', -commas =&gt; 'yes',
+  $p = Algorithm::AM-&gt;new('negpre', -commas =&gt; 'yes',
                          -probability =&gt; 0.2, -repeat =&gt; 5,
                          -skipset =&gt; 'no', -gangs =&gt; 'summary');</pre>
 <p>Initializing a project doesn't do anything more than read in the files
@@ -240,7 +241,7 @@ initialization time, use the following:</p>
 <pre>
   $p-&gt;();</pre>
 <p>Yep, that's all there is to it.  The call to <code>new()</code> in
-<code>AM::Parallel</code> returns a reference to a subroutine, so to run it all
+<code>Algorithm::AM</code> returns a reference to a subroutine, so to run it all
 you need to do is dereference it.</p>
 <p>Of course, you can override the defaults.  Any of the options set at
 initialization can be temporarily overridden.  So, for instance, you
@@ -263,7 +264,7 @@ the default, you can merely use</p>
 </p>
 <h2><a name="output">Output</a></h2>
 <p>Output from the program is appended to the file <em>amcpresults</em> in the
-project directory by default.  Internally, <code>AM::Parallel</code> opens
+project directory by default.  Internally, <code>Algorithm::AM</code> opens
 <em>amcpresults</em> at the beginning each run and selects its file handle
 to be current, so that the output of all <code>print()</code> statements gets
 directed to it.  Directing output elsewhere is possible, but you can't
@@ -296,12 +297,12 @@ is set greater than one.</p>
 </p>
 <hr />
 <h1><a name="using_hooks">USING HOOKS</a></h1>
-<p><code>AM::Parallel</code> provides <em>power</em> and <em>flexibility</em>.  The <em>power</em> is
+<p><code>Algorithm::AM</code> provides <em>power</em> and <em>flexibility</em>.  The <em>power</em> is
 in the C code; the <em>flexibility</em> is in the <em>hooks</em> provided for the
 user to interact with the algorithm at various stages.</p>
 <p>
 </p>
-<h2><a name="hook_placement_in_am__parallel">Hook Placement in <code>AM::Parallel</code></a></h2>
+<h2><a name="hook_placement_in_am__parallel">Hook Placement in <code>Algorithm::AM</code></a></h2>
 <p>Hooks are just references to subroutines that can be passed to the
 project at run time; the subroutine references can be either named or
 anonymous.  They are passed as any other option.  The following hooks
@@ -399,12 +400,12 @@ This hook is called for each data item considered during a test item
 run.  Unlike other hooks, which receive no arguments, this hook is
 passed the index of the data item under consideration.  The value of
 this index ranges from one less than the number of data items to 0
-(data items are considered in reverse order in <code>AM::Parallel</code> for
+(data items are considered in reverse order in <code>Algorithm::AM</code> for
 various reasons not gone into here).
 </dd>
 <dd>
 <p>The index passed is not a copy but the actual index variable used in
-<code>AM::Parallel</code>; be careful not to change it -- for example, by
+<code>Algorithm::AM</code>; be careful not to change it -- for example, by
 assigning to <code>$_[0]</code> -- unless that is what is intended.</p>
 </dd>
 <dd>
@@ -477,7 +478,7 @@ of each outcome, <a href="#item__40outcomelist"><code>@outcomelist</code></a> co
 </dd>
 <dd>
 <p>Outcomes are assigned positive integer values; outcome 0 is reserved
-for internal use of <code>AM::Parallel</code>.  (You'll have to look at the
+for internal use of <code>Algorithm::AM</code>.  (You'll have to look at the
 source code and its documentation for further details, which most
 likely you won't need.)</p>
 </dd>
@@ -491,7 +492,7 @@ likely you won't need.)</p>
   C tV-si</pre>
 </dd>
 <dd>
-<p>During initialization, <code>AM::Parallel</code> makes a series of assignments
+<p>During initialization, <code>Algorithm::AM</code> makes a series of assignments
 equivalent to the following:</p>
 </dd>
 <dd>
@@ -533,7 +534,7 @@ data item <code>$i</code>.
   C MU0=SR0=TA MURTA</pre>
 </dd>
 <dd>
-<p>During initialization, <code>AM::Parallel</code> makes a series of assignments
+<p>During initialization, <code>Algorithm::AM</code> makes a series of assignments
 equivalent to the following:</p>
 </dd>
 <dd>
@@ -600,7 +601,7 @@ within a hook.  You can only do this (easily) using the <a href="#item__2drepeat
 option at run time.  This is because typically you want each test item
 to be subjected to the same number of repetitions.  (But if for some
 reason you really want to do this, you can increase <a href="#item__24pass"><code>$pass</code></a> so that
-<code>AM::Parallel</code> will skip some passes.  You're on your own figuring
+<code>Algorithm::AM</code> will skip some passes.  You're on your own figuring
 out which hook to put this in.)</p>
 </dd>
 <p></p>
@@ -610,7 +611,7 @@ out which hook to put this in.)</p>
 This variable determines how many data items will be considered.  It
 is initially set to <code>scalar @data</code>.  However, if it is set smaller,
 only the first <a href="#item__24datacap"><code>$datacap</code></a> items in the <em>data</em> file will be
-considered.  <code>AM::Parallel</code> automatically truncates <a href="#item__24datacap"><code>$datacap</code></a> if it
+considered.  <code>Algorithm::AM</code> automatically truncates <a href="#item__24datacap"><code>$datacap</code></a> if it
 isn't an integer, so you don't have to.
 </dd>
 <dd>
@@ -649,7 +650,7 @@ at initialization time; otherwise, calling the hook has no effect.</p>
 <h3><a name="variables_available_at_the_end_of_a_test_run_iteration">Variables Available at the End of a Test Run Iteration</a></h3>
 <p>Before looking at these variables, it is important to know what they
 contain.</p>
-<p><code>AM::Parallel</code> works with really big integers, much larger than what
+<p><code>Algorithm::AM</code> works with really big integers, much larger than what
 32 bits can hold.  The XSUB uses a special internal format for storing
 them.  (You can read all about it in the usual place: the source code
 and its documentation.)  However, when the XSUB has finished its
@@ -709,7 +710,7 @@ have the highest number of pointers, try something like this:</p>
 </p>
 <h3><a name="variables_useful_for_formatting">Variables Useful for Formatting</a></h3>
 <p>You may want to create your own reports.  These variables can help
-your formatting.  (They are also used by <code>AM::Parallel</code> to format the
+your formatting.  (They are also used by <code>Algorithm::AM</code> to format the
 standard reports.)</p>
 <dl>
 <dt><strong><a name="item__24dformat">$dformat</a></strong><br />
@@ -812,7 +813,7 @@ for each test item.  Here's one way to do it:</p>
         printf &quot;$oformat  %7.3f%%\n&quot;,
           $outcomelist[$i],
           100 * $testPct[$i]/$valid;
-      }  
+      }
     }
     printf &quot;\nCorrect prediction occurred %7.3f%% (%i/5) of the time\n&quot;,
       100 * $correct / 5,
@@ -880,7 +881,7 @@ Here's one way to do it:</p>
 <dt><strong><a name="item_project_not_specified">Project not specified</a></strong><br />
 </dt>
 <dd>
-No project was specified in the call to <code>AM::Parallel-&gt;new</code>.  An
+No project was specified in the call to <code>Algorithm::AM-&gt;new</code>.  An
 empty subroutine is returned (so that batch scripts do not break).
 </dd>
 <p></p>
@@ -963,7 +964,7 @@ here.</p>
 </p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;AM::Parallel - Perl extension for Analogical Modeling using a parallel
+<big><strong><span class="block">&nbsp;Algorithm::AM - Perl extension for Analogical Modeling using a parallel
 algorithm</span></strong></big>
 </td></tr>
 </table>

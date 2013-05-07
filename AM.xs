@@ -110,7 +110,7 @@ normalize(SV *s) {
   SvNOK_on(s);
 }
 
-MODULE = AM::Parallel		PACKAGE = AM::Parallel
+MODULE = Algorithm::AM		PACKAGE = Algorithm::AM
 
 BOOT:
   {
@@ -258,14 +258,14 @@ fillandcount(...)
 	}
 	continue;
       }
-  
+
       /* set up ancestor/descendant */
       d = context;
       for (i = 1 << (active - 1); i; i >>= 1)
         if (!(i & context))
 	  gaps[numgaps++] = i;
       t = 1 << numgaps;
-  
+
       p = supralist + (pi = lattice[context]);
       if (pi) --(p->count);
       ci = nextsupra;
@@ -281,11 +281,11 @@ fillandcount(...)
       c->data[2] = subcontextnumber;
       c->data[0] = p->data[0] + 1;
       lattice[context] = ci;
-  
+
       while (--t) {
   	for (i = 0, tt = ~t & (t - 1); tt; tt >>= 1, ++i);
   	d ^= gaps[i];
-  
+
 	p = supralist + (pi = lattice[d]);
   	if (pi) --(p->count);
   	switch (p->touched) {
@@ -308,7 +308,7 @@ fillandcount(...)
   	  lattice[d] = ci;
   	}
       }
-  
+
       p = supralist;
       p->touched = 0;
       do {
