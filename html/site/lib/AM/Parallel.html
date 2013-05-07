@@ -1,0 +1,973 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>AM::Parallel - Perl extension for Analogical Modeling using a parallel
+algorithm</title>
+<link rel="stylesheet" href="../../../Active.css" type="text/css" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body style="background-color: white">
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;AM::Parallel - Perl extension for Analogical Modeling using a parallel
+algorithm</span></strong></big>
+</td></tr>
+</table>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#history">History</a></li>
+	</ul>
+
+	<li><a href="#projects">PROJECTS</a></li>
+	<ul>
+
+		<li><a href="#initializing_a_project">Initializing a Project</a></li>
+		<li><a href="#running_a_project">Running a project</a></li>
+		<li><a href="#output">Output</a></li>
+	</ul>
+
+	<li><a href="#using_hooks">USING HOOKS</a></li>
+	<ul>
+
+		<li><a href="#hook_placement_in_am__parallel">Hook Placement in <code>AM::Parallel</code></a></li>
+		<li><a href="#hook_variables">Hook Variables</a></li>
+		<ul>
+
+			<li><a href="#variables_fixed_at_initialization">Variables Fixed at Initialization</a></li>
+			<li><a href="#variables_used_for_a_specific_test_item">Variables Used for a Specific Test Item</a></li>
+			<li><a href="#variables_used_for_a_specific_iteration_of_a_test_item_run">Variables Used for a Specific Iteration of a Test Item Run</a></li>
+			<li><a href="#variables_available_at_the_end_of_a_test_run_iteration">Variables Available at the End of a Test Run Iteration</a></li>
+			<li><a href="#variables_useful_for_formatting">Variables Useful for Formatting</a></li>
+		</ul>
+
+		<li><a href="#hook_function">Hook Function</a></li>
+	</ul>
+
+	<li><a href="#more_examples">MORE EXAMPLES</a></li>
+	<ul>
+
+		<li><a href="#summarizing_a_repeated_test_item">Summarizing a Repeated Test Item</a></li>
+		<li><a href="#creating_a_confusion_matrix">Creating a Confusion Matrix</a></li>
+	</ul>
+
+	<li><a href="#warnings_and_error_messages">WARNINGS AND ERROR MESSAGES</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<h1><a name="name">NAME</a></h1>
+<p>AM::Parallel - Perl extension for Analogical Modeling using a parallel
+algorithm</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use AM::Parallel;</pre>
+<pre>
+  $p = AM::Parallel-&gt;new('finnverb', -commas =&gt; 'no');
+  $p-&gt;();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Analogical Modeling is an exemplar-based way to model language usage.
+<code>AM::Parallel</code> is a Perl module which analyzes data sets using
+Analogical Modeling.</p>
+<p>How to create data sets is not explained here.  See the appendices in
+the ``red book'', <em>Analogical Modeling: An exemplar-based approach to
+language</em>, for details on that.  See also the ``green book'',
+<em>Analogical Modeling of Language</em>, for an explanation of the method
+in general, and the ``blue book'', <em>Analogy and Structure</em>, for its
+mathematical basis.</p>
+<p>
+</p>
+<h2><a name="history">History</a></h2>
+<p>Initially, Analogical Modeling was implemented as a Pascal program.
+Subsequently, it was ported to Perl, with substantial improvements
+made in 2000.  In 2001, the core of the algorithm was rewritten in C,
+while the parsing, printing, and statistical routines remained in C;
+this was accomplished by embedding a Perl interpreter into the C code.</p>
+<p>In 2004, the algorithm was again rewritten, this time in order to
+handle more variables and large data sets.  It breaks the
+supracontextual lattice into the direct product of four smaller ones,
+which the algorithm manipulates individually before recombining them.
+Because these lattices could be manipulated in parallel, using the
+right hardware, the module is named <code>AM::Parallel</code>.</p>
+<p>To provide more flexibility and to more closely follow ``the Perl way'',
+the C core is now an XSUB wrapped within a Perl module.  Instead of
+specifying a configuration file, parameters are passed to the <code>new()</code>
+function of <code>AM::Parallel</code>.  The core functionality of the module has
+been stripped down; the only reports available are the statistical
+summary, the analogical set, and the gang listings.  However,
+<a href="#using_hooks">hooks</a> are provided for users to create their own reports.
+They can also manipulate various parameters at run time and redirect
+output.</p>
+<p>It is expected that future improvements will maintain a Perl interface
+to an XSUB.  However, the design will remain simple enough that users
+without much programming experience will still be able to use the
+module with the least amount of trouble.</p>
+<p>
+</p>
+<hr />
+<h1><a name="projects">PROJECTS</a></h1>
+<p><code>AM::Parallel</code> assumes the existence of a <em>project</em>, a directory
+containing the data set, the test set, and the outcome file (named,
+not surprisingly, <em>data</em>, <em>test</em>, and <em>outcome</em>).  Once the project
+is initialized, the user can set various parameters and run the
+algorithm.</p>
+<p>If no outcome file is given, one is created using the outcomes which
+appear in the data set.  If no test set is given, it is assumed that
+the data set functions as the test set.</p>
+<p>
+</p>
+<h2><a name="initializing_a_project">Initializing a Project</a></h2>
+<p>A project is initialized using the syntax</p>
+<p><em>$p</em> = <strong>AM::Parallel</strong>-&gt;<strong>new</strong>(<em>directory</em>, <strong>-commas</strong> =&gt;
+<em>commas</em>, ?<em>options</em>?);</p>
+<p>The first parameter must be the name of the directory where the files
+are.  It can be an absolute or a relative path.  The following
+parameter is required:</p>
+<dl>
+<dt><strong><a name="item__2dcommas">-commas</a></strong><br />
+</dt>
+<dd>
+Tells how to parse the lines of the <em>data</em> file.  May be set to
+either <code>yes</code> or <code>no</code>.  Any other value will trigger a warning and
+stop creation of the project, as will omitting this option entirely.
+See details in the ``red book'' to determine how to set this.
+</dd>
+<p></p></dl>
+<p>The following options are available:</p>
+<dl>
+<dt><strong><a name="item__2dnulls">-nulls</a></strong><br />
+</dt>
+<dd>
+Tells how to treat nulls, i.e., variables marked with an equals sign
+<code>=</code>.  Can be <code>include</code> or <code>exclude</code>; any other value will revert
+back to the default.  Default: <code>exclude</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dgiven">-given</a></strong><br />
+</dt>
+<dd>
+Tells whether or not to include the test item as a data item if it is
+found in the data set.  Can be <code>include</code> or <code>exclude</code>; any other
+value will revert back to the default.  Default: <code>exclude</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dlinear">-linear</a></strong><br />
+</dt>
+<dd>
+Determines if the analogical set will be computed using <em>occurrences</em>
+(linearly) or <em>pointers</em> (quadratically).  If <a href="#item__2dlinear"><code>-linear</code></a> is set to
+<code>yes</code>, the analogical set will be computed using occurrences;
+otherwise, it will be computed using pointers.  Default: compute using
+pointers.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dprobability">-probability</a></strong><br />
+</dt>
+<dd>
+Sets the probability of including any one data item.  Default:
+<code>undef</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2drepeat">-repeat</a></strong><br />
+</dt>
+<dd>
+Determines how many times each individual test item will be analyzed.
+Only makes sense if the probability is less than 1.  Default: <code>1</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dskipset">-skipset</a></strong><br />
+</dt>
+<dd>
+Determines whether or not the analogical set is printed.  Can be
+<code>yes</code> or <code>no</code>; any other value will revert to the default.  Default:
+<code>yes</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dgangs">-gangs</a></strong><br />
+</dt>
+<dd>
+Determines whether or not gang effects will be printed.  Can be one of
+the following three values:
+</dd>
+<p></p><ul>
+<li></li>
+<code>yes</code>: Prints which contexts affect the result, how many pointers
+they contain, and which data items are in them.
+<p></p>
+<li></li>
+<code>summary</code>: Prints which contexts affect the result and how many
+pointers they contain.
+<p></p>
+<li></li>
+<code>no</code>: Omits any information about gang effects.
+<p></p></ul>
+<p>Any other value will revert to the default.  Default: <code>no</code>.</p>
+</dl>
+<p>So, the minimal invocation to initialize a project would be something
+like</p>
+<pre>
+  $p = AM::Parallel-&gt;new('finnverb', -commas =&gt; 'no');</pre>
+<p>while something fancier might be</p>
+<pre>
+  $p = AM::Parallel-&gt;new('negpre', -commas =&gt; 'yes',
+                         -probability =&gt; 0.2, -repeat =&gt; 5,
+                         -skipset =&gt; 'no', -gangs =&gt; 'summary');</pre>
+<p>Initializing a project doesn't do anything more than read in the files
+and prepare them for analysis.  To actually do any work, read on.</p>
+<p>
+</p>
+<h2><a name="running_a_project">Running a project</a></h2>
+<p>To run an already initialized project with the defaults set at
+initialization time, use the following:</p>
+<pre>
+  $p-&gt;();</pre>
+<p>Yep, that's all there is to it.  The call to <code>new()</code> in
+<code>AM::Parallel</code> returns a reference to a subroutine, so to run it all
+you need to do is dereference it.</p>
+<p>Of course, you can override the defaults.  Any of the options set at
+initialization can be temporarily overridden.  So, for instance, you
+can run your project twice, once including nulls and once excluding
+them, as follows:</p>
+<pre>
+  $p-&gt;(-nulls =&gt; 'include');
+  $p-&gt;(-nulls =&gt; 'exclude');</pre>
+<p>Or, if you didn't specify a value at initialization time and accepted
+the default, you can merely use</p>
+<pre>
+  $p-&gt;(-nulls =&gt; 'include');
+  $p-&gt;();</pre>
+<p>Or you can play with the probabilities:</p>
+<pre>
+  $p-&gt;(-probability =&gt; 0.5, -repeat =&gt; 2);
+  $p-&gt;(-probability =&gt; 0.2, -repeat =&gt; 5);
+  $p-&gt;(-probability =&gt; 0.1, -repeat =&gt; 10);</pre>
+<p>
+</p>
+<h2><a name="output">Output</a></h2>
+<p>Output from the program is appended to the file <em>amcpresults</em> in the
+project directory by default.  Internally, <code>AM::Parallel</code> opens
+<em>amcpresults</em> at the beginning each run and selects its file handle
+to be current, so that the output of all <code>print()</code> statements gets
+directed to it.  Directing output elsewhere is possible, but you can't
+do it the ``obvious'' way; the following won't work:</p>
+<pre>
+  ## do not use this code -- it is a BAD example
+  open FH5, &quot;&gt;results05&quot;;
+  open FH2, &quot;&gt;results02&quot;;
+  open FH1, &quot;&gt;results01&quot;;
+  select FH5;
+  $p-&gt;(-probability =&gt; 0.5, -repeat =&gt; 2);
+  select FH2;
+  $p-&gt;(-probability =&gt; 0.2, -repeat =&gt; 5);
+  select FH1;
+  $p-&gt;(-probability =&gt; 0.1, -repeat =&gt; 10);
+  close FH1;
+  close FH2;
+  close FH5;</pre>
+<p>That's because at the very beginning of each run, the code for <code>$p</code>
+reselects the file handle.  However, you can do this using a
+<a href="#using_hooks">hook</a>; see <a href="#item__2dbeginhook"><code>-beginhook</code></a> for a simple example of redirected
+output and <a href="#item__2dbeginrepeathook"><code>-beginrepeathook</code></a> for a more complicated one.</p>
+<p><a href="#warnings_and_error_messages">Warnings and error messages</a> get sent
+to STDERR.  If there are no fatal errors and the program runs
+normally, status messages are sent to STDERR.  You can see how long
+the program has been running, what test item it's currently on, and
+even which iteration of an individual test item it's on if the repeat
+is set greater than one.</p>
+<p>
+</p>
+<hr />
+<h1><a name="using_hooks">USING HOOKS</a></h1>
+<p><code>AM::Parallel</code> provides <em>power</em> and <em>flexibility</em>.  The <em>power</em> is
+in the C code; the <em>flexibility</em> is in the <em>hooks</em> provided for the
+user to interact with the algorithm at various stages.</p>
+<p>
+</p>
+<h2><a name="hook_placement_in_am__parallel">Hook Placement in <code>AM::Parallel</code></a></h2>
+<p>Hooks are just references to subroutines that can be passed to the
+project at run time; the subroutine references can be either named or
+anonymous.  They are passed as any other option.  The following hooks
+are currently implemented:</p>
+<dl>
+<dt><strong><a name="item__2dbeginhook">-beginhook</a></strong><br />
+</dt>
+<dd>
+This hook is called before any test items are run.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dendhook">-endhook</a></strong><br />
+</dt>
+<dd>
+This hook is called after all test items are run.
+</dd>
+<dd>
+<p>Example: To send all the output from a run to another file, you can do
+the following:</p>
+</dd>
+<dd>
+<pre>
+  $p-&gt;(-beginhook =&gt; sub {open FH, &quot;&gt;myoutput&quot;; select FH;},
+       -endhook =&gt; sub {close FH;});</pre>
+</dd>
+<p></p>
+<dt><strong><a name="item__2dbegintesthook">-begintesthook</a></strong><br />
+</dt>
+<dd>
+This hook is called at the beginning of each new test item.  If a test
+item will be run more than once, this hook is called just once before
+the first iteration.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dendtesthook">-endtesthook</a></strong><br />
+</dt>
+<dd>
+This hook is called at the end of each test item.  If a test item will
+be run more than once, this hook is called just once after the last
+iteration.
+</dd>
+<dd>
+<p>Example: If each test item is run just once, and you want to keep a
+running tally of how many test items are correctly predicted, you can
+use the variables <a href="#item__24curtestoutcome"><code>$curTestOutcome</code></a>, <a href="#item__24pointermax"><code>$pointermax</code></a>, and <a href="#item__40sum"><code>@sum</code></a>:</p>
+</dd>
+<dd>
+<pre>
+  $count = 0;
+  $countsub = sub {
+    ## must use eq instead of == in following statement
+    ++$count if $sum[$curTestOutcome] eq $pointermax;
+  };
+  $p-&gt;(-endtesthook =&gt; $countsub,
+       -endhook =&gt; sub {print &quot;Number of correct predictions: $count\n&quot;;});</pre>
+</dd>
+<p></p>
+<dt><strong><a name="item__2dbeginrepeathook">-beginrepeathook</a></strong><br />
+</dt>
+<dd>
+This hook is called at the beginning of each iteration of a test item.
+</dd>
+<p></p>
+<dt><strong><a name="item__2dendrepeathook">-endrepeathook</a></strong><br />
+</dt>
+<dd>
+This hook is called at the end of each iteration of a test item.
+</dd>
+<dd>
+<p>Example: To vary the probability of each iteration through a test
+item, you can use the variables <a href="#item__24probability"><code>$probability</code></a> and <a href="#item__24pass"><code>$pass</code></a>:</p>
+</dd>
+<dd>
+<pre>
+  open FH5, &quot;&gt;results05&quot;;
+  open FH2, &quot;&gt;results02&quot;;
+  $repeatsub = sub {
+    $probability = (0.5, 0.2)[$pass];
+    select((FH5, FH2)[$pass]);
+  };
+  $p-&gt;(-beginrepeathook =&gt; $repeatsub);</pre>
+</dd>
+<dd>
+<p>Then on iteration 0, the test item is analyzed with the probability of
+any data item being included set to 0.5, with output sent to file
+<em>results05</em>, while on iteration 1, the test item is analyzed with the
+probability of any data item being included set to 0.2, with output
+sent to file <em>results02</em>.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item__2ddatahook">-datahook</a></strong><br />
+</dt>
+<dd>
+This hook is called for each data item considered during a test item
+run.  Unlike other hooks, which receive no arguments, this hook is
+passed the index of the data item under consideration.  The value of
+this index ranges from one less than the number of data items to 0
+(data items are considered in reverse order in <code>AM::Parallel</code> for
+various reasons not gone into here).
+</dd>
+<dd>
+<p>The index passed is not a copy but the actual index variable used in
+<code>AM::Parallel</code>; be careful not to change it -- for example, by
+assigning to <code>$_[0]</code> -- unless that is what is intended.</p>
+</dd>
+<dd>
+<p>This hook should return a true value (in the Perl sense of true) if
+the data item should still be included in the test run, and should
+return a false value otherwise.  To ensure this, it's a good idea to
+end the subroutine assigned to the hook with</p>
+</dd>
+<dd>
+<pre>
+  return 1;</pre>
+</dd>
+<dd>
+<p>since</p>
+</dd>
+<dd>
+<pre>
+  return;</pre>
+</dd>
+<dd>
+<p>returns an undefined value.</p>
+</dd>
+<dd>
+<p>If the probability of including any data item is less than one, this
+hook is called <em>before</em> a call to <code>rand()</code> to see whether or not to
+include the item.  If you don't like this, set <a href="#item__2dprobability"><code>-probability</code></a> to 1 in
+the option list and call <code>rand()</code> yourself somewhere within the hook.</p>
+</dd>
+<dd>
+<p>Example: The results for <em>sorta-</em> in the ``red book'' do not match what
+you get when you run <em>finnverb</em>.  That's because the ``red book''
+omitted all data items with outcome <em>a-oi</em>.  You can do this using
+the variables <a href="#item__40curtestitem"><code>@curTestItem</code></a>, <a href="#item__40outcome"><code>@outcome</code></a>, and <a href="#item__outcometonum"><code>%outcometonum</code></a>:</p>
+</dd>
+<dd>
+<pre>
+  $datasub = sub {
+    ## we use @curTestItem because finnverb/test has no specifiers
+    return 1 unless join('', @curTestItem) eq 'SO0=SR0=TA';
+    return 1 unless $outcome[$_[0]] eq $outcometonum{'a-oi'};
+    return 0;
+  };
+  $p-&gt;(-datahook =&gt; $datasub);</pre>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h2><a name="hook_variables">Hook Variables</a></h2>
+<p>Various variables can be read and even manipulated by the hooks.</p>
+<p><strong>Note:</strong> All hook variables are exported into package <code>main</code>.  If you
+don't know what this means, chances are you don't need to worry about
+it; if you <em>do</em> know what it means, you'll know how to deal with it.</p>
+<p>However, these variables exist in package <code>main</code> only while a project
+is being run (they are exported using <code>local()</code>).  Thus, you can only
+access them through a hook, and they will not clobber the values of
+variables of the same name outside of the run.</p>
+<p>
+</p>
+<h3><a name="variables_fixed_at_initialization">Variables Fixed at Initialization</a></h3>
+<p>These variables should be considered <strong>read-only</strong>, unless you're
+<strong>really sure</strong> what you're doing.</p>
+<dl>
+<dt><strong><a name="item__40outcomelist">@outcomelist</a></strong><br />
+</dt>
+<dd>
+This array lists all possible outcomes.  It is generated either from
+the <em>outcome</em> file, if it exists, or from the outcomes that appear in
+the <em>data</em> file.  If there is a ``short'' version and a ``long'' version
+of each outcome, <a href="#item__40outcomelist"><code>@outcomelist</code></a> contains the ``long'' version.
+</dd>
+<dd>
+<p>Outcomes are assigned positive integer values; outcome 0 is reserved
+for internal use of <code>AM::Parallel</code>.  (You'll have to look at the
+source code and its documentation for further details, which most
+likely you won't need.)</p>
+</dd>
+<dd>
+<p>Example: File <em>finnverb/outcome</em> is as follows:</p>
+</dd>
+<dd>
+<pre>
+  A V-i
+  B a-oi
+  C tV-si</pre>
+</dd>
+<dd>
+<p>During initialization, <code>AM::Parallel</code> makes a series of assignments
+equivalent to the following:</p>
+</dd>
+<dd>
+<pre>
+  @outcomelist = ('', 'V-i', 'a-oi', 'tV-si');</pre>
+</dd>
+<p></p>
+<dt><strong><a name="item__outcometonum">%outcometonum</a></strong><br />
+</dt>
+<dd>
+This hash maps outcome strings (the ``long'' ones that appear in
+<a href="#item__40outcomelist"><code>@outcomelist</code></a>) to their respective positions in <a href="#item__40outcomelist"><code>@outcomelist</code></a>.
+</dd>
+<p></p>
+<dt><strong><a name="item__40outcome">@outcome</a></strong><br />
+</dt>
+<dd>
+<code>$outcome[$i]</code> contains the outcome of data item <code>$i</code> as an integer
+index into <a href="#item__40outcomelist"><code>@outcomelist</code></a>.
+</dd>
+<p></p>
+<dt><strong><a name="item__40data">@data</a></strong><br />
+</dt>
+<dd>
+<code>$data[$i]</code> is a reference to an array containing the variables of
+data item <code>$i</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__40spec">@spec</a></strong><br />
+</dt>
+<dd>
+<code>$spec[$i]</code> contains the specifier for data item <code>$i</code>.
+</dd>
+<dd>
+<p>Example: Line 80 of file <em>finnverb/data</em> is as follows:</p>
+</dd>
+<dd>
+<pre>
+  C MU0=SR0=TA MURTA</pre>
+</dd>
+<dd>
+<p>During initialization, <code>AM::Parallel</code> makes a series of assignments
+equivalent to the following:</p>
+</dd>
+<dd>
+<pre>
+  $outcome[79] = 3;
+  $data[79] = ['M', 'U', '0', '=', 'S', 'R', '0', '=', 'T', 'A'];
+  $spec[79] = 'MURTA';</pre>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h3><a name="variables_used_for_a_specific_test_item">Variables Used for a Specific Test Item</a></h3>
+<p>These variables should be considered <strong>read-only</strong>, unless you're
+<strong>really sure</strong> what you're doing.</p>
+<dl>
+<dt><strong><a name="item__24curtestoutcome">$curTestOutcome</a></strong><br />
+</dt>
+<dd>
+Contains the outcome index for the outcome of the current test item,
+as determined by <a href="#item__40outcomelist"><code>@outcomelist</code></a>, if an outcome has been specified,
+and 0 otherwise.
+</dd>
+<p></p>
+<dt><strong><a name="item__40curtestitem">@curTestItem</a></strong><br />
+</dt>
+<dd>
+Contains the variables of the current test item.
+</dd>
+<p></p>
+<dt><strong><a name="item__24curtestspec">$curTestSpec</a></strong><br />
+</dt>
+<dd>
+Contains the specifier of the current test item, if one has been
+specified, and is empty otherwise.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h3><a name="variables_used_for_a_specific_iteration_of_a_test_item_run">Variables Used for a Specific Iteration of a Test Item Run</a></h3>
+<dl>
+<dt><strong><a name="item__24probability">$probability</a></strong><br />
+</dt>
+<dd>
+Setting this changes the likelihood of including any one particular
+data item in a test run.  <strong>Note:</strong> If the option <a href="#item__2dprobability"><code>-probability</code></a> is
+not set at either initialization time or at run time, setting the
+value of <a href="#item__24probability"><code>$probability</code></a> inside a hook has no effect.  (This is an
+intentional optimization; see the source code and its documentation
+for the reason why.)  Therefore, if you plan to change the probability
+during test item runs, make sure to specify a value (1 is a good
+choice) for the option <a href="#item__2dprobability"><code>-probability</code></a>.
+</dd>
+<p></p>
+<dt><strong><a name="item__24pass">$pass</a></strong><br />
+</dt>
+<dd>
+This variable indicates the current iteration of a test item run; it
+will range from 0 to one less than the number specified by the
+<a href="#item__2drepeat"><code>-repeat</code></a> option.
+</dd>
+<dd>
+<p><strong>Note:</strong> You cannot (easily) change the number of repetitions from
+within a hook.  You can only do this (easily) using the <a href="#item__2drepeat"><code>-repeat</code></a>
+option at run time.  This is because typically you want each test item
+to be subjected to the same number of repetitions.  (But if for some
+reason you really want to do this, you can increase <a href="#item__24pass"><code>$pass</code></a> so that
+<code>AM::Parallel</code> will skip some passes.  You're on your own figuring
+out which hook to put this in.)</p>
+</dd>
+<p></p>
+<dt><strong><a name="item__24datacap">$datacap</a></strong><br />
+</dt>
+<dd>
+This variable determines how many data items will be considered.  It
+is initially set to <code>scalar @data</code>.  However, if it is set smaller,
+only the first <a href="#item__24datacap"><code>$datacap</code></a> items in the <em>data</em> file will be
+considered.  <code>AM::Parallel</code> automatically truncates <a href="#item__24datacap"><code>$datacap</code></a> if it
+isn't an integer, so you don't have to.
+</dd>
+<dd>
+<p>Example: It is often of interest to see how results change as the
+number of data items considered decreases.  Here's one way to do it:</p>
+</dd>
+<dd>
+<pre>
+  $repeatsub = sub {
+    $datacap = (1, 0.5, 0.25)[$pass] * scalar @data;
+  };
+  $p-&gt;(-repeat =&gt; 3, -beginrepeathook =&gt; $repeatsub);</pre>
+</dd>
+<dd>
+<p>Note that this will give different results than the following:</p>
+</dd>
+<dd>
+<pre>
+  $repeatsub = sub {
+    $probability = (1, 0.5, 0.25)[$pass];
+  };
+  $p-&gt;(-probability =&gt; 1, -repeat =&gt; 3, -beginrepeathook =&gt; $repeatsub);</pre>
+</dd>
+<dd>
+<p>The first way would be useful for modeling how predictions change as
+more examples are gathered -- say, as a child grows older (though the
+way it's written, it looks like the child is actually growing
+younger).  The second way would be useful for modeling how predictions
+change as memory worsens -- say, as an adult grows older.  Note that
+option <a href="#item__2dprobability"><code>-probability</code></a> must be specified at run time if it hasn't been
+at initialization time; otherwise, calling the hook has no effect.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h3><a name="variables_available_at_the_end_of_a_test_run_iteration">Variables Available at the End of a Test Run Iteration</a></h3>
+<p>Before looking at these variables, it is important to know what they
+contain.</p>
+<p><code>AM::Parallel</code> works with really big integers, much larger than what
+32 bits can hold.  The XSUB uses a special internal format for storing
+them.  (You can read all about it in the usual place: the source code
+and its documentation.)  However, when the XSUB has finished its
+computations, it converts these integers into something that the Perl
+code finds more useful.</p>
+<p>The scalar values returned from the XSUB are <em>dual-valued</em> scalars;
+they have different values depending on the context they're called
+in.  In string context, you get a string representation of the
+integer.  In numeric context, you get a double.</p>
+<p>For example, if <code>$n</code> and <code>$d</code> are big integers returned from the
+XSUB, you can write</p>
+<pre>
+  print $n/$d;</pre>
+<p>to see the decimal value of the fraction you get when you divide <code>$n</code>
+by <code>$d</code>, because the division will use the numeric values, while</p>
+<pre>
+  print &quot;$n/$d&quot;;</pre>
+<p>will let you see this fraction expressed as the quotient of two
+integers, because the quotation marks will interpolate the string
+values.</p>
+<p>Because of this, you can't use <code>==</code> to test if two big integers have
+the same value -- they might be so big that the double representation
+doesn't give enough accuracy to distinguish them.  Use <code>eq</code> to test
+equality.</p>
+<p>If you need a comparison operator, you can use <a href="#item_bigcmp"><code>bigcmp()</code></a>.</p>
+<dl>
+<dt><strong><a name="item__40sum">@sum</a></strong><br />
+</dt>
+<dd>
+Contains the number of pointers for each outcome index.  (Remember
+that outcome indices start with 1.)
+</dd>
+<p></p>
+<dt><strong><a name="item__24pointertotal">$pointertotal</a></strong><br />
+</dt>
+<dd>
+Contains the total number of pointers.
+</dd>
+<p></p>
+<dt><strong><a name="item__24pointermax">$pointermax</a></strong><br />
+</dt>
+<dd>
+Contains the maximum value among all the values in <a href="#item__40sum"><code>@sum</code></a>.
+</dd>
+<p></p></dl>
+<p>Note that there is no variable reporting which outcome has the most
+pointers.  That's because there could be a tie, and different users
+treat ties in different ways.  So, if you want to see which outcomes
+have the highest number of pointers, try something like this:</p>
+<pre>
+  @winners = ();
+  for ($i = 1; $i &lt; @sum; ++$i) {
+    push @winners, $i if $sum[$i] eq $pointermax; ## use eq, not ==
+  }</pre>
+<p>For another example using these variables, see <a href="#item__2dendtesthook"><code>-endtesthook</code></a>.</p>
+<p>
+</p>
+<h3><a name="variables_useful_for_formatting">Variables Useful for Formatting</a></h3>
+<p>You may want to create your own reports.  These variables can help
+your formatting.  (They are also used by <code>AM::Parallel</code> to format the
+standard reports.)</p>
+<dl>
+<dt><strong><a name="item__24dformat">$dformat</a></strong><br />
+</dt>
+<dd>
+Leaves enough space to hold an integer equal to the number of data
+items.  Justifies right.
+</dd>
+<p></p>
+<dt><strong><a name="item__24sformat">$sformat</a></strong><br />
+</dt>
+<dd>
+Leaves enough space to hold a specifier.  Justifies left.
+</dd>
+<p></p>
+<dt><strong><a name="item__24oformat">$oformat</a></strong><br />
+</dt>
+<dd>
+Leaves enough space to hold a ``long'' outcome.  Justifies left.
+</dd>
+<p></p>
+<dt><strong><a name="item__24vformat">$vformat</a></strong><br />
+</dt>
+<dd>
+Formats a list of variables.  Set <a href="#item__2dgangs"><code>-gangs</code></a> to <code>yes</code> for an example.
+</dd>
+<p></p>
+<dt><strong><a name="item__24pformat">$pformat</a></strong><br />
+</dt>
+<dd>
+Leaves enough space to hold the big integer <a href="#item__24pointertotal"><code>$pointertotal</code></a>, and thus
+is big enough to hold <a href="#item__24pointermax"><code>$pointermax</code></a> or any element of <a href="#item__40sum"><code>@sum</code></a> as
+well.  Justifies right.
+</dd>
+<dd>
+<p><strong>Note:</strong> This variable changes with each iteration of a test item.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h2><a name="hook_function">Hook Function</a></h2>
+<p>The following function is also exported into package <code>main</code> and
+available for use in hooks.  This is done with <code>local()</code>, just as
+with hook variables, so it is not available outside of hooks.</p>
+<dl>
+<dt><strong><a name="item_bigcmp"><code>bigcmp()</code></a></strong><br />
+</dt>
+<dd>
+Compares two big integers, returning 1, 0, or -1 depending on whether
+the first argument is greater than, equal to, or less than the second
+argument.  Remember that the syntax is different: you must write
+</dd>
+<dd>
+<pre>
+  bigcmp($a, $b)</pre>
+</dd>
+<dd>
+<p>instead of <code>$a bigcmp $b</code>.</p>
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="more_examples">MORE EXAMPLES</a></h1>
+<p>
+</p>
+<h2><a name="summarizing_a_repeated_test_item">Summarizing a Repeated Test Item</a></h2>
+<p>Suppose you run each test item 5 times, each with probability 0.005,
+and you want to create a statistical analysis summarizing the results
+for each test item.  Here's one way to do it:</p>
+<pre>
+  $begintest = sub {
+    $valid = 0;
+    @testPct = ();
+    @testPctSq = ();
+    $correct = 0;
+  };
+  $endrepeat = sub {
+    return unless $pointertotal;
+    ++$valid;
+    ++$correct if $sum[$curTestOutcome] eq $pointermax;
+    for ($i = 1; $i &lt; @outcomelist; ++$i) {
+      $testPct[$i] += $sum[$i]/$pointertotal;
+      $testPctSq[$i] += ($sum[$i]*$sum[$i])/($pointertotal*$pointertotal);
+    }
+  };
+  $endtest = sub {
+    print &quot;Summary for test item: $curTestSpec\n&quot;;
+    print &quot;Valid runs: $valid out of 5\n\n&quot;;
+    print &quot;\n&quot; and return unless $valid;
+    printf &quot;$oformat    Avg     Std Dev\n&quot;, &quot;&quot;;
+    for ($i = 1; $i &lt; @outcomelist; ++$i) {
+      next unless $testPct[$i];
+      if ($valid &gt; 1) {
+        printf &quot;$oformat  %7.3f%% %7.3f%%\n&quot;,
+          $outcomelist[$i],
+          100 * $testPct[$i]/$valid,
+          100 * sqrt(($testPctSq[$i]-$testPct[$i]*$testPct[$i]/$valid)/($valid-1));
+      } else {
+        printf &quot;$oformat  %7.3f%%\n&quot;,
+          $outcomelist[$i],
+          100 * $testPct[$i]/$valid;
+      }  
+    }
+    printf &quot;\nCorrect prediction occurred %7.3f%% (%i/5) of the time\n&quot;,
+      100 * $correct / 5,
+      $correct;
+    print &quot;\n\n&quot;;
+  };
+  $p-&gt;(-probability =&gt; 0.005, -repeat =&gt; 5,
+       -begintesthook =&gt; $begintest, -endrepeathook =&gt; $endrepeat, -endtesthook =&gt; $endtest);</pre>
+<p>
+</p>
+<h2><a name="creating_a_confusion_matrix">Creating a Confusion Matrix</a></h2>
+<p>Suppose you want to compare correct outcomes with predicted outcomes.
+Here's one way to do it:</p>
+<pre>
+  $begin = sub {
+    @confusion = ();
+  };
+  $endrepeat = sub {
+    if (!$pointertotal) {
+      ++$confusion[$curTestOutcome][0];
+      return;
+    }
+    if ($sum[$curTestOutcome] eq $pointermax) {
+      ++$confusion[$curTestOutcome][$curTestOutcome];
+      return;
+    }
+    my @winners = ();
+    my $i;
+    for ($i = 1; $i &lt; @outcomelist; ++$i) {
+      push @winners, $i if $sum[$i] == $pointermax;
+    }
+    my $numwinners = scalar @winners;
+    foreach (@winners) {
+      $confusion[$curTestOutcome][$_] += 1 / $numwinners;
+    }
+  };
+  $end = sub {
+    my($i,$j);
+    for ($i = 1; $i &lt; @outcomelist; ++$i) {
+      my $total = 0;
+      foreach (@{$confusion[$i]}) {
+        $total += $_;
+      }
+      next unless $total;
+      printf &quot;Test items with outcome $oformat were predicted as follows:\n&quot;,
+        $outcomelist[$i];
+      for ($j = 1; $j &lt; @outcomelist; ++$j) {
+        my $t;
+        next unless ($t = $confusion[$i][$j]);
+        printf &quot;%7.3f%% $oformat  (%i/%i)\n&quot;, 100 * $t / $total, $outcomelist[$j], $t, $total;
+      }
+      if ($t = $confusion[$i][0]) {
+        printf &quot;%7.3f%% could not be predicted (%i/%i)\n&quot;, 100 * $t / $total, $t, $total;
+      }
+      print &quot;\n\n&quot;;
+    }
+  };
+  $p-&gt;(-probability =&gt; 0.005, -repeat =&gt; 5,
+       -beginhook =&gt; $begin, -endrepeathook =&gt; $endrepeat, -endhook =&gt; $end);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="warnings_and_error_messages">WARNINGS AND ERROR MESSAGES</a></h1>
+<dl>
+<dt><strong><a name="item_project_not_specified">Project not specified</a></strong><br />
+</dt>
+<dd>
+No project was specified in the call to <code>AM::Parallel-&gt;new</code>.  An
+empty subroutine is returned (so that batch scripts do not break).
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_has_no_data_file">Project %s has no data file</a></strong><br />
+</dt>
+<dd>
+The project directory has no file named <em>data</em>.  An empty subroutine
+is returned (so that batch scripts do not break).
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_comma_formatting">Project %s did not specify comma formatting</a></strong><br />
+</dt>
+<dd>
+The required parameter <a href="#item__2dcommas"><code>-commas</code></a> was not provided.  An empty
+subroutine is returned (so that batch scripts do not break).
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_comma_formatting_corr">Project %s did not specify comma formatting correctly</a></strong><br />
+</dt>
+<dd>
+Parameter <a href="#item__2dcommas"><code>-commas</code></a> must be either <code>yes</code> or <code>no</code>.  An empty
+subroutine is returned (so that batch scripts do not break).
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_option__2dnulls_corre">Project %s did not specify option -nulls correctly</a></strong><br />
+</dt>
+<dd>
+Parameter <a href="#item__2dnulls"><code>-nulls</code></a> must be either <code>include</code> or <code>exclude</code>.
+Displayed default value will be used.
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_option__2dgiven_corre">Project %s did not specify option -given correctly</a></strong><br />
+</dt>
+<dd>
+Parameter <a href="#item__2dgiven"><code>-given</code></a> must be either <code>include</code> or <code>exclude</code>.
+Displayed default value will be used.
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_option__2dskipset_cor">Project %s did not specify option -skipset correctly</a></strong><br />
+</dt>
+<dd>
+Parameter <a href="#item__2dskipset"><code>-skipset</code></a> must be either <code>yes</code> or <code>no</code>.
+Displayed default value will be used.
+</dd>
+<p></p>
+<dt><strong><a name="item_project__25s_did_not_specify_option__2dgangs_corre">Project %s did not specify option -gangs correctly</a></strong><br />
+</dt>
+<dd>
+Parameter <a href="#item__2dgangs"><code>-gangs</code></a> must be either <code>yes</code>, <code>summary</code>, or <code>no</code>.
+Displayed default value will be used.
+</dd>
+<p></p>
+<dt><strong><a name="item_couldn_27t_open__25s_2ftest">Couldn't open %s/test</a></strong><br />
+</dt>
+<dd>
+Project %s does not have a <em>test</em> file.  The <em>data</em> file will be
+used.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>Home page for Analogical Modeling:</p>
+<pre>
+  <a href="http://humanities.byu.edu/am/">http://humanities.byu.edu/am/</a></pre>
+<p>Source code, documentation, and sample data sets are all available
+here.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Theron Stanford &lt;<a href="mailto:shixilun@yahoo.com">shixilun@yahoo.com</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright (C) 2004 by Royal Skousen
+
+</p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;AM::Parallel - Perl extension for Analogical Modeling using a parallel
+algorithm</span></strong></big>
+</td></tr>
+</table>
+
+</body>
+
+</html>
