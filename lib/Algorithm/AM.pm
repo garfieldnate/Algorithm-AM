@@ -11,6 +11,16 @@ require XSLoader;
 XSLoader::load('Algorithm::AM', $VERSION);
 
 use Carp;
+use Log::Dispatch;
+my $logger = Log::Dispatch->new(
+    outputs => [
+        # [ 'File',   min_level => 'debug', filename => 'amcpresults' ],
+        [ 'Screen', min_level => 'debug',newline => 1 ],
+    ],
+
+);
+
+use Carp;
 use Symbol;
 
 my $subsource;
@@ -105,7 +115,7 @@ sub new {
     return sub {};
   }
 
-  print STDERR "Initializing project $project\n";
+  $logger->info( "Initializing project $project");
 
   unless (-e "$project/data") {
     carp "Project $project has no data file";
@@ -228,12 +238,11 @@ sub new {
       $l = length $datavar[$i];
       $vlen[$i] = $l if $l > $vlen[$i];
     }
-    print STDERR "Data file: ", scalar(@data), "\r";
+    $logger->info('Data file: ' . scalar(@data));
 ##    last if $specifyFreq and ($specifyFreq == @data);
 
   }
   close DATASET;
-  print STDERR "\n";
   my(@itemcontextchain) = (0) x @data; ## preemptive allocation of memory
   my(@datatocontext) = (pack "S!4", 0, 0, 0, 0) x @data;
 ## $vformat done after reading test file
@@ -242,7 +251,7 @@ sub new {
 
 ## outcome file
 
-  print STDERR "Outcome file...\n";
+  $logger->info('Outcome file...');
   my(@outcomelist) = ('');
   my(@ocl) = ('');
   my %octonum;
@@ -262,16 +271,15 @@ sub new {
     }
     close OUTCOME;
   } else {
-    print STDERR "...will use data file\n";
+    $logger->info('...will use data file');
     my %oc = ();
 ##    map { ++$oc{$_} } @outcome;
     my $l = 0;
     foreach (@outcome) {
       ++$oc{$_};
       ++$l;
-      print STDERR "   $l\r";
+      $logger->debug( "$l");
     }
-    print STDERR "\n";
     foreach (sort {lc($a) cmp lc($b)} keys %oc) {
       $octonum{$_} = ++$outcomecounter;
       $outcometonum{$_} = $outcomecounter;
@@ -281,27 +289,26 @@ sub new {
   }
 ##  @outcome = map { $octonum{$_} } @outcome;
   my $l = 0;
-  print STDERR "...converting outcomes to indices\n";
+  $logger->info('...converting outcomes to indices');
   foreach (@outcome) {
     $_ = $octonum{$_};
     ++$l;
-    print STDERR "   $l\r";
+    $logger->debug("$l");
   }
-  print STDERR "\n";
   foreach (@outcomelist) {
     my $l;
     $l = length;
     $olen = $l if $l > $olen;
   }
   my $oformat = "%-$olen.${olen}s";
-  print STDERR "...done\n";
+  $logger->info('...done');
 
 ## test file
 
-  print STDERR "Test file...\n";
+  $logger->info('Test file...');
   open(TEST, "$project/test")
     or carp "Couldn't open $project/test"
-    and warn "Will run data file against itself\n"
+    and $logger->warn('Will run data file against itself')
     and open(TEST, "$project/data");
   my(@testItems) = <TEST>;
   close TEST;
@@ -313,7 +320,7 @@ sub new {
     no warnings; ## Use of implicit split to @_ is deprecated
     $maxvar = scalar split /$smallsep/, $item;
   }
-  print STDERR "...done\n";
+  $logger->info('...done');
 
   splice @vlen, $maxvar;
   my $vformat = join " ", map { "%-$_.${_}s" } @vlen;
@@ -535,7 +542,7 @@ my($sec, $min, $hour);
 
 my $left = scalar @testItems;
 foreach my $t (@testItems) {
-  print STDERR "\nTest items left: $left\n\n";
+  $logger->debug("Test items left: $left");
   --$left;
 
 ## parse test item
@@ -572,9 +579,9 @@ foreach my $t (@testItems) {
   my $nullcontext = pack "b64", '0' x 64;
 
   ($sec,$min,$hour) = localtime();
-  printf STDERR "Time: %2s:%02s:%02s\n\n", $hour, $min, $sec;
-  print STDERR "@curTestItem\n\n";
-  printf STDERR "\r0/$repeat  %2s:%02s:%02s", $hour, $min, $sec;
+  $logger->info(sprintf ("Time: %2s:%02s:%02s\n\n", $hour, $min, $sec));
+  $logger->info("@curTestItem");
+  $logger->info(sprintf("0/$repeat  %2s:%02s:%02s", $hour, $min, $sec));
 
   $pass = 0;
   while ($pass < $repeat) {
@@ -636,7 +643,8 @@ foreach my $t (@testItems) {
     }
 
 
-    print <<TOP;
+#TODO: under what circumstance is this written?
+$logger->info(<<TOP);
 Given Context:  @curTestItem, $curTestSpec
 If context is in data file then exclude
 Include context even if it is in the data file
@@ -650,8 +658,8 @@ Gang: linear
 Gang: squared
 Number of active variables: $activeVar
 TOP
-print "Test item is in the data.\n" if $testindata;
-    print "\n\n";
+$logger->info('Test item is in the data.')
+  if $testindata;
 
     $amsub->fillandcount(X);
     $grandtotal = $pointers{'grandtotal'};
@@ -660,33 +668,32 @@ print "Test item is in the data.\n" if $testindata;
     $high = "";
 
     unless ($grandtotal) {
-      print "No data items considered.  No prediction possible.\n\n\n";
+      $logger->info('No data items considered.  No prediction possible.');
       next;
     }
 
-    print "Statistical Summary\n\n";
+    $logger->info('Statistical Summary');
     for (my $i = 1; $i < @outcomelist; ++$i) {
       my $n;
       next unless $n = $sum[$i];
       $high = $n
 	if length($n) > length($high)
 	or length($n) == length($high) and $n gt $high;
-      printf "$oformat  $gformat  %7.3f%%\n",
+      $logger->info(sprintf("$oformat  $gformat  %7.3f%%",
       $outcomelist[$i],
       $n,
-      100 * $n/$grandtotal;
+      100 * $n/$grandtotal));
     }
-    printf "$oformat  $gformat\n", "", '-' x $longest;
-    printf "$oformat  $gformat\n", "", $grandtotal;
+    $logger->info(sprintf("$oformat  $gformat\n", "", '-' x $longest));
+     $logger->info(sprintf("$oformat  $gformat\n", "", $grandtotal));
     if (defined $curTestOutcome) {
-      print "\nExpected outcome: $outcomelist[$curTestOutcome]\n";
+      $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
       if ($sum[$curTestOutcome] eq $high) {
-	print "Correct outcome predicted.\n";
+	$logger->info('Correct outcome predicted.');
       } else {
-	print "Incorrect outcome predicted.\n";
+	$logger->info('Incorrect outcome predicted');
       }
     }
-    print "\n\n";
 
 ## begin analogical set
     my @datalist = ();
@@ -698,22 +705,22 @@ print "Test item is in the data.\n" if $testindata;
 	push @datalist, $i;
       }
     }
-    print "Analogical Set\n\n";
-    print "Total Frequency = ", $grandtotal, "\n\n";
+    $logger->info('Analogical Set');
+    $logger->info("Total Frequency = $grandtotal");
     @datalist = sort { $a <=> $b } @datalist;
     foreach my $i (@datalist) {
       my $p = $pointers{$datatocontext[$i]};
-      printf "$oformat  $sformat  $gformat  %7.3f%%\n",
+      $logger->info(sprintf("$oformat  $sformat  $gformat  %7.3f%%",
       $outcomelist[$outcome[$i]],
       $spec[$i],
       $p,
-      100 * $p/$grandtotal;
+      100 * $p/$grandtotal));
     }
-    print "\n\n";
 ## end analogical set
 
 ## begin gang
-    print "Gang effects\n\n";
+#TODO: explain the magic below
+    $logger->info('Gang effects');
     my $dashes = '-' x ($longest + 10);
     my $pad = " " x length
       sprintf "%7.3f%%  $gformat x $dformat  $oformat", 0, '0', 0, "";
@@ -741,28 +748,28 @@ print "Test item is in the data.\n" if $testindata;
       if ($subtooutcome{$k}) {
 	{
 	  no warnings;
-	  printf "%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
+	  $logger->info(sprintf("%7.3f%%  $gformat   $dformat  $oformat  $vformat",
 	  100 * $gang{$k}/$grandtotal,
 	  $gang{$k},
 	  "",
 	  "",
-	  @curTestItem;
-	  printf "$dashes   $dformat  $oformat  $vformat\n",
+	  @curTestItem));
+	  $logger->info(sprintf("$dashes   $dformat  $oformat  $vformat\n",
 	  "",
 	  "",
-	  @vtemp;
+	  @vtemp));
 	}
-	printf "%7.3f%%  $gformat x $dformat  $oformat\n",
+	$logger->info(sprintf("%7.3f%%  $gformat x $dformat  $oformat\n",
 	100 * $gang{$k}/$grandtotal,
 	$p,
 	$contextsize{$k},
-	$outcomelist[$subtooutcome{$k}];
+	$outcomelist[$subtooutcome{$k}]));
 ## begin skip gang list
 	my $i;
 	for ($i = $itemcontextchainhead{$k};
 	     defined $i;
 	     $i = $itemcontextchain[$i]) {
-	  printf "$pad  $vformat  $spec[$i]\n", @{$data[$i]};
+	  $logger->info(sprintf "$pad  $vformat  $spec[$i]\n", @{$data[$i]}));
 	}
 ## end skip gang list
       } else {
@@ -781,32 +788,31 @@ print "Test item is in the data.\n" if $testindata;
 	}
 	{
 	  no warnings;
-	  printf "%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
+	  $logger->info(sprintf "%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
 	  100 * $gang{$k}/$grandtotal,
 	  $gang{$k},
 	  "",
 	  "",
-	  @curTestItem;
-	  printf "$dashes   $dformat  $oformat  $vformat\n",
+	  @curTestItem));
+	  $logger->info(sprintf("$dashes   $dformat  $oformat  $vformat\n",
 	  "",
 	  "",
-	  @vtemp;
+	  @vtemp));
 	}
 	for ($i = 1; $i < @outcomelist; ++$i) {
 	  next unless $gangsort[$i];
-	  printf "%7.3f%%  $gformat x $dformat  $oformat\n",
+	  $logger->info(sprintf("%7.3f%%  $gformat x $dformat  $oformat\n",
 	  100 * $gangsort[$i] * $p/$grandtotal,
 	  $p,
 	  $gangsort[$i],
-	  $outcomelist[$i];
+	  $outcomelist[$i]));
 ## begin skip gang list
 	  foreach (@{$ganglist[$i]}) {
-	    printf "$pad  $vformat  $spec[$_]\n", @{$data[$_]};
+	    $logger->info(sprintf ("$pad  $vformat  $spec[$_]\n", @{$data[$_]}));
 	  }
 ## end skip gang list
 	}
       }
-      print "\n\n";
     }
 ## end gang
 
@@ -814,19 +820,17 @@ print "Test item is in the data.\n" if $testindata;
     &$endrepeathook();
     ++$pass;
     ($sec,$min,$hour) = localtime();
-    printf STDERR "\r$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec;
+    $logger->info(sprintf("$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec));
   }
   &$endtesthook();
-  print STDERR "\n";
 }
 
 
 ($sec,$min,$hour) = localtime();
-printf STDERR "\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec;
+$logger->info(sprintf("\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec));
 
 &$endhook();
 
-select STDERR;
 close $fh;
 
 

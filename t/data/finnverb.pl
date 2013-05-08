@@ -7,8 +7,6 @@ $countsub = sub {
     ++$count if $sum[$curTestOutcome] eq $pointermax;
 };
 
-
-
   $begin = sub {
     @confusion = ();
   };
