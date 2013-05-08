@@ -1,3 +1,7 @@
+Make a test out of the known good behavior of finnverb.pl
+put argument handling in one place
+
+
 figure out how to build the correct makefile with Dist::Zilla
 	perhaps Dist::Zilla::Plugin::MakeMaker::Custom
 Figure out how to also add Build.PL
@@ -7,6 +11,10 @@ Look at API. Update/clean if necessary.
 Create an AM old stuff branch
 tests!
 put XS in its own directory
-use a real logger instead of printing to stderr
+reduce amount of output printed to CMD
+get rid of ENORMOUS __DATA__ hack
+	start with Data::Section::Simple or something?
+Fix import mechanism
+Add comments from my commented version of Parallel.xs
 Release!
 	2.3? 2.4?

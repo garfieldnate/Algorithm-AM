@@ -16,7 +16,7 @@ my $logger = Log::Dispatch->new(
     outputs => [
 
         # [ 'File',   min_level => 'debug', filename => 'amcpresults' ],
-        [ 'Screen', min_level => 'debug', newline => 1 ],
+        [ 'Screen', min_level => 'info', newline => 1 ],
     ],
 
 );
@@ -82,6 +82,7 @@ $import{'bigcmp'} = 'local *main::bigcmp = sub {
 
 sub new {
     my $proto = shift;
+    #TODO: why?
     my $class = ref($proto) || $proto;
 
     my $fh = select(STDERR);
@@ -89,6 +90,7 @@ sub new {
     select $fh;
 
     my $project = "";
+    #TODO: why?
     $project = shift unless $_[0] =~ /^-/;
     unless ($project) {
         carp "Project not specified";
@@ -230,7 +232,7 @@ sub new {
             $l = length $datavar[$i];
             $vlen[$i] = $l if $l > $vlen[$i];
         }
-        $logger->info( 'Data file: ' . scalar(@data) );
+        $logger->debug( 'Data file: ' . scalar(@data) );
 ##    last if $specifyFreq and ($specifyFreq == @data);
 
     }
@@ -259,7 +261,7 @@ sub new {
             $octonum{$oc}           = ++$outcomecounter;
             $outcometonum{$outcome} = $outcomecounter;
             push @outcomelist, $outcome;
-            push @ocl,         $oc;
+            push @ocl, $oc;
         }
         close OUTCOME;
     }
@@ -661,7 +663,6 @@ foreach my $t (@testItems) {
 ## end exclude given;
         }
 
-        #TODO: under what circumstance is this written?
         $logger->info(<<TOP);
 Given Context:  @curTestItem, $curTestSpec
 If context is in data file then exclude
@@ -690,6 +691,7 @@ TOP
             next;
         }
 
+        #TODO: put this in a return value or something!
         $logger->info('Statistical Summary');
         for ( my $i = 1 ; $i < @outcomelist ; ++$i ) {
             my $n;
