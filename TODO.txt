@@ -1,0 +1,12 @@
+figure out how to build the correct makefile with Dist::Zilla
+	perhaps Dist::Zilla::Plugin::MakeMaker::Custom
+Figure out how to also add Build.PL
+
+Read through documentation, update/clean if necessary
+Look at API. Update/clean if necessary.
+Create an AM old stuff branch
+tests!
+put XS in its own directory
+use a real logger instead of printing to stderr
+Release!
+	2.3? 2.4?

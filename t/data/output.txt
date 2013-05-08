@@ -1,0 +1,1397 @@
+Initializing project finnverb
+Data file: 1Data file: 2Data file: 3Data file: 4Data file: 5Data file: 6Data file: 7Data file: 8Data file: 9Data file: 10Data file: 11Data file: 12Data file: 13Data file: 14Data file: 15Data file: 16Data file: 17Data file: 18Data file: 19Data file: 20Data file: 21Data file: 22Data file: 23Data file: 24Data file: 25Data file: 26Data file: 27Data file: 28Data file: 29Data file: 30Data file: 31Data file: 32Data file: 33Data file: 34Data file: 35Data file: 36Data file: 37Data file: 38Data file: 39Data file: 40Data file: 41Data file: 42Data file: 43Data file: 44Data file: 45Data file: 46Data file: 47Data file: 48Data file: 49Data file: 50Data file: 51Data file: 52Data file: 53Data file: 54Data file: 55Data file: 56Data file: 57Data file: 58Data file: 59Data file: 60Data file: 61Data file: 62Data file: 63Data file: 64Data file: 65Data file: 66Data file: 67Data file: 68Data file: 69Data file: 70Data file: 71Data file: 72Data file: 73Data file: 74Data file: 75Data file: 76Data file: 77Data file: 78Data file: 79Data file: 80Data file: 81Data file: 82Data file: 83Data file: 84Data file: 85Data file: 86Data file: 87Data file: 88Data file: 89Data file: 90Data file: 91Data file: 92Data file: 93Data file: 94Data file: 95Data file: 96Data file: 97Data file: 98Data file: 99Data file: 100Data file: 101Data file: 102Data file: 103Data file: 104Data file: 105Data file: 106Data file: 107Data file: 108Data file: 109Data file: 110Data file: 111Data file: 112Data file: 113Data file: 114Data file: 115Data file: 116Data file: 117Data file: 118Data file: 119Data file: 120Data file: 121Data file: 122Data file: 123Data file: 124Data file: 125Data file: 126Data file: 127Data file: 128Data file: 129Data file: 130Data file: 131Data file: 132Data file: 133Data file: 134Data file: 135Data file: 136Data file: 137Data file: 138Data file: 139Data file: 140Data file: 141Data file: 142Data file: 143Data file: 144Data file: 145Data file: 146Data file: 147Data file: 148Data file: 149Data file: 150Data file: 151Data file: 152Data file: 153Data file: 154Data file: 155Data file: 156Data file: 157Data file: 158Data file: 159Data file: 160Data file: 161Data file: 162Data file: 163Data file: 164Data file: 165Data file: 166Data file: 167Data file: 168Data file: 169Data file: 170Data file: 171Data file: 172Data file: 173
+Outcome file...
+...will use data file
+   1   2   3   4   5   6   7   8   9   10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66   67   68   69   70   71   72   73   74   75   76   77   78   79   80   81   82   83   84   85   86   87   88   89   90   91   92   93   94   95   96   97   98   99   100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119   120   121   122   123   124   125   126   127   128   129   130   131   132   133   134   135   136   137   138   139   140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159   160   161   162   163   164   165   166   167   168   169   170   171   172   173
+...converting outcomes to indices
+   1   2   3   4   5   6   7   8   9   10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44   45   46   47   48   49   50   51   52   53   54   55   56   57   58   59   60   61   62   63   64   65   66   67   68   69   70   71   72   73   74   75   76   77   78   79   80   81   82   83   84   85   86   87   88   89   90   91   92   93   94   95   96   97   98   99   100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119   120   121   122   123   124   125   126   127   128   129   130   131   132   133   134   135   136   137   138   139   140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159   160   161   162   163   164   165   166   167   168   169   170   171   172   173
+...done
+Test file...
+...done
+
+Test items left: 173
+
+Time: 18:39:00
+
+A A 0 = 0 = 0 = J A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 172
+
+Time: 18:39:00
+
+A A 0 = S L 0 = K A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 171
+
+Time: 18:39:00
+
+A A 0 = S N 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 170
+
+Time: 18:39:00
+
+A A V U 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 169
+
+Time: 18:39:00
+
+E E 0 = 0 = 0 = L a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 168
+
+Time: 18:39:00
+
+E E 0 = 0 = O S T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 167
+
+Time: 18:39:00
+
+H A V A 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 166
+
+Time: 18:39:00
+
+H A V I 0 = 0 = S E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 165
+
+Time: 18:39:00
+
+H A V I 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 164
+
+Time: 18:39:00
+
+H A 0 = 0 = 0 = K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 163
+
+Time: 18:39:00
+
+H E V I 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 162
+
+Time: 18:39:00
+
+H I V I 0 = O H T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 161
+
+Time: 18:39:00
+
+H O 0 = 0 = O H T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 160
+
+Time: 18:39:00
+
+H O V I 0 = 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 159
+
+Time: 18:39:00
+
+H U V O S L 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 158
+
+Time: 18:39:00
+
+H U V U 0 = 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 157
+
+Time: 18:39:00
+
+I I 0 = 0 = 0 = M E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 156
+
+Time: 18:39:00
+
+I I 0 = 0 = O S K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 155
+
+Time: 18:39:00
+
+I I 0 = 0 = O T K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 154
+
+Time: 18:39:00
+
+I I 0 = 0 = 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 153
+
+Time: 18:39:00
+
+J A 0 = 0 = 0 = K A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 152
+
+Time: 18:39:00
+
+J A 0 = 0 = O K S A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 151
+
+Time: 18:39:00
+
+J A 0 = 0 = O T K A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 150
+
+Time: 18:39:00
+
+J A V U 0 = 0 = H A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 149
+
+Time: 18:39:00
+
+J O 0 = 0 = O H T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 148
+
+Time: 18:39:00
+
+J O V U 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 147
+
+Time: 18:39:00
+
+J U V O 0 = O K S E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 146
+
+Time: 18:39:00
+
+J a 0 = 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 145
+
+Time: 18:39:00
+
+J a V Y 0 = 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 144
+
+Time: 18:39:00
+
+K A V A 0 = 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 143
+
+Time: 18:39:00
+
+K A V I 0 = O H T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 142
+
+Time: 18:39:00
+
+K A V I 0 = 0 = V A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 141
+
+Time: 18:39:00
+
+K A 0 = S N 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 140
+
+Time: 18:39:00
+
+K A 0 = S R O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 139
+
+Time: 18:39:00
+
+K A 0 = 0 = O S V A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 138
+
+Time: 18:39:00
+
+K A 0 = 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 137
+
+Time: 18:39:00
+
+K E V I 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 136
+
+Time: 18:39:00
+
+K E 0 = 0 = O S T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 135
+
+Time: 18:39:00
+
+K I V E S L 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 134
+
+Time: 18:39:00
+
+K I V E S R 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 133
+
+Time: 18:39:00
+
+K I V I 0 = O S T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 132
+
+Time: 18:39:00
+
+K I V I 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 131
+
+Time: 18:39:00
+
+K I V I 0 = 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 130
+
+Time: 18:39:00
+
+K I 0 = 0 = O T K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 129
+
+Time: 18:39:00
+
+K O V I 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 128
+
+Time: 18:39:00
+
+K O 0 = 0 = 0 = K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 127
+
+Time: 18:39:00
+
+K O 0 = 0 = O S K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 126
+
+Time: 18:39:00
+
+K O 0 = 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 125
+
+Time: 18:39:00
+
+K U 0 = S L 0 = K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 124
+
+Time: 18:39:00
+
+K U V O 0 = 0 = L E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 123
+
+Time: 18:39:00
+
+K U V U 0 = 0 = L E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 122
+
+Time: 18:39:00
+
+K U V U S L 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 121
+
+Time: 18:39:00
+
+K Y 0 = S L 0 = P E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 120
+
+Time: 18:39:00
+
+K Y 0 = S L 0 = V a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 119
+
+Time: 18:39:00
+
+K Y 0 = S N 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 118
+
+Time: 18:39:00
+
+K Y 0 = 0 = 0 = T E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 117
+
+Time: 18:39:00
+
+K Y 0 = 0 = O T K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 116
+
+Time: 18:39:00
+
+K a 0 = 0 = O S K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 115
+
+Time: 18:39:00
+
+K a 0 = 0 = O T K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 114
+
+Time: 18:39:00
+
+K a V Y 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 113
+
+Time: 18:39:00
+
+K a V a S N 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 112
+
+Time: 18:39:00
+
+L A V I 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 111
+
+Time: 18:39:00
+
+L A 0 = 0 = O S K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 110
+
+Time: 18:39:00
+
+L A V U 0 = 0 = L A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 109
+
+Time: 18:39:00
+
+L E 0 = S N 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 108
+
+Time: 18:39:00
+
+L I V I 0 = O T T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 107
+
+Time: 18:39:00
+
+L O V I 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 106
+
+Time: 18:39:00
+
+L U V I 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 105
+
+Time: 18:39:00
+
+L U 0 = 0 = 0 = K E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 104
+
+Time: 18:39:00
+
+L U V O 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 103
+
+Time: 18:39:00
+
+L U V U 0 = 0 = L E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 102
+
+Time: 18:39:00
+
+L a 0 = 0 = O H T E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 101
+
+Time: 18:39:00
+
+L o V Y 0 = 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 100
+
+Time: 18:39:00
+
+M A 0 = 0 = O H T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 99
+
+Time: 18:39:00
+
+M A V I 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 98
+
+Time: 18:39:00
+
+M A 0 = 0 = O K S A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 97
+
+Time: 18:39:00
+
+M A 0 = S L O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 96
+
+Time: 18:39:00
+
+M E 0 = 0 = 0 = N E
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 95
+
+Time: 18:39:00
+
+M U V I 0 = O S T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 94
+
+Time: 18:39:00
+
+M U 0 = S R 0 = T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 93
+
+Time: 18:39:00
+
+M U V U 0 = O T T A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 92
+
+Time: 18:39:00
+
+M Y V o S N 0 = T a
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 91
+
+Time: 18:39:00
+
+N A V U 0 = 0 = R A
+
+0/1  18:39:001/1  18:39:00
+
+Test items left: 90
+
+Time: 18:39:00
+
+N I V E 0 = 0 = L E
+
+0/1  18:39:001/1  18:39:01
+
+Test items left: 89
+
+Time: 18:39:01
+
+N I V I 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 88
+
+Time: 18:39:01
+
+N O 0 = 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 87
+
+Time: 18:39:01
+
+N O V U 0 = 0 = S E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 86
+
+Time: 18:39:01
+
+N O V U 0 = 0 = T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 85
+
+Time: 18:39:01
+
+N Y 0 = 0 = O H T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 84
+
+Time: 18:39:01
+
+N Y 0 = S L 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 83
+
+Time: 18:39:01
+
+N a 0 = 0 = 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 82
+
+Time: 18:39:01
+
+N a V Y 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 81
+
+Time: 18:39:01
+
+O O 0 = 0 = 0 = L E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 80
+
+Time: 18:39:01
+
+O O 0 = 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 79
+
+Time: 18:39:01
+
+O O 0 = 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 78
+
+Time: 18:39:01
+
+P A V A 0 = O H T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 77
+
+Time: 18:39:01
+
+P A V I 0 = 0 = N A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 76
+
+Time: 18:39:01
+
+P A V I 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 75
+
+Time: 18:39:01
+
+P A 0 = 0 = 0 = L A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 74
+
+Time: 18:39:01
+
+P A 0 = 0 = 0 = N E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 73
+
+Time: 18:39:01
+
+P E V I 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 72
+
+Time: 18:39:01
+
+P E 0 = 0 = 0 = S E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 71
+
+Time: 18:39:01
+
+P E 0 = 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 70
+
+Time: 18:39:01
+
+P I V E 0 = O K S E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 69
+
+Time: 18:39:01
+
+P I V I 0 = 0 = L E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 68
+
+Time: 18:39:01
+
+P I V I S R 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 67
+
+Time: 18:39:01
+
+P I 0 = 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 66
+
+Time: 18:39:01
+
+P I 0 = 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 65
+
+Time: 18:39:01
+
+P O V I 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 64
+
+Time: 18:39:01
+
+P O 0 = S L 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 63
+
+Time: 18:39:01
+
+P O 0 = S L O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 62
+
+Time: 18:39:01
+
+P O 0 = 0 = 0 = T E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 61
+
+Time: 18:39:01
+
+P U 0 = 0 = 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 60
+
+Time: 18:39:01
+
+P U 0 = 0 = 0 = R E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 59
+
+Time: 18:39:01
+
+P U 0 = S R 0 = K A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 58
+
+Time: 18:39:01
+
+P U 0 = 0 = O S K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 57
+
+Time: 18:39:01
+
+P Y V Y 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 56
+
+Time: 18:39:01
+
+P Y V o S R 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 55
+
+Time: 18:39:01
+
+P a V a 0 = 0 = S E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 54
+
+Time: 18:39:01
+
+P a V a 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 53
+
+Time: 18:39:01
+
+P a V a 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 52
+
+Time: 18:39:01
+
+R A V A 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 51
+
+Time: 18:39:01
+
+R I V E S N 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 50
+
+Time: 18:39:01
+
+R I V I 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 49
+
+Time: 18:39:01
+
+R I V I 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 48
+
+Time: 18:39:01
+
+R Y V o 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 47
+
+Time: 18:39:01
+
+S A V A 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 46
+
+Time: 18:39:01
+
+S A 0 = 0 = 0 = T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 45
+
+Time: 18:39:01
+
+S I V E 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 44
+
+Time: 18:39:01
+
+S I V I S R 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 43
+
+Time: 18:39:01
+
+S O V I 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 42
+
+Time: 18:39:01
+
+S O 0 = 0 = O T K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 41
+
+Time: 18:39:01
+
+S O V U 0 = 0 = T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 40
+
+Time: 18:39:01
+
+S U V I 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 39
+
+Time: 18:39:01
+
+S U 0 = 0 = 0 = L A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 38
+
+Time: 18:39:01
+
+S U 0 = S L 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 37
+
+Time: 18:39:01
+
+S U 0 = 0 = 0 = R E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 36
+
+Time: 18:39:01
+
+S Y V Y 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 35
+
+Time: 18:39:01
+
+S Y V Y 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 34
+
+Time: 18:39:01
+
+S Y V o 0 = O K S E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 33
+
+Time: 18:39:01
+
+S Y V o 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 32
+
+Time: 18:39:01
+
+S a 0 = S R 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 31
+
+Time: 18:39:01
+
+S a V a 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 30
+
+Time: 18:39:01
+
+S a V a 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 29
+
+Time: 18:39:01
+
+T A V I 0 = 0 = T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 28
+
+Time: 18:39:01
+
+T A V I 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 27
+
+Time: 18:39:01
+
+T A 0 = 0 = O P P A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 26
+
+Time: 18:39:01
+
+T E V E 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 25
+
+Time: 18:39:01
+
+T E 0 = 0 = 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 24
+
+Time: 18:39:01
+
+T I V E 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 23
+
+Time: 18:39:01
+
+T O V I 0 = O S T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 22
+
+Time: 18:39:01
+
+T U 0 = 0 = 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 21
+
+Time: 18:39:01
+
+T U 0 = 0 = 0 = L E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 20
+
+Time: 18:39:01
+
+T U 0 = S n 0 = K E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 19
+
+Time: 18:39:01
+
+T U 0 = S N 0 = T E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 18
+
+Time: 18:39:01
+
+T U V O 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 17
+
+Time: 18:39:01
+
+T Y V o S N 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 16
+
+Time: 18:39:01
+
+T a V Y 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 15
+
+Time: 18:39:01
+
+U U V I 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 14
+
+Time: 18:39:01
+
+V A V I 0 = O H T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 13
+
+Time: 18:39:01
+
+V A 0 = 0 = 0 = L A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 12
+
+Time: 18:39:01
+
+V E 0 = 0 = 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 11
+
+Time: 18:39:01
+
+V I V E 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 10
+
+Time: 18:39:01
+
+V I V I 0 = O S T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 9
+
+Time: 18:39:01
+
+V I 0 = S R O K K A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 8
+
+Time: 18:39:01
+
+V O V I 0 = O T T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 7
+
+Time: 18:39:01
+
+V U V O 0 = 0 = L E
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 6
+
+Time: 18:39:01
+
+V U V O 0 = 0 = T A
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 5
+
+Time: 18:39:01
+
+V Y V o 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 4
+
+Time: 18:39:01
+
+V a V I 0 = O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 3
+
+Time: 18:39:01
+
+V a 0 = S L O T T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 2
+
+Time: 18:39:01
+
+V a V a S N 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Test items left: 1
+
+Time: 18:39:01
+
+Y Y 0 = S L 0 = T a
+
+0/1  18:39:011/1  18:39:01
+
+Time: 18:39:01
+

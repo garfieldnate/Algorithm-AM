@@ -1,6 +1,7 @@
 package Algorithm::AM;
 
-use 5.016002;
+# ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
+# use 5.016;
 use strict;
 use warnings;
 
@@ -831,12 +832,6 @@ close $fh;
 
 
 __END__
-
-
-=head1 NAME
-
-Algorithm::AM - Perl extension for Analogical Modeling using a parallel
-algorithm
 
 =head1 SYNOPSIS
 

@@ -1,4 +1,0 @@
-EXPORTS
-  boot_AM__Parallel
-  _boot_AM__Parallel = boot_AM__Parallel
-  
