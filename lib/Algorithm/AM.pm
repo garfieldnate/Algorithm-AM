@@ -111,7 +111,7 @@ sub new {
   $project = shift unless $_[0] =~ /^-/;
   unless ($project) {
     carp "Project not specified";
-    warn "No test items can be run\n";
+    $logger->warn('No test items can be run');
     return sub {};
   }
 
@@ -119,14 +119,14 @@ sub new {
 
   unless (-e "$project/data") {
     carp "Project $project has no data file";
-    warn "No test items can be run\n";
+    $logger->warn('No test items can be run');
     return sub {};
   }
 
   my(%opts) = @_;
   unless (exists $opts{-commas}) {
     carp "Project $project did not specify comma formatting";
-    warn "No test items can be run\n";
+    $logger->warn('No test items can be run');
     return sub {};
   }
   my($bigsep, $smallsep);
@@ -138,8 +138,8 @@ sub new {
     $smallsep = qr{};
   } else {
     carp "Project $project did not specify comma formatting correctly";
-    warn "(must specify -commas => 'yes' or -commas => 'no')\n";
-    warn "No test items can be run\n";
+    $logger->warn(q{(must specify -commas => 'yes' or -commas => 'no')});
+    $logger->warn('No test items can be run');
     return sub {};
   }
 
@@ -149,8 +149,8 @@ sub new {
   if (exists $opts{-nulls}) {
     if ($opts{-nulls} !~ /(in|ex)clude/) {
       carp "Project $project did not specify option -nulls correctly";
-      warn "(must be 'include' or 'exclude')\n";
-      warn "Will use default value of 'exclude'\n";
+      $logger->warn(q{(must be 'include' or 'exclude')});
+      $logger->warn(q{Will use default value of 'exclude'});
     } else {
       $excNull = $opts{-nulls};
     }
@@ -159,8 +159,8 @@ sub new {
   if (exists $opts{-given}) {
     if ($opts{-given} !~ /(in|ex)clude/) {
       carp "Project $project did not specify option -given correctly";
-      warn "(must be 'include' or 'exclude')\n";
-      warn "Will use default value of 'exclude'\n";
+      $logger->warn(q{(must be 'include' or 'exclude')});
+      $logger->warn(q{Will use default value of 'exclude'});
     } else {
       $excGiven = $opts{-given};
     }
@@ -169,8 +169,8 @@ sub new {
   if (exists $opts{-linear}) {
     if ($opts{-linear} !~ /(yes|no)/) {
       carp "Project $project did not specify option -linear correctly";
-      warn "(must be 'yes' or 'no')\n";
-      warn "Will use default value of 'no'\n";
+      $logger->warn(q{(must be 'yes' or 'no')});
+      $logger->warn(q{Will use default value of 'no'});
     } else {
       $linear = $opts{-linear};
     }
@@ -182,8 +182,8 @@ sub new {
   if (exists $opts{-skipset}) {
     if ($opts{-skipset} !~ /yes|no/) {
       carp "Project $project did not specify option -skipset correctly";
-      warn "(must be 'yes' or 'no')\n";
-      warn "Will use default value of 'yes'\n";
+      $logger->warn(q{(must be 'yes' or 'no')});
+      $logger->warn(q{Will use default value of 'yes'});
     } else {
       $skipset = $opts{-skipset};
     }
@@ -192,8 +192,8 @@ sub new {
   if (exists $opts{-gangs}) {
     if ($opts{-gangs} !~ /yes|summary|no/) {
       carp "Project $project did not specify option -gangs correctly";
-      warn "(must be 'yes', 'summary', or 'no')\n";
-      warn "Will use default value of 'no'\n";
+      $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+      $logger->warn(q{Will use default value of 'no'});
     } else {
       $gangs = $opts{-gangs};
     }
@@ -363,8 +363,8 @@ sub new {
     if (exists $opts{-nulls}) {
       if ($opts{-nulls} !~ /(in|ex)clude/) {
 	carp "Project $project did not specify option -nulls correctly";
-	warn "(must be 'include' or 'exclude')\n";
-	warn "Will use default value of '$excNull'\n";
+	$logger->warn(q{(must be 'include' or 'exclude')});
+	$logger->warn(q{Will use default value of '$excNull'});
       } else {
 	$excNull = $opts{-nulls};
       }
@@ -373,8 +373,8 @@ sub new {
     if (exists $opts{-given}) {
       if ($opts{-given} !~ /(in|ex)clude/) {
 	carp "Project $project did not specify option -given correctly";
-	warn "(must be 'include' or 'exclude')\n";
-	warn "Will use default value of '$excGiven'\n";
+	$logger->warn(q{(must be 'include' or 'exclude')});
+	$logger->warn(q{Will use default value of '$excGiven'});
       } else {
 	$excGiven = $opts{-given};
       }
@@ -383,8 +383,8 @@ sub new {
     if (exists $opts{-linear}) {
       if ($opts{-linear} !~ /(yes|no)/) {
 	carp "Project $project did not specify option -linear correctly";
-	warn "(must be 'yes' or 'no')\n";
-	warn "Will use default value of '$linear'\n";
+	$logger->warn(q{(must be 'yes' or 'no')});
+	$logger->warn(q{Will use default value of '$linear'});
       } else {
 	$linear = $opts{-linear};
       }
@@ -396,8 +396,8 @@ sub new {
     if (exists $opts{-skipset}) {
       if ($opts{-skipset} !~ /yes|no/) {
 	carp "Project $project did not specify option -skipset correctly";
-	warn "(must be 'yes' or 'no')\n";
-	warn "Will use default value of '$skipset'\n";
+	$logger->warn(q{(must be 'yes' or 'no')});
+	$logger->warn(q{Will use default value of '$skipset'});
       } else {
 	$skipset = $opts{-skipset};
       }
@@ -406,13 +406,14 @@ sub new {
     if (exists $opts{-gangs}) {
       if ($opts{-gangs} !~ /yes|summary|no/) {
 	carp "Project $project did not specify option -gangs correctly";
-	warn "(must be 'yes', 'summary', or 'no')\n";
-	warn "Will use default value of '$gangs'\n";
+	$logger->warn(q{(must be 'yes', 'summary', or 'no')});
+	$logger->warn(q{Will use default value of '$gangs'});
       } else {
 	$gangs = $opts{-gangs};
       }
     }
 
+    #TODO: what is $subsource used for?
     local $_ = $subsource;
 
     if ($excNull eq 'exclude') {
@@ -514,7 +515,8 @@ sub new {
 
     my $importlist = join ";", values %import;
     eval "$importlist;$_";
-    warn $@ if $@;
+    $logger->warn($@)
+      if $@;
 
   };
 
