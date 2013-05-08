@@ -8,14 +8,15 @@ use warnings;
 our $VERSION = '1.00';
 
 require XSLoader;
-XSLoader::load('Algorithm::AM', $VERSION);
+XSLoader::load( 'Algorithm::AM', $VERSION );
 
 use Carp;
 use Log::Dispatch;
 my $logger = Log::Dispatch->new(
     outputs => [
+
         # [ 'File',   min_level => 'debug', filename => 'amcpresults' ],
-        [ 'Screen', min_level => 'debug',newline => 1 ],
+        [ 'Screen', min_level => 'debug', newline => 1 ],
     ],
 
 );
@@ -25,8 +26,8 @@ use Symbol;
 
 my $subsource;
 {
-  local $/;
-  $subsource = <DATA>;
+    local $/;
+    $subsource = <DATA>;
 }
 $subsource =~ s/__END__.*//s;
 
@@ -34,51 +35,31 @@ my %import;
 
 ## Useful variables exported and documented
 
-$import{'@outcomelist'} =
-  'local *main::outcomelist = \@outcomelist';
-$import{'%outcometonum'} =
-  'local *main::outcometonum = \%outcometonum';
-$import{'@outcome'} =
-  'local *main::outcome = \@outcome';
-$import{'@data'} =
-  'local *main::data = \@data';
-$import{'@spec'} =
-  'local *main::spec = \@spec';
+$import{'@outcomelist'}  = 'local *main::outcomelist = \@outcomelist';
+$import{'%outcometonum'} = 'local *main::outcometonum = \%outcometonum';
+$import{'@outcome'}      = 'local *main::outcome = \@outcome';
+$import{'@data'}         = 'local *main::data = \@data';
+$import{'@spec'}         = 'local *main::spec = \@spec';
 
-$import{'$curTestOutcome'} =
-  'local *main::curTestOutcome = \$curTestOutcome';
-$import{'@curTestItem'} =
-  'local *main::curTestItem = \@curTestItem';
-$import{'$curTestSpec'} =
-  'local *main::curTestSpec = \$curTestSpec';
+$import{'$curTestOutcome'} = 'local *main::curTestOutcome = \$curTestOutcome';
+$import{'@curTestItem'}    = 'local *main::curTestItem = \@curTestItem';
+$import{'$curTestSpec'}    = 'local *main::curTestSpec = \$curTestSpec';
 
-$import{'$probability'} =
-  'local *main::probability = \$probability';
-$import{'$pass'} =
-  'local *main::pass = \$pass';
-$import{'$datacap'} =
-  'local *main::datacap = \$datacap';
+$import{'$probability'} = 'local *main::probability = \$probability';
+$import{'$pass'}        = 'local *main::pass = \$pass';
+$import{'$datacap'}     = 'local *main::datacap = \$datacap';
 
-$import{'@sum'} =
-  'local *main::sum = \@sum';
-$import{'$pointertotal'} =
-  'local *main::pointertotal = \$grandtotal';
-$import{'$pointermax'} =
-  'local *main::pointermax = \$high';
+$import{'@sum'}          = 'local *main::sum = \@sum';
+$import{'$pointertotal'} = 'local *main::pointertotal = \$grandtotal';
+$import{'$pointermax'}   = 'local *main::pointermax = \$high';
 
-$import{'$dformat'} =
-  'local *main::dformat = \$dformat';
-$import{'$sformat'} =
-  'local *main::sformat = \$sformat';
-$import{'$oformat'} =
-  'local *main::oformat = \$oformat';
-$import{'$vformat'} =
-  'local *main::vformat = \$vformat';
-$import{'$pformat'} =
-  'local *main::pformat = \$gformat';
+$import{'$dformat'} = 'local *main::dformat = \$dformat';
+$import{'$sformat'} = 'local *main::sformat = \$sformat';
+$import{'$oformat'} = 'local *main::oformat = \$oformat';
+$import{'$vformat'} = 'local *main::vformat = \$vformat';
+$import{'$pformat'} = 'local *main::pformat = \$gformat';
 
-$import{'bigcmp'} =
-  'local *main::bigcmp = sub {
+$import{'bigcmp'} = 'local *main::bigcmp = sub {
      my($a,$b) = @_;
      return (length($a) <=> length($b)) || ($a cmp $b);
    }';
@@ -100,433 +81,467 @@ $import{'bigcmp'} =
 ##   'local *main::gang = \%gang';
 
 sub new {
-  my $proto = shift;
-  my $class = ref($proto) || $proto;
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
 
-  my $fh = select(STDERR);
-  local($|) = 1;
-  select $fh;
+    my $fh = select(STDERR);
+    local ($|) = 1;
+    select $fh;
 
-  my $project = "";
-  $project = shift unless $_[0] =~ /^-/;
-  unless ($project) {
-    carp "Project not specified";
-    $logger->warn('No test items can be run');
-    return sub {};
-  }
-
-  $logger->info( "Initializing project $project");
-
-  unless (-e "$project/data") {
-    carp "Project $project has no data file";
-    $logger->warn('No test items can be run');
-    return sub {};
-  }
-
-  my(%opts) = @_;
-  unless (exists $opts{-commas}) {
-    carp "Project $project did not specify comma formatting";
-    $logger->warn('No test items can be run');
-    return sub {};
-  }
-  my($bigsep, $smallsep);
-  if ($opts{-commas} eq 'yes') {
-    $bigsep = qr{\s*,\s*};
-    $smallsep = qr{\s+};
-  } elsif ($opts{-commas} eq 'no') {
-    $bigsep = qr{\s+};
-    $smallsep = qr{};
-  } else {
-    carp "Project $project did not specify comma formatting correctly";
-    $logger->warn(q{(must specify -commas => 'yes' or -commas => 'no')});
-    $logger->warn('No test items can be run');
-    return sub {};
-  }
-
-  my($excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs)
-    = ('exclude', 'exclude', 'no', undef, 1, 'yes', 'no');
-
-  if (exists $opts{-nulls}) {
-    if ($opts{-nulls} !~ /(in|ex)clude/) {
-      carp "Project $project did not specify option -nulls correctly";
-      $logger->warn(q{(must be 'include' or 'exclude')});
-      $logger->warn(q{Will use default value of 'exclude'});
-    } else {
-      $excNull = $opts{-nulls};
+    my $project = "";
+    $project = shift unless $_[0] =~ /^-/;
+    unless ($project) {
+        carp "Project not specified";
+        $logger->warn('No test items can be run');
+        return sub { };
     }
-  }
 
-  if (exists $opts{-given}) {
-    if ($opts{-given} !~ /(in|ex)clude/) {
-      carp "Project $project did not specify option -given correctly";
-      $logger->warn(q{(must be 'include' or 'exclude')});
-      $logger->warn(q{Will use default value of 'exclude'});
-    } else {
-      $excGiven = $opts{-given};
+    $logger->info("Initializing project $project");
+
+    unless ( -e "$project/data" ) {
+        carp "Project $project has no data file";
+        $logger->warn('No test items can be run');
+        return sub { };
     }
-  }
 
-  if (exists $opts{-linear}) {
-    if ($opts{-linear} !~ /(yes|no)/) {
-      carp "Project $project did not specify option -linear correctly";
-      $logger->warn(q{(must be 'yes' or 'no')});
-      $logger->warn(q{Will use default value of 'no'});
-    } else {
-      $linear = $opts{-linear};
+    my (%opts) = @_;
+    unless ( exists $opts{-commas} ) {
+        carp "Project $project did not specify comma formatting";
+        $logger->warn('No test items can be run');
+        return sub { };
     }
-  }
-
-  $probability = $opts{-probability} if exists $opts{-probability};
-  $repeat = $opts{-repeat} if exists $opts{-repeat};
-
-  if (exists $opts{-skipset}) {
-    if ($opts{-skipset} !~ /yes|no/) {
-      carp "Project $project did not specify option -skipset correctly";
-      $logger->warn(q{(must be 'yes' or 'no')});
-      $logger->warn(q{Will use default value of 'yes'});
-    } else {
-      $skipset = $opts{-skipset};
+    my ( $bigsep, $smallsep );
+    if ( $opts{-commas} eq 'yes' ) {
+        $bigsep   = qr{\s*,\s*};
+        $smallsep = qr{\s+};
     }
-  }
-
-  if (exists $opts{-gangs}) {
-    if ($opts{-gangs} !~ /yes|summary|no/) {
-      carp "Project $project did not specify option -gangs correctly";
-      $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-      $logger->warn(q{Will use default value of 'no'});
-    } else {
-      $gangs = $opts{-gangs};
+    elsif ( $opts{-commas} eq 'no' ) {
+        $bigsep   = qr{\s+};
+        $smallsep = qr{};
     }
-  }
+    else {
+        carp "Project $project did not specify comma formatting correctly";
+        $logger->warn(q{(must specify -commas => 'yes' or -commas => 'no')});
+        $logger->warn('No test items can be run');
+        return sub { };
+    }
 
-  my(@projectdefaults) =
-    ($bigsep, $smallsep, $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs);
+    my ( $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs )
+      = ( 'exclude', 'exclude', 'no', undef, 1, 'yes', 'no' );
+
+    if ( exists $opts{-nulls} ) {
+        if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
+            carp "Project $project did not specify option -nulls correctly";
+            $logger->warn(q{(must be 'include' or 'exclude')});
+            $logger->warn(q{Will use default value of 'exclude'});
+        }
+        else {
+            $excNull = $opts{-nulls};
+        }
+    }
+
+    if ( exists $opts{-given} ) {
+        if ( $opts{-given} !~ /(in|ex)clude/ ) {
+            carp "Project $project did not specify option -given correctly";
+            $logger->warn(q{(must be 'include' or 'exclude')});
+            $logger->warn(q{Will use default value of 'exclude'});
+        }
+        else {
+            $excGiven = $opts{-given};
+        }
+    }
+
+    if ( exists $opts{-linear} ) {
+        if ( $opts{-linear} !~ /(yes|no)/ ) {
+            carp "Project $project did not specify option -linear correctly";
+            $logger->warn(q{(must be 'yes' or 'no')});
+            $logger->warn(q{Will use default value of 'no'});
+        }
+        else {
+            $linear = $opts{-linear};
+        }
+    }
+
+    $probability = $opts{-probability} if exists $opts{-probability};
+    $repeat      = $opts{-repeat}      if exists $opts{-repeat};
+
+    if ( exists $opts{-skipset} ) {
+        if ( $opts{-skipset} !~ /yes|no/ ) {
+            carp "Project $project did not specify option -skipset correctly";
+            $logger->warn(q{(must be 'yes' or 'no')});
+            $logger->warn(q{Will use default value of 'yes'});
+        }
+        else {
+            $skipset = $opts{-skipset};
+        }
+    }
+
+    if ( exists $opts{-gangs} ) {
+        if ( $opts{-gangs} !~ /yes|summary|no/ ) {
+            carp "Project $project did not specify option -gangs correctly";
+            $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+            $logger->warn(q{Will use default value of 'no'});
+        }
+        else {
+            $gangs = $opts{-gangs};
+        }
+    }
+
+    my (@projectdefaults) = (
+        $bigsep,      $smallsep, $excNull, $excGiven, $linear,
+        $probability, $repeat,   $skipset, $gangs
+    );
 
 ## The following is in case I decide later to allow hooks to be set at
 ## initialization time as well as at run time
 
-  my($beginhook, $begintesthook, $beginrepeathook, $datahook, $endrepeathook, $endtesthook, $endhook) =
-    (undef, undef, undef, undef, undef, undef, undef);
+    my ( $beginhook, $begintesthook, $beginrepeathook, $datahook,
+        $endrepeathook, $endtesthook, $endhook )
+      = ( undef, undef, undef, undef, undef, undef, undef );
 
-  my(@hooks) =
-    ($beginhook, $begintesthook, $beginrepeathook, $datahook, $endrepeathook, $endtesthook, $endhook);
+    my (@hooks) = (
+        $beginhook, $begintesthook, $beginrepeathook, $datahook,
+        $endrepeathook, $endtesthook, $endhook
+    );
 
 ## data file
 
-  my(@outcome, @data, @spec);
-  my $slen = 0;
-  my @vlen = (0) x 60;
+    my ( @outcome, @data, @spec );
+    my $slen = 0;
+    my @vlen = (0) x 60;
 
 ## use DATASET instead of DATA to avoid possible clash
-  open(DATASET, "$project/data")
-    or carp "Couldn't open $project/data"
-    and return sub {};
-  while(<DATASET>) {
-    chomp;
-    my($outcome, $data, $spec) = split /$bigsep/, $_, 3;
-    $spec ||= $data;
-    my $l;
+    open( DATASET, "$project/data" )
+      or carp "Couldn't open $project/data" and return sub { };
+    while (<DATASET>) {
+        chomp;
+        my ( $outcome, $data, $spec ) = split /$bigsep/, $_, 3;
+        $spec ||= $data;
+        my $l;
 
-    push @outcome, $outcome;
-    push @spec, $spec;
-    $l = length $spec;
-    $slen = $l if $l > $slen;
-    my @datavar = split /$smallsep/, $data;
-    push @data, \@datavar;
-    my $i;
-    for ($i = 0; $i < @datavar; ++$i) {
-      $l = length $datavar[$i];
-      $vlen[$i] = $l if $l > $vlen[$i];
-    }
-    $logger->info('Data file: ' . scalar(@data));
+        push @outcome, $outcome;
+        push @spec,    $spec;
+        $l = length $spec;
+        $slen = $l if $l > $slen;
+        my @datavar = split /$smallsep/, $data;
+        push @data, \@datavar;
+        my $i;
+        for ( $i = 0 ; $i < @datavar ; ++$i ) {
+            $l = length $datavar[$i];
+            $vlen[$i] = $l if $l > $vlen[$i];
+        }
+        $logger->info( 'Data file: ' . scalar(@data) );
 ##    last if $specifyFreq and ($specifyFreq == @data);
 
-  }
-  close DATASET;
-  my(@itemcontextchain) = (0) x @data; ## preemptive allocation of memory
-  my(@datatocontext) = (pack "S!4", 0, 0, 0, 0) x @data;
+    }
+    close DATASET;
+    my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
+    my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
 ## $vformat done after reading test file
-  my $sformat = "%-$slen.${slen}s";
-  my $dformat = "%" . (scalar @data) . ".0u";
+    my $sformat = "%-$slen.${slen}s";
+    my $dformat = "%" . ( scalar @data ) . ".0u";
 
 ## outcome file
 
-  $logger->info('Outcome file...');
-  my(@outcomelist) = ('');
-  my(@ocl) = ('');
-  my %octonum;
-  my %outcometonum;
-  my $olen = 0;
+    $logger->info('Outcome file...');
+    my (@outcomelist) = ('');
+    my (@ocl)         = ('');
+    my %octonum;
+    my %outcometonum;
+    my $olen = 0;
 
-  my $outcomecounter = 0;
-  if (-e "$project/outcome") {
-    open(OUTCOME, "$project/outcome");
-    while(<OUTCOME>) {
-      chomp;
-      my($oc, $outcome) = split /\s+/, $_, 2;
-      $octonum{$oc} = ++$outcomecounter;
-      $outcometonum{$outcome} = $outcomecounter;
-      push @outcomelist, $outcome;
-      push @ocl, $oc;
+    my $outcomecounter = 0;
+    if ( -e "$project/outcome" ) {
+        open( OUTCOME, "$project/outcome" );
+        while (<OUTCOME>) {
+            chomp;
+            my ( $oc, $outcome ) = split /\s+/, $_, 2;
+            $octonum{$oc}           = ++$outcomecounter;
+            $outcometonum{$outcome} = $outcomecounter;
+            push @outcomelist, $outcome;
+            push @ocl,         $oc;
+        }
+        close OUTCOME;
     }
-    close OUTCOME;
-  } else {
-    $logger->info('...will use data file');
-    my %oc = ();
+    else {
+        $logger->info('...will use data file');
+        my %oc = ();
 ##    map { ++$oc{$_} } @outcome;
-    my $l = 0;
-    foreach (@outcome) {
-      ++$oc{$_};
-      ++$l;
-      $logger->debug( "$l");
+        my $l = 0;
+        foreach (@outcome) {
+            ++$oc{$_};
+            ++$l;
+            $logger->debug("$l");
+        }
+        foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
+            $octonum{$_}      = ++$outcomecounter;
+            $outcometonum{$_} = $outcomecounter;
+            push @outcomelist, $_;
+            push @ocl,         $_;
+        }
     }
-    foreach (sort {lc($a) cmp lc($b)} keys %oc) {
-      $octonum{$_} = ++$outcomecounter;
-      $outcometonum{$_} = $outcomecounter;
-      push @outcomelist, $_;
-      push @ocl, $_;
-    }
-  }
 ##  @outcome = map { $octonum{$_} } @outcome;
-  my $l = 0;
-  $logger->info('...converting outcomes to indices');
-  foreach (@outcome) {
-    $_ = $octonum{$_};
-    ++$l;
-    $logger->debug("$l");
-  }
-  foreach (@outcomelist) {
-    my $l;
-    $l = length;
-    $olen = $l if $l > $olen;
-  }
-  my $oformat = "%-$olen.${olen}s";
-  $logger->info('...done');
+    my $l = 0;
+    $logger->info('...converting outcomes to indices');
+    foreach (@outcome) {
+        $_ = $octonum{$_};
+        ++$l;
+        $logger->debug("$l");
+    }
+    foreach (@outcomelist) {
+        my $l;
+        $l = length;
+        $olen = $l if $l > $olen;
+    }
+    my $oformat = "%-$olen.${olen}s";
+    $logger->info('...done');
 
 ## test file
 
-  $logger->info('Test file...');
-  open(TEST, "$project/test")
-    or carp "Couldn't open $project/test"
-    and $logger->warn('Will run data file against itself')
-    and open(TEST, "$project/data");
-  my(@testItems) = <TEST>;
-  close TEST;
-  chomp(@testItems);
-  my $item;
-  (undef, $item) = split /$bigsep/, $testItems[0];
-  my $maxvar;
-  {
-    no warnings; ## Use of implicit split to @_ is deprecated
-    $maxvar = scalar split /$smallsep/, $item;
-  }
-  $logger->info('...done');
+    $logger->info('Test file...');
+    open( TEST, "$project/test" )
+      or carp "Couldn't open $project/test"
+      and $logger->warn('Will run data file against itself')
+      and open( TEST, "$project/data" );
+    my (@testItems) = <TEST>;
+    close TEST;
+    chomp(@testItems);
+    my $item;
+    ( undef, $item ) = split /$bigsep/, $testItems[0];
+    my $maxvar;
+    {
+        no warnings;    ## Use of implicit split to @_ is deprecated
+        $maxvar = scalar split /$smallsep/, $item;
+    }
+    $logger->info('...done');
 
-  splice @vlen, $maxvar;
-  my $vformat = join " ", map { "%-$_.${_}s" } @vlen;
+    splice @vlen, $maxvar;
+    my $vformat = join " ", map { "%-$_.${_}s" } @vlen;
 
-  my @activeVar;
-  {
-    use integer;
-    my $half = $maxvar / 2;
-    $activeVar[0] = $half / 2;
-    $activeVar[1] = $half - $activeVar[0];
-    $half = $maxvar - $half;
-    $activeVar[2] = $half / 2;
-    $activeVar[3] = $half - $activeVar[2];
-  }
-  my %itemcontextchainhead;
-  my %subtooutcome;
-  my %contextsize;
-  my %pointers;
-  my %gang;
-  my @sum = (0.0) x @outcomelist;
+    my @activeVar;
+    {
+        use integer;
+        my $half = $maxvar / 2;
+        $activeVar[0] = $half / 2;
+        $activeVar[1] = $half - $activeVar[0];
+        $half         = $maxvar - $half;
+        $activeVar[2] = $half / 2;
+        $activeVar[3] = $half - $activeVar[2];
+    }
+    my %itemcontextchainhead;
+    my %subtooutcome;
+    my %contextsize;
+    my %pointers;
+    my %gang;
+    my @sum = (0.0) x @outcomelist;
 
-  my $amsub;
-  $amsub = sub {
+    my $amsub;
+    $amsub = sub {
 
-    ## The following lines are here just to make sure that these
-    ## variables are all referred to somewhere, so that the closure
-    ## works properly
-    my(@fake);
-    @fake = \($project, $amsub);
-    @fake = \(@outcome, @data, @spec, @itemcontextchain, @datatocontext, $sformat, $dformat);
-    @fake = \(@outcomelist, @ocl, %octonum, %outcometonum, $oformat);
-    @fake = \(@testItems, $vformat, @activeVar);
-    @fake = \(%itemcontextchainhead, %subtooutcome, %contextsize, %pointers, %gang, @sum);
+        ## The following lines are here just to make sure that these
+        ## variables are all referred to somewhere, so that the closure
+        ## works properly
+        my (@fake);
+        @fake = \( $project, $amsub );
+        @fake = \(
+            @outcome, @data, @spec, @itemcontextchain, @datatocontext,
+            $sformat, $dformat
+        );
+        @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum, $oformat );
+        @fake = \( @testItems,   $vformat, @activeVar );
+        @fake = \(
+            %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
+            %gang, @sum
+        );
 
-    my(%opts) = @_;
+        my (%opts) = @_;
 
-    my($bigsep, $smallsep, $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs)
-      = @projectdefaults;
+        my (
+            $bigsep,      $smallsep, $excNull, $excGiven, $linear,
+            $probability, $repeat,   $skipset, $gangs
+        ) = @projectdefaults;
 
-    if (exists $opts{-nulls}) {
-      if ($opts{-nulls} !~ /(in|ex)clude/) {
-	carp "Project $project did not specify option -nulls correctly";
-	$logger->warn(q{(must be 'include' or 'exclude')});
-	$logger->warn(q{Will use default value of '$excNull'});
-      } else {
-	$excNull = $opts{-nulls};
-      }
-    }
+        if ( exists $opts{-nulls} ) {
+            if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
+                carp "Project $project did not specify option -nulls correctly";
+                $logger->warn(q{(must be 'include' or 'exclude')});
+                $logger->warn(q{Will use default value of '$excNull'});
+            }
+            else {
+                $excNull = $opts{-nulls};
+            }
+        }
 
-    if (exists $opts{-given}) {
-      if ($opts{-given} !~ /(in|ex)clude/) {
-	carp "Project $project did not specify option -given correctly";
-	$logger->warn(q{(must be 'include' or 'exclude')});
-	$logger->warn(q{Will use default value of '$excGiven'});
-      } else {
-	$excGiven = $opts{-given};
-      }
-    }
+        if ( exists $opts{-given} ) {
+            if ( $opts{-given} !~ /(in|ex)clude/ ) {
+                carp "Project $project did not specify option -given correctly";
+                $logger->warn(q{(must be 'include' or 'exclude')});
+                $logger->warn(q{Will use default value of '$excGiven'});
+            }
+            else {
+                $excGiven = $opts{-given};
+            }
+        }
 
-    if (exists $opts{-linear}) {
-      if ($opts{-linear} !~ /(yes|no)/) {
-	carp "Project $project did not specify option -linear correctly";
-	$logger->warn(q{(must be 'yes' or 'no')});
-	$logger->warn(q{Will use default value of '$linear'});
-      } else {
-	$linear = $opts{-linear};
-      }
-    }
+        if ( exists $opts{-linear} ) {
+            if ( $opts{-linear} !~ /(yes|no)/ ) {
+                carp
+                  "Project $project did not specify option -linear correctly";
+                $logger->warn(q{(must be 'yes' or 'no')});
+                $logger->warn(q{Will use default value of '$linear'});
+            }
+            else {
+                $linear = $opts{-linear};
+            }
+        }
 
-    $probability = $opts{-probability} if exists $opts{-probability};
-    $repeat = $opts{-repeat} if exists $opts{-repeat};
+        $probability = $opts{-probability} if exists $opts{-probability};
+        $repeat      = $opts{-repeat}      if exists $opts{-repeat};
 
-    if (exists $opts{-skipset}) {
-      if ($opts{-skipset} !~ /yes|no/) {
-	carp "Project $project did not specify option -skipset correctly";
-	$logger->warn(q{(must be 'yes' or 'no')});
-	$logger->warn(q{Will use default value of '$skipset'});
-      } else {
-	$skipset = $opts{-skipset};
-      }
-    }
+        if ( exists $opts{-skipset} ) {
+            if ( $opts{-skipset} !~ /yes|no/ ) {
+                carp
+                  "Project $project did not specify option -skipset correctly";
+                $logger->warn(q{(must be 'yes' or 'no')});
+                $logger->warn(q{Will use default value of '$skipset'});
+            }
+            else {
+                $skipset = $opts{-skipset};
+            }
+        }
 
-    if (exists $opts{-gangs}) {
-      if ($opts{-gangs} !~ /yes|summary|no/) {
-	carp "Project $project did not specify option -gangs correctly";
-	$logger->warn(q{(must be 'yes', 'summary', or 'no')});
-	$logger->warn(q{Will use default value of '$gangs'});
-      } else {
-	$gangs = $opts{-gangs};
-      }
-    }
+        if ( exists $opts{-gangs} ) {
+            if ( $opts{-gangs} !~ /yes|summary|no/ ) {
+                carp "Project $project did not specify option -gangs correctly";
+                $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+                $logger->warn(q{Will use default value of '$gangs'});
+            }
+            else {
+                $gangs = $opts{-gangs};
+            }
+        }
 
-    #TODO: what is $subsource used for?
-    local $_ = $subsource;
+        #TODO: what is $subsource used for?
+        local $_ = $subsource;
 
-    if ($excNull eq 'exclude') {
-      s/## begin include nulls.*?## end include nulls//sg;
-      s/Nulls: include\n//s;
-    } else {
-      s/## begin exclude nulls.*?## end exclude nulls//sg;
-      s/Nulls: exclude\n//s;
-    }
+        if ( $excNull eq 'exclude' ) {
+            s/## begin include nulls.*?## end include nulls//sg;
+            s/Nulls: include\n//s;
+        }
+        else {
+            s/## begin exclude nulls.*?## end exclude nulls//sg;
+            s/Nulls: exclude\n//s;
+        }
 
-    if ($excGiven eq 'exclude') {
-      s/## begin include given.*?## end include given//sg;
-      s/Include context even if it is in the data file\n//s;
-    } else {
-      s/## begin exclude given.*?## end exclude given//sg;
-      s/If context is in data file then exclude\n//s;
-    }
+        if ( $excGiven eq 'exclude' ) {
+            s/## begin include given.*?## end include given//sg;
+            s/Include context even if it is in the data file\n//s;
+        }
+        else {
+            s/## begin exclude given.*?## end exclude given//sg;
+            s/If context is in data file then exclude\n//s;
+        }
 
-    if ($linear eq 'yes') {
-      s/fillandcount\(X\)/fillandcount(0)/;
-      s/Gang: squared\n//s;
-    } else {
-      s/fillandcount\(X\)/fillandcount(1)/;
-      s/Gang: linear\n//s;
-    }
+        if ( $linear eq 'yes' ) {
+            s/fillandcount\(X\)/fillandcount(0)/;
+            s/Gang: squared\n//s;
+        }
+        else {
+            s/fillandcount\(X\)/fillandcount(1)/;
+            s/Gang: linear\n//s;
+        }
 
-    if (not defined $probability) {
-      s/## begin probability.*?## end probability//sg;
-      s/Probability of including any one data item: \$probability\n//s;
-    } else {
-      s/All data items considered\n//s;
-    }
+        if ( not defined $probability ) {
+            s/## begin probability.*?## end probability//sg;
+            s/Probability of including any one data item: \$probability\n//s;
+        }
+        else {
+            s/All data items considered\n//s;
+        }
 
-    if ($skipset eq 'yes') {
-      s/## begin analogical set.*?## end analogical set//sg;
-    }
+        if ( $skipset eq 'yes' ) {
+            s/## begin analogical set.*?## end analogical set//sg;
+        }
 
-    if ($gangs ne 'yes') {
-      if ($gangs eq 'summary') {
-	s/## begin skip gang list.*?## end skip gang list//sg;
-      } else {
-	s/## begin gang.*?## end gang//sg;
-      }
-    }
+        if ( $gangs ne 'yes' ) {
+            if ( $gangs eq 'summary' ) {
+                s/## begin skip gang list.*?## end skip gang list//sg;
+            }
+            else {
+                s/## begin gang.*?## end gang//sg;
+            }
+        }
 
-    my($beginhook, $begintesthook, $beginrepeathook, $datahook, $endrepeathook, $endtesthook, $endhook) =
-      @hooks;
+        my ( $beginhook, $begintesthook, $beginrepeathook, $datahook,
+            $endrepeathook, $endtesthook, $endhook )
+          = @hooks;
 
-    if (exists $opts{-beginhook}) {
-      $beginhook = $opts{-beginhook};
-    }
-    unless (defined $beginhook) {
-      s/&\$beginhook\(\)//;
-    }
-    if (exists $opts{-begintesthook}) {
-      $begintesthook = $opts{-begintesthook};
-    }
-    unless (defined $begintesthook) {
-      s/&\$begintesthook\(\)//;
-    }
-    if (exists $opts{-beginrepeathook}) {
-      $beginrepeathook = $opts{-beginrepeathook};
-    }
-    unless (defined $beginrepeathook) {
-      s/&\$beginrepeathook\(\)//;
-    }
-    if (exists $opts{-datahook}) {
-      $datahook = $opts{-datahook};
-    }
-    unless (defined $datahook) {
-      s/next unless &\$datahook\(\$i\)//;
-    }
-    if (exists $opts{-endrepeathook}) {
-      $endrepeathook = $opts{-endrepeathook};
-    }
-    unless (defined $endrepeathook) {
-      s/&\$endrepeathook\(\)//;
-    }
-    if (exists $opts{-endtesthook}) {
-      $endtesthook = $opts{-endtesthook};
-    }
-    unless (defined $endtesthook) {
-      s/&\$endtesthook\(\)//;
-    }
-    if (exists $opts{-endhook}) {
-      $endhook = $opts{-endhook};
-    }
-    unless (defined $endhook) {
-      s/&\$endhook\(\)//;
-    }
+        if ( exists $opts{-beginhook} ) {
+            $beginhook = $opts{-beginhook};
+        }
+        unless ( defined $beginhook ) {
+            s/&\$beginhook\(\)//;
+        }
+        if ( exists $opts{-begintesthook} ) {
+            $begintesthook = $opts{-begintesthook};
+        }
+        unless ( defined $begintesthook ) {
+            s/&\$begintesthook\(\)//;
+        }
+        if ( exists $opts{-beginrepeathook} ) {
+            $beginrepeathook = $opts{-beginrepeathook};
+        }
+        unless ( defined $beginrepeathook ) {
+            s/&\$beginrepeathook\(\)//;
+        }
+        if ( exists $opts{-datahook} ) {
+            $datahook = $opts{-datahook};
+        }
+        unless ( defined $datahook ) {
+            s/next unless &\$datahook\(\$i\)//;
+        }
+        if ( exists $opts{-endrepeathook} ) {
+            $endrepeathook = $opts{-endrepeathook};
+        }
+        unless ( defined $endrepeathook ) {
+            s/&\$endrepeathook\(\)//;
+        }
+        if ( exists $opts{-endtesthook} ) {
+            $endtesthook = $opts{-endtesthook};
+        }
+        unless ( defined $endtesthook ) {
+            s/&\$endtesthook\(\)//;
+        }
+        if ( exists $opts{-endhook} ) {
+            $endhook = $opts{-endhook};
+        }
+        unless ( defined $endhook ) {
+            s/&\$endhook\(\)//;
+        }
 
 ## stuff to be exported
-    my($curTestOutcome, @curTestItem, $curTestSpec);
-    my $pass;
-    my $datacap = @data;
-    my $grandtotal;
-    my $high;
-    my $gformat;
+        my ( $curTestOutcome, @curTestItem, $curTestSpec );
+        my $pass;
+        my $datacap = @data;
+        my $grandtotal;
+        my $high;
+        my $gformat;
 
-    my $importlist = join ";", values %import;
-    eval "$importlist;$_";
-    $logger->warn($@)
-      if $@;
+        my $importlist = join ";", values %import;
+        eval "$importlist;$_";
+        $logger->warn($@)
+          if $@;
 
-  };
+    };
 
-  bless $amsub, $class;
-  $amsub->initialize(\@activeVar, \@outcome, \@itemcontextchain,
-		     \%itemcontextchainhead, \%subtooutcome,
-		     \%contextsize, \%pointers, \%gang, \@sum);
-  return $amsub;
+    bless $amsub, $class;
+    $amsub->initialize(
+        \@activeVar,            \@outcome,      \@itemcontextchain,
+        \%itemcontextchainhead, \%subtooutcome, \%contextsize,
+        \%pointers,             \%gang,         \@sum
+    );
+    return $amsub;
 }
-
 
 1;
 __DATA__
@@ -535,118 +550,119 @@ select(STDOUT);
 local ($|) = 1;
 
 my $fh = gensym();
-open ($fh, ">>$project/amcpresults");
+open( $fh, ">>$project/amcpresults" );
 select $fh;
 
-my($sec, $min, $hour);
+my ( $sec, $min, $hour );
 
 &$beginhook();
 
 my $left = scalar @testItems;
 foreach my $t (@testItems) {
-  $logger->debug("Test items left: $left");
-  --$left;
+    $logger->debug("Test items left: $left");
+    --$left;
 
 ## parse test item
 
-  my $curTestItem;
-  ($curTestOutcome, $curTestItem, $curTestSpec)
-    = split /$bigsep/, $t, 3;
-  $curTestOutcome = $octonum{$curTestOutcome};
-  $curTestSpec ||= "";
+    my $curTestItem;
+    ( $curTestOutcome, $curTestItem, $curTestSpec ) = split /$bigsep/, $t, 3;
+    $curTestOutcome = $octonum{$curTestOutcome};
+    $curTestSpec ||= "";
 
 ## begin exclude nulls
-  my $eq = 0;
-  @curTestItem = split /$smallsep/, $curTestItem;
-  $eq += ($_ eq '=') foreach @curTestItem;
-  my $activeVar = @curTestItem - $eq;
+    my $eq = 0;
+    @curTestItem = split /$smallsep/, $curTestItem;
+    $eq += ( $_ eq '=' ) foreach @curTestItem;
+    my $activeVar = @curTestItem - $eq;
 ## end exclude nulls
 ## begin include nulls
-  @curTestItem = split /$smallsep/, $curTestItem;
-  my $activeVar = @curTestItem;
+    @curTestItem = split /$smallsep/, $curTestItem;
+    my $activeVar = @curTestItem;
 ## end include nulls
 
-  &$begintesthook();
+    &$begintesthook();
 
-  { use integer;
-    my $half = $activeVar / 2;
-    $activeVar[0] = $half / 2;
-    $activeVar[1] = $half - $activeVar[0];
-    $half = $activeVar - $half;
-    $activeVar[2] = $half / 2;
-    $activeVar[3] = $half - $activeVar[2];
-  }
+    {
+        use integer;
+        my $half = $activeVar / 2;
+        $activeVar[0] = $half / 2;
+        $activeVar[1] = $half - $activeVar[0];
+        $half         = $activeVar - $half;
+        $activeVar[2] = $half / 2;
+        $activeVar[3] = $half - $activeVar[2];
+    }
 ##  $activeContexts = 1 << $activeVar;
 
-  my $nullcontext = pack "b64", '0' x 64;
+    my $nullcontext = pack "b64", '0' x 64;
 
-  ($sec,$min,$hour) = localtime();
-  $logger->info(sprintf ("Time: %2s:%02s:%02s\n\n", $hour, $min, $sec));
-  $logger->info("@curTestItem");
-  $logger->info(sprintf("0/$repeat  %2s:%02s:%02s", $hour, $min, $sec));
+    ( $sec, $min, $hour ) = localtime();
+    $logger->info( sprintf( "Time: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
+    $logger->info("@curTestItem");
+    $logger->info( sprintf( "0/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
 
-  $pass = 0;
-  while ($pass < $repeat) {
-    &$beginrepeathook();
-    $datacap = int($datacap);
+    $pass = 0;
+    while ( $pass < $repeat ) {
+        &$beginrepeathook();
+        $datacap = int($datacap);
 
-    my $excludedData = 0;
-    my $testindata = 0;
-    my $eg = 0;
+        my $excludedData = 0;
+        my $testindata   = 0;
+        my $eg           = 0;
 
-    %contextsize = ();
-    %itemcontextchainhead = ();
-    %subtooutcome = ();
-    %pointers = ();
-    %gang = ();
-    foreach (@sum) {
-      $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
-    }
+        %contextsize          = ();
+        %itemcontextchainhead = ();
+        %subtooutcome         = ();
+        %pointers             = ();
+        %gang                 = ();
+        foreach (@sum) {
+            $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
+        }
 
-    for (my $i = $datacap; $i; ) {
-      --$i;
-      next unless &$datahook($i);
+        for ( my $i = $datacap ; $i ; ) {
+            --$i;
+            next unless &$datahook($i);
 ## begin probability
-      ++$excludedData, next if rand() > $probability;
+            ++$excludedData, next if rand() > $probability;
 ## end probability
-      my @dataItem = @{$data[$i]};
-      my @alist = @activeVar;
-      my $j = 0;
-      my @clist = ();
-      while (@alist) {
-	my $a = shift @alist;
-	my $c = 0;
-	for (; $a; --$a) {
+            my @dataItem = @{ $data[$i] };
+            my @alist    = @activeVar;
+            my $j        = 0;
+            my @clist    = ();
+            while (@alist) {
+                my $a = shift @alist;
+                my $c = 0;
+                for ( ; $a ; --$a ) {
 ## begin exclude nulls
-	  ++$j while $curTestItem[$j] eq '=';
+                    ++$j while $curTestItem[$j] eq '=';
 ## end exclude nulls
-	  $c = ($c << 1) | ($curTestItem[$j] ne $dataItem[$j]);
-	  ++$j;
-	}
-	push @clist, $c;
-      }
-      my $context = pack "S!4", @clist;
-      $datatocontext[$i] = $context;
-      $itemcontextchain[$i] = $itemcontextchainhead{$context};
-      $itemcontextchainhead{$context} = $i;
-      ++$contextsize{$context};
-      my $outcome = $outcome[$i];
-      if (defined $subtooutcome{$context}) {
-	$subtooutcome{$context} = 0 if $subtooutcome{$context} != $outcome;
-      } else {
-	$subtooutcome{$context} = $outcome;
-      }
-    }
-    if (exists $subtooutcome{$nullcontext}) {
-      ++$testindata;
+                    $c = ( $c << 1 ) | ( $curTestItem[$j] ne $dataItem[$j] );
+                    ++$j;
+                }
+                push @clist, $c;
+            }
+            my $context = pack "S!4", @clist;
+            $datatocontext[$i]              = $context;
+            $itemcontextchain[$i]           = $itemcontextchainhead{$context};
+            $itemcontextchainhead{$context} = $i;
+            ++$contextsize{$context};
+            my $outcome = $outcome[$i];
+            if ( defined $subtooutcome{$context} ) {
+                $subtooutcome{$context} = 0
+                  if $subtooutcome{$context} != $outcome;
+            }
+            else {
+                $subtooutcome{$context} = $outcome;
+            }
+        }
+        if ( exists $subtooutcome{$nullcontext} ) {
+            ++$testindata;
 ## begin exclude given
-      delete $subtooutcome{$nullcontext}, ++$eg if $excGiven;
+            delete $subtooutcome{$nullcontext}, ++$eg if $excGiven;
 ## end exclude given;
-    }
+        }
 
-
-#TODO: under what circumstance is this written?
-$logger->info(<<TOP);
+        #TODO: under what circumstance is this written?
+        $logger->info(<<TOP);
 Given Context:  @curTestItem, $curTestSpec
 If context is in data file then exclude
 Include context even if it is in the data file
@@ -660,181 +676,216 @@ Gang: linear
 Gang: squared
 Number of active variables: $activeVar
 TOP
-$logger->info('Test item is in the data.')
-  if $testindata;
+        $logger->info('Test item is in the data.')
+          if $testindata;
 
-    $amsub->fillandcount(X);
-    $grandtotal = $pointers{'grandtotal'};
-    my $longest = length $grandtotal;
-    $gformat = "%$longest.${longest}s";
-    $high = "";
+        $amsub->fillandcount(X);
+        $grandtotal = $pointers{'grandtotal'};
+        my $longest = length $grandtotal;
+        $gformat = "%$longest.${longest}s";
+        $high    = "";
 
-    unless ($grandtotal) {
-      $logger->info('No data items considered.  No prediction possible.');
-      next;
-    }
+        unless ($grandtotal) {
+            $logger->info('No data items considered.  No prediction possible.');
+            next;
+        }
 
-    $logger->info('Statistical Summary');
-    for (my $i = 1; $i < @outcomelist; ++$i) {
-      my $n;
-      next unless $n = $sum[$i];
-      $high = $n
-	if length($n) > length($high)
-	or length($n) == length($high) and $n gt $high;
-      $logger->info(sprintf("$oformat  $gformat  %7.3f%%",
-      $outcomelist[$i],
-      $n,
-      100 * $n/$grandtotal));
-    }
-    $logger->info(sprintf("$oformat  $gformat\n", "", '-' x $longest));
-     $logger->info(sprintf("$oformat  $gformat\n", "", $grandtotal));
-    if (defined $curTestOutcome) {
-      $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
-      if ($sum[$curTestOutcome] eq $high) {
-	$logger->info('Correct outcome predicted.');
-      } else {
-	$logger->info('Incorrect outcome predicted');
-      }
-    }
+        $logger->info('Statistical Summary');
+        for ( my $i = 1 ; $i < @outcomelist ; ++$i ) {
+            my $n;
+            next unless $n = $sum[$i];
+            $high = $n
+              if length($n) > length($high)
+              or length($n) == length($high)
+              and $n gt $high;
+            $logger->info(
+                sprintf(
+                    "$oformat  $gformat  %7.3f%%",
+                    $outcomelist[$i], $n, 100 * $n / $grandtotal
+                )
+            );
+        }
+        $logger->info( sprintf( "$oformat  $gformat\n", "", '-' x $longest ) );
+        $logger->info( sprintf( "$oformat  $gformat\n", "", $grandtotal ) );
+        if ( defined $curTestOutcome ) {
+            $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
+            if ( $sum[$curTestOutcome] eq $high ) {
+                $logger->info('Correct outcome predicted.');
+            }
+            else {
+                $logger->info('Incorrect outcome predicted');
+            }
+        }
 
 ## begin analogical set
-    my @datalist = ();
-    foreach my $k (keys %pointers) {
-      my $p = $pointers{$k};
-      for (my $i = $itemcontextchainhead{$k};
-	   defined $i;
-	   $i = $itemcontextchain[$i]) {
-	push @datalist, $i;
-      }
-    }
-    $logger->info('Analogical Set');
-    $logger->info("Total Frequency = $grandtotal");
-    @datalist = sort { $a <=> $b } @datalist;
-    foreach my $i (@datalist) {
-      my $p = $pointers{$datatocontext[$i]};
-      $logger->info(sprintf("$oformat  $sformat  $gformat  %7.3f%%",
-      $outcomelist[$outcome[$i]],
-      $spec[$i],
-      $p,
-      100 * $p/$grandtotal));
-    }
+        my @datalist = ();
+        foreach my $k ( keys %pointers ) {
+            my $p = $pointers{$k};
+            for (
+                my $i = $itemcontextchainhead{$k} ;
+                defined $i ;
+                $i = $itemcontextchain[$i]
+              )
+            {
+                push @datalist, $i;
+            }
+        }
+        $logger->info('Analogical Set');
+        $logger->info("Total Frequency = $grandtotal");
+        @datalist = sort { $a <=> $b } @datalist;
+        foreach my $i (@datalist) {
+            my $p = $pointers{ $datatocontext[$i] };
+            $logger->info(
+                sprintf(
+                    "$oformat  $sformat  $gformat  %7.3f%%",
+                    $outcomelist[ $outcome[$i] ], $spec[$i],
+                    $p,                           100 * $p / $grandtotal
+                )
+            );
+        }
 ## end analogical set
 
 ## begin gang
-#TODO: explain the magic below
-    $logger->info('Gang effects');
-    my $dashes = '-' x ($longest + 10);
-    my $pad = " " x length
-      sprintf "%7.3f%%  $gformat x $dformat  $oformat", 0, '0', 0, "";
-    foreach my $k (sort {
-      (length($gang{$b}) <=> length($gang{$a})) || ($gang{$b} cmp $gang{$a})
-      } keys %gang)
-    {
-      my @clist = unpack "S!4", $k;
-      my @alist = @activeVar;
-      my(@vtemp) = @curTestItem;
-      my $j = 1;
-      while (@alist) {
-	my $a = pop @alist;
-	my $c = pop @clist;
-	for (; $a; --$a) {
+        #TODO: explain the magic below
+        $logger->info('Gang effects');
+        my $dashes = '-' x ( $longest + 10 );
+        my $pad = " " x length sprintf "%7.3f%%  $gformat x $dformat  $oformat",
+          0, '0', 0, "";
+        foreach my $k (
+            sort {
+                     ( length( $gang{$b} ) <=> length( $gang{$a} ) )
+                  || ( $gang{$b} cmp $gang{$a} )
+            } keys %gang
+          )
+        {
+            my @clist   = unpack "S!4", $k;
+            my @alist   = @activeVar;
+            my (@vtemp) = @curTestItem;
+            my $j       = 1;
+            while (@alist) {
+                my $a = pop @alist;
+                my $c = pop @clist;
+                for ( ; $a ; --$a ) {
 ## begin exclude nulls
-	  ++$j while $vtemp[-$j] eq '=';
+                    ++$j while $vtemp[ -$j ] eq '=';
 ## end exclude nulls
-	  $vtemp[-$j] = '' if $c & 1;
-	  $c >>= 1;
-	  ++$j;
-	}
-      }
-      my $p = $pointers{$k};
-      if ($subtooutcome{$k}) {
-	{
-	  no warnings;
-	  $logger->info(sprintf("%7.3f%%  $gformat   $dformat  $oformat  $vformat",
-	  100 * $gang{$k}/$grandtotal,
-	  $gang{$k},
-	  "",
-	  "",
-	  @curTestItem));
-	  $logger->info(sprintf("$dashes   $dformat  $oformat  $vformat\n",
-	  "",
-	  "",
-	  @vtemp));
-	}
-	$logger->info(sprintf("%7.3f%%  $gformat x $dformat  $oformat\n",
-	100 * $gang{$k}/$grandtotal,
-	$p,
-	$contextsize{$k},
-	$outcomelist[$subtooutcome{$k}]));
+                    $vtemp[ -$j ] = '' if $c & 1;
+                    $c >>= 1;
+                    ++$j;
+                }
+            }
+            my $p = $pointers{$k};
+            if ( $subtooutcome{$k} ) {
+                {
+                    no warnings;
+                    $logger->info(
+                        sprintf(
+                            "%7.3f%%  $gformat   $dformat  $oformat  $vformat",
+                            100 * $gang{$k} / $grandtotal,
+                            $gang{$k}, "", "", @curTestItem
+                        )
+                    );
+                    $logger->info(
+                        sprintf(
+                            "$dashes   $dformat  $oformat  $vformat\n",
+                            "", "", @vtemp
+                        )
+                    );
+                }
+                $logger->info(
+                    sprintf(
+                        "%7.3f%%  $gformat x $dformat  $oformat\n",
+                        100 * $gang{$k} / $grandtotal,
+                        $p,
+                        $contextsize{$k},
+                        $outcomelist[ $subtooutcome{$k} ]
+                    )
+                );
 ## begin skip gang list
-	my $i;
-	for ($i = $itemcontextchainhead{$k};
-	     defined $i;
-	     $i = $itemcontextchain[$i]) {
-	  $logger->info(sprintf "$pad  $vformat  $spec[$i]\n", @{$data[$i]}));
-	}
+                my $i;
+                for (
+                    $i = $itemcontextchainhead{$k} ;
+                    defined $i ;
+                    $i = $itemcontextchain[$i]
+                  )
+                {
+                    $logger->info( sprintf "$pad  $vformat  $spec[$i]\n",
+                        @{ $data[$i] } );
+                }
 ## end skip gang list
-      } else {
-	my @gangsort = (0) x @outcomelist;
+            }
+            else {
+                my @gangsort = (0) x @outcomelist;
 ## begin skip gang list
-	my @ganglist = ();
+                my @ganglist = ();
 ## end skip gang list
-	my $i;
-	for ($i = $itemcontextchainhead{$k};
-	     defined $i;
-	     $i = $itemcontextchain[$i]) {
-	  ++$gangsort[$outcome[$i]];
+                my $i;
+                for (
+                    $i = $itemcontextchainhead{$k} ;
+                    defined $i ;
+                    $i = $itemcontextchain[$i]
+                  )
+                {
+                    ++$gangsort[ $outcome[$i] ];
 ## begin skip gang list
-	  push @{$ganglist[$outcome[$i]]}, $i;
+                    push @{ $ganglist[ $outcome[$i] ] }, $i;
 ## end skip gang list
-	}
-	{
-	  no warnings;
-	  $logger->info(sprintf "%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
-	  100 * $gang{$k}/$grandtotal,
-	  $gang{$k},
-	  "",
-	  "",
-	  @curTestItem));
-	  $logger->info(sprintf("$dashes   $dformat  $oformat  $vformat\n",
-	  "",
-	  "",
-	  @vtemp));
-	}
-	for ($i = 1; $i < @outcomelist; ++$i) {
-	  next unless $gangsort[$i];
-	  $logger->info(sprintf("%7.3f%%  $gformat x $dformat  $oformat\n",
-	  100 * $gangsort[$i] * $p/$grandtotal,
-	  $p,
-	  $gangsort[$i],
-	  $outcomelist[$i]));
+                }
+                {
+                    no warnings;
+                    $logger->info(
+                        sprintf(
+"%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
+                            100 * $gang{$k} / $grandtotal,
+                            $gang{$k}, "", "", @curTestItem
+                        )
+                    );
+                    $logger->info(
+                        sprintf(
+                            "$dashes   $dformat  $oformat  $vformat\n",
+                            "", "", @vtemp
+                        )
+                    );
+                }
+                for ( $i = 1 ; $i < @outcomelist ; ++$i ) {
+                    next unless $gangsort[$i];
+                    $logger->info(
+                        sprintf(
+                            "%7.3f%%  $gformat x $dformat  $oformat\n",
+                            100 * $gangsort[$i] * $p / $grandtotal,
+                            $p, $gangsort[$i], $outcomelist[$i]
+                        )
+                    );
 ## begin skip gang list
-	  foreach (@{$ganglist[$i]}) {
-	    $logger->info(sprintf ("$pad  $vformat  $spec[$_]\n", @{$data[$_]}));
-	  }
+                    foreach ( @{ $ganglist[$i] } ) {
+                        $logger->info(
+                            sprintf( "$pad  $vformat  $spec[$_]\n",
+                                @{ $data[$_] } )
+                        );
+                    }
 ## end skip gang list
-	}
-      }
-    }
+                }
+            }
+        }
 ## end gang
 
-  } continue {
-    &$endrepeathook();
-    ++$pass;
-    ($sec,$min,$hour) = localtime();
-    $logger->info(sprintf("$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec));
-  }
-  &$endtesthook();
+    }
+    continue {
+        &$endrepeathook();
+        ++$pass;
+        ( $sec, $min, $hour ) = localtime();
+        $logger->info(
+            sprintf( "$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
+    }
+    &$endtesthook();
 }
 
-
-($sec,$min,$hour) = localtime();
-$logger->info(sprintf("\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec));
+( $sec, $min, $hour ) = localtime();
+$logger->info( sprintf( "\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
 
 &$endhook();
 
 close $fh;
-
 
 
 __END__
@@ -1009,7 +1060,7 @@ while something fancier might be
 
   $p = Algorithm::AM->new('negpre', -commas => 'yes',
                          -probability => 0.2, -repeat => 5,
-			 -skipset => 'no', -gangs => 'summary');
+       -skipset => 'no', -gangs => 'summary');
 
 Initializing a project doesn't do anything more than read in the files
 and prepare them for analysis.  To actually do any work, read on.
@@ -1520,13 +1571,13 @@ for each test item.  Here's one way to do it:
       next unless $testPct[$i];
       if ($valid > 1) {
         printf "$oformat  %7.3f%% %7.3f%%\n",
-	  $outcomelist[$i],
-	  100 * $testPct[$i]/$valid,
-	  100 * sqrt(($testPctSq[$i]-$testPct[$i]*$testPct[$i]/$valid)/($valid-1));
+    $outcomelist[$i],
+    100 * $testPct[$i]/$valid,
+    100 * sqrt(($testPctSq[$i]-$testPct[$i]*$testPct[$i]/$valid)/($valid-1));
       } else {
         printf "$oformat  %7.3f%%\n",
-	  $outcomelist[$i],
-	  100 * $testPct[$i]/$valid;
+    $outcomelist[$i],
+    100 * $testPct[$i]/$valid;
       }
     }
     printf "\nCorrect prediction occurred %7.3f%% (%i/5) of the time\n",
