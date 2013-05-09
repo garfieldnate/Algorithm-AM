@@ -1,16 +1,16 @@
 package Algorithm::AM;
 
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
-# use 5.016;
 use strict;
 use warnings;
 
-our $VERSION = '1.0';
+our $VERSION = '2.31';
 
 require XSLoader;
 XSLoader::load( 'Algorithm::AM', $VERSION );
 
 use Carp;
+use IO::Handle;
 use Log::Dispatch;
 my $logger = Log::Dispatch->new(
     outputs => [
@@ -80,18 +80,16 @@ $import{'bigcmp'} = 'local *main::bigcmp = sub {
 ## $import{'%gang'} =
 ##   'local *main::gang = \%gang';
 
-sub new {
-    my $proto = shift;
-    #TODO: why?
+sub new {## no critic (RequireArgUnpacking)
+    my ($proto, $project) = @_;
+    #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
+    $project = ''
+        if $proto =~ /^-/;
 
-    my $fh = select(STDERR);
-    local ($|) = 1;
-    select $fh;
+    #don't buffer error messages
+    *STDOUT->autoflush();
 
-    my $project = "";
-    #TODO: why?
-    $project = shift unless $_[0] =~ /^-/;
     unless ($project) {
         carp "Project not specified";
         $logger->warn('No test items can be run');
@@ -213,7 +211,7 @@ sub new {
     my @vlen = (0) x 60;
 
 ## use $dataset instead of DATA to avoid possible clash
-    open my $dataset_fh, '<', "$project/data"
+    open my $dataset_fh, '<', "$project/data" ## no critic (RequireBriefOpen)
       or carp "Couldn't open $project/data" and return sub { };
     while (<$dataset_fh>) {
         chomp;
@@ -311,11 +309,9 @@ sub new {
     chomp(@testItems);
     my $item;
     ( undef, $item ) = split /$bigsep/, $testItems[0];
-    my $maxvar;
-    {
-        no warnings;    ## Use of implicit split to @_ is deprecated
-        $maxvar = scalar split /$smallsep/, $item;
-    }
+
+    #$maxvar is number of $smallseps in $item
+    my $maxvar = () = split /$smallsep/, $item, -1;
     $logger->info('...done');
 
     splice @vlen, $maxvar;
@@ -531,7 +527,7 @@ sub new {
         my $gformat;
 
         my $importlist = join ";", values %import;
-        eval "$importlist;$_";
+        eval "$importlist;$_"; ## no critic (ProhibitStringyEval)
         $logger->warn($@)
           if $@;
 
