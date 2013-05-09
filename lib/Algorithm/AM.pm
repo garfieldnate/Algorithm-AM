@@ -5,10 +5,18 @@ package Algorithm::AM;
 use strict;
 use warnings;
 
-our $VERSION = '1.00';
+#VERSION
+
+#allows us to get some kind of version string during development, when $VERSION is undefined
+#($VERSION is inserted by a dzil plugin at build time)
+sub _version {
+    ## no critic (ProhibitNoStrict)
+    no strict 'vars';
+    return $VERSION || '1.00';
+}
 
 require XSLoader;
-XSLoader::load( 'Algorithm::AM', $VERSION );
+XSLoader::load( 'Algorithm::AM', _version() );
 
 use Carp;
 use Log::Dispatch;
