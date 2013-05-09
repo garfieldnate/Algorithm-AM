@@ -212,10 +212,10 @@ sub new {
     my $slen = 0;
     my @vlen = (0) x 60;
 
-## use DATASET instead of DATA to avoid possible clash
-    open( DATASET, "$project/data" )
+## use $dataset instead of DATA to avoid possible clash
+    open my $dataset_fh, '<', "$project/data"
       or carp "Couldn't open $project/data" and return sub { };
-    while (<DATASET>) {
+    while (<$dataset_fh>) {
         chomp;
         my ( $outcome, $data, $spec ) = split /$bigsep/, $_, 3;
         $spec ||= $data;
@@ -236,7 +236,7 @@ sub new {
 ##    last if $specifyFreq and ($specifyFreq == @data);
 
     }
-    close DATASET;
+    close $dataset_fh;
     my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
     my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
 ## $vformat done after reading test file
@@ -254,8 +254,8 @@ sub new {
 
     my $outcomecounter = 0;
     if ( -e "$project/outcome" ) {
-        open( OUTCOME, "$project/outcome" );
-        while (<OUTCOME>) {
+        open my $outcome_fh, '<', "$project/outcome";
+        while (<$outcome_fh>) {
             chomp;
             my ( $oc, $outcome ) = split /\s+/, $_, 2;
             $octonum{$oc}           = ++$outcomecounter;
@@ -263,7 +263,7 @@ sub new {
             push @outcomelist, $outcome;
             push @ocl, $oc;
         }
-        close OUTCOME;
+        close $outcome_fh;
     }
     else {
         $logger->info('...will use data file');
@@ -301,12 +301,13 @@ sub new {
 ## test file
 
     $logger->info('Test file...');
-    open( TEST, "$project/test" )
+    my $test_fh;
+    open $test_fh, '<', "$project/test"
       or carp "Couldn't open $project/test"
       and $logger->warn('Will run data file against itself')
-      and open( TEST, "$project/data" );
-    my (@testItems) = <TEST>;
-    close TEST;
+      and open $test_fh, '<', "$project/data";
+    my (@testItems) = <$test_fh>;
+    close $test_fh;
     chomp(@testItems);
     my $item;
     ( undef, $item ) = split /$bigsep/, $testItems[0];
@@ -551,8 +552,7 @@ __DATA__
 select(STDOUT);
 local ($|) = 1;
 
-my $fh = gensym();
-open( $fh, ">>$project/amcpresults" );
+open my $fh, '>>', "$project/amcpresults";
 select $fh;
 
 my ( $sec, $min, $hour );
@@ -912,7 +912,15 @@ I<Analogical Modeling of Language>, for an explanation of the method
 in general, and the "blue book", I<Analogy and Structure>, for its
 mathematical basis.
 
-=head2 History
+=head1 METHODS
+
+=head1 C<new>
+
+Arguments: see "Initializing a Project"
+
+Creates and returns a subroutine to classify the data in a given project.
+
+=head2 HISTORY
 
 Initially, Analogical Modeling was implemented as a Pascal program.
 Subsequently, it was ported to Perl, with substantial improvements
