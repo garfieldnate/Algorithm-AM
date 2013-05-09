@@ -1,0 +1,779 @@
+# NAME
+
+Algorithm::AM - Perl extension for Analogical Modeling using a parallel algorithm
+
+# VERSION
+
+version 0.01
+
+# AUTHOR
+
+Theron Stanford <shixilun@yahoo.com>, Nathan Glenn <garfieldnate@gmail.com>
+
+# COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Royall Skousen.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+# SYNOPSIS
+
+    use Algorithm::AM;
+
+    my $p = Algorithm::AM->new('finnverb', -commas => 'no');
+    $p->();
+
+# DESCRIPTION
+
+Analogical Modeling is an exemplar-based way to model language usage.
+`Algorithm::AM` is a Perl module which analyzes data sets using
+Analogical Modeling.
+
+How to create data sets is not explained here.  See the appendices in
+the "red book", _Analogical Modeling: An exemplar-based approach to
+language_, for details on that.  See also the "green book",
+_Analogical Modeling of Language_, for an explanation of the method
+in general, and the "blue book", _Analogy and Structure_, for its
+mathematical basis.
+
+## History
+
+Initially, Analogical Modeling was implemented as a Pascal program.
+Subsequently, it was ported to Perl, with substantial improvements
+made in 2000.  In 2001, the core of the algorithm was rewritten in C,
+while the parsing, printing, and statistical routines remained in C;
+this was accomplished by embedding a Perl interpreter into the C code.
+
+In 2004, the algorithm was again rewritten, this time in order to
+handle more variables and large data sets.  It breaks the
+supracontextual lattice into the direct product of four smaller ones,
+which the algorithm manipulates individually before recombining them.
+Because these lattices could be manipulated in parallel, using the
+right hardware, the module was named `AM::Parallel`. Later it was
+renamed `Algorithm::AM` to fit better into the CPAN ecostystem.
+
+To provide more flexibility and to more closely follow "the Perl way",
+the C core is now an XSUB wrapped within a Perl module.  Instead of
+specifying a configuration file, parameters are passed to the `new()`
+function of `Algorithm::AM`.  The core functionality of the module has
+been stripped down; the only reports available are the statistical
+summary, the analogical set, and the gang listings.  However,
+[hooks](#USING HOOKS) are provided for users to create their own reports.
+They can also manipulate various parameters at run time and redirect
+output.
+
+It is expected that future improvements will maintain a Perl interface
+to an XSUB.  However, the design will remain simple enough that users
+without much programming experience will still be able to use the
+module with the least amount of trouble.
+
+# PROJECTS
+
+`Algorithm::AM` assumes the existence of a _project_, a directory
+containing the data set, the test set, and the outcome file (named,
+not surprisingly, `data`, `test`, and `outcome`).  Once the project
+is initialized, the user can set various parameters and run the
+algorithm.
+
+If no outcome file is given, one is created using the outcomes which
+appear in the data set.  If no test set is given, it is assumed that
+the data set functions as the test set.
+
+## Initializing a Project
+
+A project is initialized using the syntax
+
+_$p_ = __Algorithm::AM__\->__new__(_directory_, __\-commas__ =>
+_commas_, ?_options_?);
+
+The first parameter must be the name of the directory where the files
+are.  It can be an absolute or a relative path.  The following
+parameter is required:
+
+- \-commas
+
+    Tells how to parse the lines of the `data` file.  May be set to
+    either `yes` or `no`.  Any other value will trigger a warning and
+    stop creation of the project, as will omitting this option entirely.
+    See details in the "red book" to determine how to set this.
+
+The following options are available:
+
+- \-nulls
+
+    Tells how to treat nulls, i.e., variables marked with an equals sign
+    `=`.  Can be `include` or `exclude`; any other value will revert
+    back to the default.  Default: `exclude`.
+
+- \-given
+
+    Tells whether or not to include the test item as a data item if it is
+    found in the data set.  Can be `include` or `exclude`; any other
+    value will revert back to the default.  Default: `exclude`.
+
+- \-linear
+
+    Determines if the analogical set will be computed using _occurrences_
+    (linearly) or _pointers_ (quadratically).  If `-linear` is set to
+    `yes`, the analogical set will be computed using occurrences;
+    otherwise, it will be computed using pointers.  Default: compute using
+    pointers.
+
+- \-probability
+
+    Sets the probability of including any one data item.  Default:
+    `undef`.
+
+- \-repeat
+
+    Determines how many times each individual test item will be analyzed.
+    Only makes sense if the probability is less than 1.  Default: `1`.
+
+- \-skipset
+
+    Determines whether or not the analogical set is printed.  Can be
+    `yes` or `no`; any other value will revert to the default.  Default:
+    `yes`.
+
+- \-gangs
+
+    Determines whether or not gang effects will be printed.  Can be one of
+    the following three values:
+
+    <p></p>
+
+    - `yes`: Prints which contexts affect the result, how many pointers
+    they contain, and which data items are in them.
+    - `summary`: Prints which contexts affect the result and how many
+    pointers they contain.
+    - `no`: Omits any information about gang effects.
+
+    Any other value will revert to the default.  Default: `no`.
+
+So, the minimal invocation to initialize a project would be something
+like
+
+    $p = Algorithm::AM->new('finnverb', -commas => 'no');
+
+while something fancier might be
+
+    $p = Algorithm::AM->new('negpre', -commas => 'yes',
+                           -probability => 0.2, -repeat => 5,
+         -skipset => 'no', -gangs => 'summary');
+
+Initializing a project doesn't do anything more than read in the files
+and prepare them for analysis.  To actually do any work, read on.
+
+## Running a project
+
+To run an already initialized project with the defaults set at
+initialization time, use the following:
+
+    $p->();
+
+Yep, that's all there is to it.  The call to `new()` in
+`Algorithm::AM` returns a reference to a subroutine, so to run it all
+you need to do is dereference it.
+
+Of course, you can override the defaults.  Any of the options set at
+initialization can be temporarily overridden.  So, for instance, you
+can run your project twice, once including nulls and once excluding
+them, as follows:
+
+    $p->(-nulls => 'include');
+    $p->(-nulls => 'exclude');
+
+Or, if you didn't specify a value at initialization time and accepted
+the default, you can merely use
+
+    $p->(-nulls => 'include');
+    $p->();
+
+Or you can play with the probabilities:
+
+    $p->(-probability => 0.5, -repeat => 2);
+    $p->(-probability => 0.2, -repeat => 5);
+    $p->(-probability => 0.1, -repeat => 10);
+
+## Output
+
+Output from the program is appended to the file `amcpresults` in the
+project directory by default.  Internally, `Algorithm::AM` opens
+`amcpresults` at the beginning each run and selects its file handle
+to be current, so that the output of all `print()` statements gets
+directed to it.  Directing output elsewhere is possible, but you can't
+do it the "obvious" way; the following won't work:
+
+    ## do not use this code -- it is a BAD example
+    open FH5, ">results05";
+    open FH2, ">results02";
+    open FH1, ">results01";
+    select FH5;
+    $p->(-probability => 0.5, -repeat => 2);
+    select FH2;
+    $p->(-probability => 0.2, -repeat => 5);
+    select FH1;
+    $p->(-probability => 0.1, -repeat => 10);
+    close FH1;
+    close FH2;
+    close FH5;
+
+That's because at the very beginning of each run, the code for `$p`
+reselects the file handle.  However, you can do this using a
+[hook](#USING HOOKS); see `-beginhook` for a simple example of redirected
+output and `-beginrepeathook` for a more complicated one.
+
+[Warnings and error messages](#WARNINGS AND ERROR MESSAGES) get sent
+to STDERR.  If there are no fatal errors and the program runs
+normally, status messages are sent to STDERR.  You can see how long
+the program has been running, what test item it's currently on, and
+even which iteration of an individual test item it's on if the repeat
+is set greater than one.
+
+# USING HOOKS
+
+`Algorithm::AM` provides _power_ and _flexibility_.  The _power_ is
+in the C code; the _flexibility_ is in the _hooks_ provided for the
+user to interact with the algorithm at various stages.
+
+## Hook Placement in `Algorithm::AM`
+
+Hooks are just references to subroutines that can be passed to the
+project at run time; the subroutine references can be either named or
+anonymous.  They are passed as any other option.  The following hooks
+are currently implemented:
+
+- \-beginhook
+
+    This hook is called before any test items are run.
+
+- \-endhook
+
+    This hook is called after all test items are run.
+
+    Example: To send all the output from a run to another file, you can do
+    the following:
+
+        $p->(-beginhook => sub {open FH, ">myoutput"; select FH;},
+             -endhook => sub {close FH;});
+
+- \-begintesthook
+
+    This hook is called at the beginning of each new test item.  If a test
+    item will be run more than once, this hook is called just once before
+    the first iteration.
+
+- \-endtesthook
+
+    This hook is called at the end of each test item.  If a test item will
+    be run more than once, this hook is called just once after the last
+    iteration.
+
+    Example: If each test item is run just once, and you want to keep a
+    running tally of how many test items are correctly predicted, you can
+    use the variables `$curTestOutcome`, `$pointermax`, and `@sum`:
+
+        $count = 0;
+        $countsub = sub {
+          ## must use eq instead of == in following statement
+          ++$count if $sum[$curTestOutcome] eq $pointermax;
+        };
+        $p->(-endtesthook => $countsub,
+             -endhook => sub {print "Number of correct predictions: $count\n";});
+
+- \-beginrepeathook
+
+    This hook is called at the beginning of each iteration of a test item.
+
+
+
+- \-endrepeathook
+
+    This hook is called at the end of each iteration of a test item.
+
+    Example: To vary the probability of each iteration through a test
+    item, you can use the variables `$probability` and `$pass`:
+
+        open FH5, ">results05";
+        open FH2, ">results02";
+        $repeatsub = sub {
+          $probability = (0.5, 0.2)[$pass];
+          select((FH5, FH2)[$pass]);
+        };
+        $p->(-beginrepeathook => $repeatsub);
+
+    Then on iteration 0, the test item is analyzed with the probability of
+    any data item being included set to 0.5, with output sent to file
+    `results05`, while on iteration 1, the test item is analyzed with the
+    probability of any data item being included set to 0.2, with output
+    sent to file `results02`.
+
+- \-datahook
+
+    This hook is called for each data item considered during a test item
+    run.  Unlike other hooks, which receive no arguments, this hook is
+    passed the index of the data item under consideration.  The value of
+    this index ranges from one less than the number of data items to 0
+    (data items are considered in reverse order in `Algorithm::AM` for
+    various reasons not gone into here).
+
+    The index passed is not a copy but the actual index variable used in
+    `Algorithm::AM`; be careful not to change it -- for example, by
+    assigning to `$_[0]` -- unless that is what is intended.
+
+    This hook should return a true value (in the Perl sense of true) if
+    the data item should still be included in the test run, and should
+    return a false value otherwise.  To ensure this, it's a good idea to
+    end the subroutine assigned to the hook with
+
+        return 1;
+
+    since
+
+        return;
+
+    returns an undefined value.
+
+    If the probability of including any data item is less than one, this
+    hook is called _before_ a call to `rand()` to see whether or not to
+    include the item.  If you don't like this, set `-probability` to 1 in
+    the option list and call `rand()` yourself somewhere within the hook.
+
+    Example: The results for _sorta-_ in the "red book" do not match what
+    you get when you run `finnverb`.  That's because the "red book"
+    omitted all data items with outcome _a-oi_.  You can do this using
+    the variables `@curTestItem`, `@outcome`, and `%outcometonum`:
+
+        $datasub = sub {
+          ## we use @curTestItem because finnverb/test has no specifiers
+          return 1 unless join('', @curTestItem) eq 'SO0=SR0=TA';
+          return 1 unless $outcome[$_[0]] eq $outcometonum{'a-oi'};
+          return 0;
+        };
+        $p->(-datahook => $datasub);
+
+## Hook Variables
+
+Various variables can be read and even manipulated by the hooks.
+
+__Note:__ All hook variables are exported into package `main`.  If you
+don't know what this means, chances are you don't need to worry about
+it; if you _do_ know what it means, you'll know how to deal with it.
+
+However, these variables exist in package `main` only while a project
+is being run (they are exported using `local()`).  Thus, you can only
+access them through a hook, and they will not clobber the values of
+variables of the same name outside of the run.
+
+### Variables Fixed at Initialization
+
+These variables should be considered __read-only__, unless you're
+__really sure__ what you're doing.
+
+- @outcomelist
+
+    This array lists all possible outcomes.  It is generated either from
+    the `outcome` file, if it exists, or from the outcomes that appear in
+    the `data` file.  If there is a "short" version and a "long" version
+    of each outcome, `@outcomelist` contains the "long" version.
+
+    Outcomes are assigned positive integer values; outcome 0 is reserved
+    for internal use of `Algorithm::AM`.  (You'll have to look at the
+    source code and its documentation for further details, which most
+    likely you won't need.)
+
+    Example: File `finnverb/outcome` is as follows:
+
+        A V-i
+        B a-oi
+        C tV-si
+
+    During initialization, `Algorithm::AM` makes a series of assignments
+    equivalent to the following:
+
+        @outcomelist = ('', 'V-i', 'a-oi', 'tV-si');
+
+- %outcometonum
+
+    This hash maps outcome strings (the "long" ones that appear in
+    `@outcomelist`) to their respective positions in `@outcomelist`.
+
+- @outcome
+
+    `$outcome[$i]` contains the outcome of data item `$i` as an integer
+    index into `@outcomelist`.
+
+- @data
+
+    `$data[$i]` is a reference to an array containing the variables of
+    data item `$i`.
+
+- @spec
+
+    `$spec[$i]` contains the specifier for data item `$i`.
+
+    Example: Line 80 of file `finnverb/data` is as follows:
+
+        C MU0=SR0=TA MURTA
+
+    During initialization, `Algorithm::AM` makes a series of assignments
+    equivalent to the following:
+
+        $outcome[79] = 3;
+        $data[79] = ['M', 'U', '0', '=', 'S', 'R', '0', '=', 'T', 'A'];
+        $spec[79] = 'MURTA';
+
+### Variables Used for a Specific Test Item
+
+These variables should be considered __read-only__, unless you're
+__really sure__ what you're doing.
+
+- $curTestOutcome
+
+    Contains the outcome index for the outcome of the current test item,
+    as determined by `@outcomelist`, if an outcome has been specified,
+    and 0 otherwise.
+
+- @curTestItem
+
+    Contains the variables of the current test item.
+
+- $curTestSpec
+
+    Contains the specifier of the current test item, if one has been
+    specified, and is empty otherwise.
+
+### Variables Used for a Specific Iteration of a Test Item Run
+
+- $probability
+
+    Setting this changes the likelihood of including any one particular
+    data item in a test run.  __Note:__ If the option `-probability` is
+    not set at either initialization time or at run time, setting the
+    value of `$probability` inside a hook has no effect.  (This is an
+    intentional optimization; see the source code and its documentation
+    for the reason why.)  Therefore, if you plan to change the probability
+    during test item runs, make sure to specify a value (1 is a good
+    choice) for the option `-probability`.
+
+- $pass
+
+    This variable indicates the current iteration of a test item run; it
+    will range from 0 to one less than the number specified by the
+    `-repeat` option.
+
+    __Note:__ You cannot (easily) change the number of repetitions from
+    within a hook.  You can only do this (easily) using the `-repeat`
+    option at run time.  This is because typically you want each test item
+    to be subjected to the same number of repetitions.  (But if for some
+    reason you really want to do this, you can increase `$pass` so that
+    `Algorithm::AM` will skip some passes.  You're on your own figuring
+    out which hook to put this in.)
+
+- $datacap
+
+    This variable determines how many data items will be considered.  It
+    is initially set to `scalar @data`.  However, if it is set smaller,
+    only the first `$datacap` items in the `data` file will be
+    considered.  `Algorithm::AM` automatically truncates `$datacap` if it
+    isn't an integer, so you don't have to.
+
+    Example: It is often of interest to see how results change as the
+    number of data items considered decreases.  Here's one way to do it:
+
+        $repeatsub = sub {
+          $datacap = (1, 0.5, 0.25)[$pass] * scalar @data;
+        };
+        $p->(-repeat => 3, -beginrepeathook => $repeatsub);
+
+    Note that this will give different results than the following:
+
+        $repeatsub = sub {
+          $probability = (1, 0.5, 0.25)[$pass];
+        };
+        $p->(-probability => 1, -repeat => 3, -beginrepeathook => $repeatsub);
+
+    The first way would be useful for modeling how predictions change as
+    more examples are gathered -- say, as a child grows older (though the
+    way it's written, it looks like the child is actually growing
+    younger).  The second way would be useful for modeling how predictions
+    change as memory worsens -- say, as an adult grows older.  Note that
+    option `-probability` must be specified at run time if it hasn't been
+    at initialization time; otherwise, calling the hook has no effect.
+
+### Variables Available at the End of a Test Run Iteration
+
+Before looking at these variables, it is important to know what they
+contain.
+
+`Algorithm::AM` works with really big integers, much larger than what
+32 bits can hold.  The XSUB uses a special internal format for storing
+them.  (You can read all about it in the usual place: the source code
+and its documentation.)  However, when the XSUB has finished its
+computations, it converts these integers into something that the Perl
+code finds more useful.
+
+The scalar values returned from the XSUB are _dual-valued_ scalars;
+they have different values depending on the context they're called
+in.  In string context, you get a string representation of the
+integer.  In numeric context, you get a double.
+
+For example, if `$n` and `$d` are big integers returned from the
+XSUB, you can write
+
+    print $n/$d;
+
+to see the decimal value of the fraction you get when you divide `$n`
+by `$d`, because the division will use the numeric values, while
+
+    print "$n/$d";
+
+will let you see this fraction expressed as the quotient of two
+integers, because the quotation marks will interpolate the string
+values.
+
+Because of this, you can't use `==` to test if two big integers have
+the same value -- they might be so big that the double representation
+doesn't give enough accuracy to distinguish them.  Use `eq` to test
+equality.
+
+If you need a comparison operator, you can use `bigcmp()`.
+
+- @sum
+
+    Contains the number of pointers for each outcome index.  (Remember
+    that outcome indices start with 1.)
+
+- $pointertotal
+
+    Contains the total number of pointers.
+
+- $pointermax
+
+    Contains the maximum value among all the values in `@sum`.
+
+Note that there is no variable reporting which outcome has the most
+pointers.  That's because there could be a tie, and different users
+treat ties in different ways.  So, if you want to see which outcomes
+have the highest number of pointers, try something like this:
+
+    @winners = ();
+    for ($i = 1; $i < @sum; ++$i) {
+      push @winners, $i if $sum[$i] eq $pointermax; ## use eq, not ==
+    }
+
+For another example using these variables, see `-endtesthook`.
+
+### Variables Useful for Formatting
+
+You may want to create your own reports.  These variables can help
+your formatting.  (They are also used by `Algorithm::AM` to format the
+standard reports.)
+
+- $dformat
+
+    Leaves enough space to hold an integer equal to the number of data
+    items.  Justifies right.
+
+- $sformat
+
+    Leaves enough space to hold a specifier.  Justifies left.
+
+- $oformat
+
+    Leaves enough space to hold a "long" outcome.  Justifies left.
+
+- $vformat
+
+    Formats a list of variables.  Set `-gangs` to `yes` for an example.
+
+- $pformat
+
+    Leaves enough space to hold the big integer `$pointertotal`, and thus
+    is big enough to hold `$pointermax` or any element of `@sum` as
+    well.  Justifies right.
+
+    __Note:__ This variable changes with each iteration of a test item.
+
+## Hook Function
+
+The following function is also exported into package `main` and
+available for use in hooks.  This is done with `local()`, just as
+with hook variables, so it is not available outside of hooks.
+
+- bigcmp()
+
+    Compares two big integers, returning 1, 0, or -1 depending on whether
+    the first argument is greater than, equal to, or less than the second
+    argument.  Remember that the syntax is different: you must write
+
+        bigcmp($a, $b)
+
+    instead of `$a bigcmp $b`.
+
+# MORE EXAMPLES
+
+## Summarizing a Repeated Test Item
+
+Suppose you run each test item 5 times, each with probability 0.005,
+and you want to create a statistical analysis summarizing the results
+for each test item.  Here's one way to do it:
+
+    $begintest = sub {
+      $valid = 0;
+      @testPct = ();
+      @testPctSq = ();
+      $correct = 0;
+    };
+    $endrepeat = sub {
+      return unless $pointertotal;
+      ++$valid;
+      ++$correct if $sum[$curTestOutcome] eq $pointermax;
+      for ($i = 1; $i < @outcomelist; ++$i) {
+        $testPct[$i] += $sum[$i]/$pointertotal;
+        $testPctSq[$i] += ($sum[$i]*$sum[$i])/($pointertotal*$pointertotal);
+      }
+    };
+    $endtest = sub {
+      print "Summary for test item: $curTestSpec\n";
+      print "Valid runs: $valid out of 5\n\n";
+      print "\n" and return unless $valid;
+      printf "$oformat    Avg     Std Dev\n", "";
+      for ($i = 1; $i < @outcomelist; ++$i) {
+        next unless $testPct[$i];
+        if ($valid > 1) {
+          printf "$oformat  %7.3f%% %7.3f%%\n",
+      $outcomelist[$i],
+      100 * $testPct[$i]/$valid,
+      100 * sqrt(($testPctSq[$i]-$testPct[$i]*$testPct[$i]/$valid)/($valid-1));
+        } else {
+          printf "$oformat  %7.3f%%\n",
+      $outcomelist[$i],
+      100 * $testPct[$i]/$valid;
+        }
+      }
+      printf "\nCorrect prediction occurred %7.3f%% (%i/5) of the time\n",
+        100 * $correct / 5,
+        $correct;
+      print "\n\n";
+    };
+    $p->(-probability => 0.005, -repeat => 5,
+         -begintesthook => $begintest, -endrepeathook => $endrepeat, -endtesthook => $endtest);
+
+## Creating a Confusion Matrix
+
+Suppose you want to compare correct outcomes with predicted outcomes.
+Here's one way to do it:
+
+    $begin = sub {
+      @confusion = ();
+    };
+    $endrepeat = sub {
+      if (!$pointertotal) {
+        ++$confusion[$curTestOutcome][0];
+        return;
+      }
+      if ($sum[$curTestOutcome] eq $pointermax) {
+        ++$confusion[$curTestOutcome][$curTestOutcome];
+        return;
+      }
+      my @winners = ();
+      my $i;
+      for ($i = 1; $i < @outcomelist; ++$i) {
+        push @winners, $i if $sum[$i] == $pointermax;
+      }
+      my $numwinners = scalar @winners;
+      foreach (@winners) {
+        $confusion[$curTestOutcome][$_] += 1 / $numwinners;
+      }
+    };
+    $end = sub {
+      my($i,$j);
+      for ($i = 1; $i < @outcomelist; ++$i) {
+        my $total = 0;
+        foreach (@{$confusion[$i]}) {
+          $total += $_;
+        }
+        next unless $total;
+        printf "Test items with outcome $oformat were predicted as follows:\n",
+          $outcomelist[$i];
+        for ($j = 1; $j < @outcomelist; ++$j) {
+          my $t;
+          next unless ($t = $confusion[$i][$j]);
+          printf "%7.3f%% $oformat  (%i/%i)\n", 100 * $t / $total, $outcomelist[$j], $t, $total;
+        }
+        if ($t = $confusion[$i][0]) {
+          printf "%7.3f%% could not be predicted (%i/%i)\n", 100 * $t / $total, $t, $total;
+        }
+        print "\n\n";
+      }
+    };
+    $p->(-probability => 0.005, -repeat => 5,
+         -beginhook => $begin, -endrepeathook => $endrepeat, -endhook => $end);
+
+
+
+# WARNINGS AND ERROR MESSAGES
+
+- Project not specified
+
+    No project was specified in the call to `Algorithm::AM->new`.  An
+    empty subroutine is returned (so that batch scripts do not break).
+
+- Project %s has no data file
+
+    The project directory has no file named `data`.  An empty subroutine
+    is returned (so that batch scripts do not break).
+
+- Project %s did not specify comma formatting
+
+    The required parameter `-commas` was not provided.  An empty
+    subroutine is returned (so that batch scripts do not break).
+
+- Project %s did not specify comma formatting correctly
+
+    Parameter `-commas` must be either `yes` or `no`.  An empty
+    subroutine is returned (so that batch scripts do not break).
+
+- Project %s did not specify option -nulls correctly
+
+    Parameter `-nulls` must be either `include` or `exclude`.
+    Displayed default value will be used.
+
+- Project %s did not specify option -given correctly
+
+    Parameter `-given` must be either `include` or `exclude`.
+    Displayed default value will be used.
+
+- Project %s did not specify option -skipset correctly
+
+    Parameter `-skipset` must be either `yes` or `no`.
+    Displayed default value will be used.
+
+- Project %s did not specify option -gangs correctly
+
+    Parameter `-gangs` must be either `yes`, `summary`, or `no`.
+    Displayed default value will be used.
+
+- Couldn't open %s/test
+
+    Project %s does not have a `test` file.  The `data` file will be
+    used.
+
+# SEE ALSO
+
+Home page for Analogical Modeling:
+
+    http://humanities.byu.edu/am/
+
+Source code, documentation, and sample data sets are all available
+here.
+
+# AUTHOR
+
+Theron Stanford <shixilun@yahoo.com>
+
+# COPYRIGHT AND LICENSE
+
+Copyright (C) 2004 by Royal Skousen
