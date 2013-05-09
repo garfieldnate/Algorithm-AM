@@ -896,7 +896,7 @@ __END__
 
   use Algorithm::AM;
 
-  $p = Algorithm::AM->new('finnverb', -commas => 'no');
+  my $p = Algorithm::AM->new('finnverb', -commas => 'no');
   $p->();
 
 =head1 DESCRIPTION
