@@ -914,9 +914,9 @@ mathematical basis.
 
 =head1 METHODS
 
-=head1 C<new>
+=head2 C<new>
 
-Arguments: see "Initializing a Project"
+Arguments: see "Initializing a Project" (TODO: reorganize POD properly)
 
 Creates and returns a subroutine to classify the data in a given project.
 
