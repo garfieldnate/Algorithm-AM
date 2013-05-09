@@ -4,10 +4,10 @@ package Algorithm::AM;
 use strict;
 use warnings;
 
-our $VERSION = '2.31';
+# VERSION;
 
 require XSLoader;
-XSLoader::load( 'Algorithm::AM', $VERSION );
+XSLoader::load();
 
 use Carp;
 use IO::Handle;
