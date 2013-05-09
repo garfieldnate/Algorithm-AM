@@ -5,18 +5,10 @@ package Algorithm::AM;
 use strict;
 use warnings;
 
-#VERSION
-
-#allows us to get some kind of version string during development, when $VERSION is undefined
-#($VERSION is inserted by a dzil plugin at build time)
-sub _version {
-    ## no critic (ProhibitNoStrict)
-    no strict 'vars';
-    return $VERSION || '1.00';
-}
+our $VERSION = '1.0';
 
 require XSLoader;
-XSLoader::load( 'Algorithm::AM', _version() );
+XSLoader::load( 'Algorithm::AM', $VERSION );
 
 use Carp;
 use Log::Dispatch;
@@ -453,11 +445,11 @@ sub new {
         }
 
         if ( $linear eq 'yes' ) {
-            s/fillandcount\(X\)/fillandcount(0)/;
+            s/_fillandcount\(X\)/_fillandcount(0)/;
             s/Gang: squared\n//s;
         }
         else {
-            s/fillandcount\(X\)/fillandcount(1)/;
+            s/_fillandcount\(X\)/_fillandcount(1)/;
             s/Gang: linear\n//s;
         }
 
@@ -545,7 +537,7 @@ sub new {
     };
 
     bless $amsub, $class;
-    $amsub->initialize(
+    $amsub->_initialize(
         \@activeVar,            \@outcome,      \@itemcontextchain,
         \%itemcontextchainhead, \%subtooutcome, \%contextsize,
         \%pointers,             \%gang,         \@sum
@@ -688,7 +680,7 @@ TOP
         $logger->info('Test item is in the data.')
           if $testindata;
 
-        $amsub->fillandcount(X);
+        $amsub->_fillandcount(X);
         $grandtotal = $pointers{'grandtotal'};
         my $longest = length $grandtotal;
         $gformat = "%$longest.${longest}s";

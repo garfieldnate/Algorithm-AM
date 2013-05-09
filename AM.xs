@@ -25,7 +25,7 @@ typedef struct AM_supra {
    * label; instead, all the subcontext labels
    * are kept in an array called subcontext
    * (bad choice of name?)  created in
-   * function fillandcount().  Thus, the
+   * function _fillandcount().  Thus, the
    * actual subcontexts in the supracontext
    * are subcontext[data[2]], ...
    *
@@ -82,7 +82,7 @@ typedef struct AM_supra {
  * There is quite a bit of data that must pass between Parallel.pm and
  * Parallel.xs.  Instead of repeatedly passing it back and forth on
  * the argument stack, Parallel.pm sends references to the variables
- * holding this shared data, by calling initialize() (defined later
+ * holding this shared data, by calling _initialize() (defined later
  * on).  These pointers are then stored in the following structure,
  * which is put into the magic part of $amsub (since $amsub is a CV,
  * it is perforce an SvPVMG as well).
@@ -305,7 +305,7 @@ BOOT:
    */
 
 void
-initialize(...)
+_initialize(...)
  PREINIT:
   CV *project;
   AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
@@ -350,7 +350,7 @@ initialize(...)
   mg_magical((SV *) project);
 
 void
-fillandcount(...)
+_fillandcount(...)
  PREINIT:
   CV *project;
   AM_GUTS *guts;

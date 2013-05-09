@@ -1,6 +1,8 @@
 package Algorithm::AM;
-#ABSTRACT: How to store and manipulate large lattices in C
-#VERSION
+use strict;
+use warnings;
+# ABSTRACT: How to store and manipulate large lattices in C
+# VERSION
 
 1;
 

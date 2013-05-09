@@ -1,6 +1,8 @@
 package Algorithm::AM;
-#ABSTRACT: How the Analogical Modeling algorithm works
-#VERSION
+use strict;
+use warnings;
+# ABSTRACT: How the Analogical Modeling algorithm works
+# VERSION
 
 1;
 
