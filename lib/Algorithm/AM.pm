@@ -310,8 +310,8 @@ sub new {## no critic (RequireArgUnpacking)
     my $item;
     ( undef, $item ) = split /$bigsep/, $testItems[0];
 
-    #$maxvar is number of $smallseps in $item
-    my $maxvar = () = split /$smallsep/, $item, -1;
+    #$maxvar is the number of features in the item
+    my $maxvar = scalar split /$smallsep/, $item;
     $logger->info('...done');
 
     splice @vlen, $maxvar;
