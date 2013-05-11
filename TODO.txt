@@ -1,17 +1,20 @@
-keep running `dzil release` until there are no more errors
+Figure out 'cannot remove directory' errors
+Figure out good project organization to allow dual builders (MB and EUMM)
 
+Make printing clearer (label gangs, etc.)
 Make a test out of the known good behavior of finnverb.pl
 put argument handling in one place
-figure out how to build the correct makefile with Dist::Zilla
-	perhaps Dist::Zilla::Plugin::MakeMaker::Custom
-Figure out how to also add Build.PL
+
+remove references to 'the red book'; put all documentation in the code!
+output something about the number of features in the vectors contained in a data file
 
 Read through documentation, update/clean if necessary
 Look at API. Update/clean if necessary.
 Create an AM old stuff branch
 tests!
-put XS in its own directory
-get rid of *enormous* (but extremely cool) __DATA__ hack
+get rid of difficult (but extremely cool) __DATA__ hack
+	At first, put __DATA__ in a separate file for easier browsing
+	Maybe use Text::Template or Template toolkit instead of hand markings
 Fix import mechanism
 Release!
 	2.3? 2.4?

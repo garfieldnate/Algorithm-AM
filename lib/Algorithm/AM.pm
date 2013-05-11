@@ -12,6 +12,7 @@ XSLoader::load();
 use Carp;
 use IO::Handle;
 use Log::Dispatch;
+use Log::Dispatch::File;
 my $logger = Log::Dispatch->new(
     outputs => [
 
@@ -548,8 +549,14 @@ __DATA__
 select(STDOUT);
 local ($|) = 1;
 
-open my $fh, '>>', "$project/amcpresults";
-select $fh;
+
+$logger->add(
+    Log::Dispatch::File->new(
+        name      => 'amcpresults',
+        min_level => 'debug',
+        filename  => "$project/amcpresults"
+    )
+);
 
 my ( $sec, $min, $hour );
 
@@ -883,9 +890,6 @@ $logger->info( sprintf( "\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
 
 &$endhook();
 
-close $fh;
-
-
 __END__
 
 =head1 SYNOPSIS
@@ -1008,7 +1012,7 @@ pointers.
 =item -probability
 
 Sets the probability of including any one data item.  Default:
-C<undef>.
+C<undef>. (TODO: what's undef do here?)
 
 =item -repeat
 
