@@ -11,12 +11,12 @@ XSLoader::load();
 
 use Carp;
 use IO::Handle;
+
+use Data::Dumper;
 use Log::Dispatch;
 use Log::Dispatch::File;
 my $logger = Log::Dispatch->new(
     outputs => [
-
-        # [ 'File',   min_level => 'debug', filename => 'amcpresults' ],
         [ 'Screen', min_level => 'info', newline => 1 ],
     ],
 
@@ -546,10 +546,6 @@ sub new {## no critic (RequireArgUnpacking)
 1;
 __DATA__
 
-select(STDOUT);
-local ($|) = 1;
-
-
 $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
@@ -685,6 +681,7 @@ TOP
 
         $amsub->_fillandcount(X);
         $grandtotal = $pointers{'grandtotal'};
+        print Dumper \%pointers;
         my $longest = length $grandtotal;
         $gformat = "%$longest.${longest}s";
         $high    = "";
@@ -702,7 +699,7 @@ TOP
             $high = $n
               if length($n) > length($high)
               or length($n) == length($high)
-              and $n gt $high;
+              and $n gt $high;#TODO: it having a semi-colon here right?
             $logger->info(
                 sprintf(
                     "$oformat  $gformat  %7.3f%%",
@@ -889,6 +886,8 @@ TOP
 $logger->info( sprintf( "\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
 
 &$endhook();
+
+$logger->remove('amcpresults');
 
 __END__
 

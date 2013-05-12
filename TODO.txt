@@ -1,4 +1,4 @@
-Figure out 'cannot remove directory' errors
+Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)
 
 Make printing clearer (label gangs, etc.)

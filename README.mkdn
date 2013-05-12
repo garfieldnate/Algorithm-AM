@@ -4,7 +4,7 @@ Algorithm::AM - Perl extension for Analogical Modeling using a parallel algorith
 
 # VERSION
 
-version 0.01
+version 2.31
 
 # AUTHOR
 
@@ -37,7 +37,15 @@ _Analogical Modeling of Language_, for an explanation of the method
 in general, and the "blue book", _Analogy and Structure_, for its
 mathematical basis.
 
-## History
+# METHODS
+
+## `new`
+
+Arguments: see "Initializing a Project" (TODO: reorganize POD properly)
+
+Creates and returns a subroutine to classify the data in a given project.
+
+## HISTORY
 
 Initially, Analogical Modeling was implemented as a Pascal program.
 Subsequently, it was ported to Perl, with substantial improvements
