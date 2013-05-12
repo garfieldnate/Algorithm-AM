@@ -550,7 +550,8 @@ $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
         min_level => 'debug',
-        filename  => "$project/amcpresults"
+        filename  => "$project/amcpresults",
+        newline => 1
     )
 );
 
@@ -681,7 +682,7 @@ TOP
 
         $amsub->_fillandcount(X);
         $grandtotal = $pointers{'grandtotal'};
-        print Dumper \%pointers;
+        # print Dumper \%pointers;
         my $longest = length $grandtotal;
         $gformat = "%$longest.${longest}s";
         $high    = "";
