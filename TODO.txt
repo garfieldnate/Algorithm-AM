@@ -12,9 +12,29 @@ Read through documentation, update/clean if necessary
 Look at API. Update/clean if necessary.
 Create an AM old stuff branch
 tests!
+	classification accuracy:
+		normal, quadratic	(done)
+		normal, linear 		(done)
+		nulls
+			include
+			exclude
+		given
+			include
+			exclude
+	formats- commas=yes/no (future arff, csv, etc.?)
+	gangs
+	skipset
+	repeat
+	probability
+	hooks
+allow user to specify input format
+	specify bigsep, littlesep
+	specify comment character
 get rid of difficult (but extremely cool) __DATA__ hack
 	At first, put __DATA__ in a separate file for easier browsing
 	Maybe use Text::Template or Template toolkit instead of hand markings
 Fix import mechanism
+	pass info to hooks as arguments instead of messing with the symbol table
+
 Release!
 	2.3? 2.4?

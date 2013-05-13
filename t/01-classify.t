@@ -13,7 +13,7 @@ use File::Slurp;
 plan tests => 2;
 
 my $project_path = path($Bin, 'data', 'chapter3');
-my $results_path = path($Bin, 'data', 'chapter3', 'amcpresults');
+my $results_path = path($project_path, 'amcpresults');
 #clean up previous test runs
 unlink $results_path
 	if -e $results_path;
