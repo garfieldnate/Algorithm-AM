@@ -766,8 +766,8 @@ _fillandcount(...)
 				 (char *) (subcontext + (4 * intersectlist[i])),
 				 8, 0));
 	      if (pointercount & 0xffff0000) {
-		USHORT pchi = (USHORT) pointercount >> 16;
-		USHORT pclo = (USHORT) pointercount & 0xffff;
+		USHORT pchi = (USHORT) (pointercount >> 16);
+		USHORT pclo = (USHORT) (pointercount & 0xffff);
 		ULONG hiprod[6];
 		hiprod[1] = pchi * count[0];
 		hiprod[2] = pchi * count[1];
@@ -1037,8 +1037,8 @@ _fillandcount(...)
     Copy(SvPVX(HeVAL(he)), p, 8, ULONG);
     tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(USHORT), 0);
     count = (ULONG) SvUVX(tempsv);
-    counthi = (USHORT) count >> 16;
-    countlo = (USHORT) count & 0xffff;
+    counthi = (USHORT) (count >> 16);
+    countlo = (USHORT) (count & 0xffff);
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
       gangcount[i] += countlo * p[i];
@@ -1090,8 +1090,8 @@ _fillandcount(...)
   }
   for (i = 1; i <= numoutcomes; ++i) normalize(sum[i]);
   tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
-  sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(ULONG));
   SvUPGRADE(tempsv, SVt_PVNV);
+  sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(ULONG));
   normalize(tempsv);
 
   Safefree(subcontext);
