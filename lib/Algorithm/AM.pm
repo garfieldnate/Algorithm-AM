@@ -3,6 +3,7 @@ package Algorithm::AM;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
 use strict;
 use warnings;
+use feature 'switch';
 
 # VERSION;
 
@@ -81,8 +82,8 @@ $import{'bigcmp'} = 'local *main::bigcmp = sub {
 ## $import{'%gang'} =
 ##   'local *main::gang = \%gang';
 
-sub new {## no critic (RequireArgUnpacking)
-    my ($proto, $project) = @_;
+sub new {
+    my ($proto, $project, %opts) = @_;
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
     $project = ''
@@ -100,22 +101,23 @@ sub new {## no critic (RequireArgUnpacking)
 
     $logger->info("Initializing project $project");
 
-    my (%opts) = @_;
     croak "Project $project did no specify comma formatting"
         unless exists $opts{-commas};
 
     my ( $bigsep, $smallsep );
-    if ( $opts{-commas} eq 'yes' ) {
-        $bigsep   = qr{\s*,\s*};
-        $smallsep = qr{\s+};
-    }
-    elsif ( $opts{-commas} eq 'no' ) {
-        $bigsep   = qr{\s+};
-        $smallsep = qr{};
-    }
-    else {
-        croak "Project $project did not specify comma formatting correctly;\n" .
-            q{(must specify -commas => 'yes' or -commas => 'no')};
+    given($opts{-commas}){
+        when('yes'){
+            $bigsep   = qr{\s*,\s*};
+            $smallsep = qr{\s+};
+        }
+        when('no'){
+            $bigsep   = qr{\s+};
+            $smallsep = qr{};
+        }
+        default{
+            croak "Project $project did not specify comma formatting correctly;\n" .
+                q{(must specify -commas => 'yes' or -commas => 'no')};
+        }
     }
 
     my ( $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs )
@@ -179,6 +181,7 @@ sub new {## no critic (RequireArgUnpacking)
         }
     }
 
+    #TODO: put in a hash so everything can be labeled
     my (@projectdefaults) = (
         $bigsep,      $smallsep, $excNull, $excGiven, $linear,
         $probability, $repeat,   $skipset, $gangs
@@ -191,6 +194,7 @@ sub new {## no critic (RequireArgUnpacking)
         $endrepeathook, $endtesthook, $endhook )
       = ( undef, undef, undef, undef, undef, undef, undef );
 
+    #TODO: put in a hash so everything can be labeled
     my (@hooks) = (
         $beginhook, $begintesthook, $beginrepeathook, $datahook,
         $endrepeathook, $endtesthook, $endhook
@@ -202,7 +206,7 @@ sub new {## no critic (RequireArgUnpacking)
     my $slen = 0;
     my @vlen = (0) x 60;
 
-## use $dataset instead of DATA to avoid possible clash
+    #TODO: create a subroutine for this
     open my $dataset_fh, '<', "$project/data" ## no critic (RequireBriefOpen)
       or carp "Couldn't open $project/data" and return sub { };
     while (<$dataset_fh>) {
