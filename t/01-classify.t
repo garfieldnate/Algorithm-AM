@@ -23,7 +23,7 @@ my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
 );
-$am->();
+$am->classify();
 my $results = read_file($results_path);
 like_string($results,qr/e   4   30.769%\v+r   9   69.231%/, 'Chapter 3 data, counting pointers')
 	or diag $results;
@@ -32,7 +32,7 @@ like_string($results,qr/e   4   30.769%\v+r   9   69.231%/, 'Chapter 3 data, cou
 unlink $results_path
 	if -e $results_path;
 
-$am->(-linear => 'yes');
+$am->classify(-linear => 'yes');
 $results = read_file($results_path);
 like_string($results,qr/e  2   28.571%\v+r  5   71.429%/, 'Chapter 3 data, counting occurences')
 	or diag $results;

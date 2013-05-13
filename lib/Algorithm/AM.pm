@@ -328,7 +328,7 @@ sub new {## no critic (RequireArgUnpacking)
 
     my $amsub;
     $amsub = sub {
-
+        my $self = shift;
         ## The following lines are here just to make sure that these
         ## variables are all referred to somewhere, so that the closure
         ## works properly
@@ -525,13 +525,15 @@ sub new {## no critic (RequireArgUnpacking)
 
     };
 
-    bless $amsub, $class;
-    $amsub->_initialize(
+    # bless $amsub, $class;
+    *classify = $amsub
+        or die "didn't work out";
+    $self->_initialize(
         \@activeVar,            \@outcome,      \@itemcontextchain,
         \%itemcontextchainhead, \%subtooutcome, \%contextsize,
         \%pointers,             \%gang,         \@sum
     );
-    return $amsub;
+    return $self;
 }
 
 1;
@@ -671,7 +673,7 @@ TOP
         $logger->info('Test item is in the data.')
           if $testindata;
 
-        $amsub->_fillandcount(X);
+        $self->_fillandcount(X);
         $grandtotal = $pointers{'grandtotal'};
         # print Dumper \%pointers;
         my $longest = length $grandtotal;

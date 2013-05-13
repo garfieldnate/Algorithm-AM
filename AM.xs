@@ -84,7 +84,7 @@ typedef struct AM_supra {
  * the argument stack, Parallel.pm sends references to the variables
  * holding this shared data, by calling _initialize() (defined later
  * on).  These pointers are then stored in the following structure,
- * which is put into the magic part of $amsub (since $amsub is a CV,
+ * which is put into the magic part of $self (since $self is an HV,
  * it is perforce an SvPVMG as well).
  *
  * Note that for arrays, we store a pointer to the array data itself,
@@ -297,23 +297,23 @@ BOOT:
   }
 
   /*
-   * This function is called by from Parallel.pm right after $amsub
-   * has been blessed into AM::Parallel.  It stores the necessary
+   * This function is called by from Parallel.pm right after creating
+   * a blessed reference to Algorithm::AM. It stores the necessary
    * pointers in the AM_GUTS structure and attaches it to the magic
-   * part of $amsub.
+   * part of thre reference.
    *
    */
 
 void
 _initialize(...)
  PREINIT:
-  CV *project;
+  HV *project;
   AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
   SV *svguts;
   MAGIC *mg;
   int i;
  PPCODE:
-  project = (CV *) SvRV(ST(0)); /* $amsub is here */
+  project = (HV *) SvRV(ST(0)); /* $self is here */
   guts.activeVar = AvARRAY((AV *) SvRV(ST(1)));
   guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
@@ -352,7 +352,7 @@ _initialize(...)
 void
 _fillandcount(...)
  PREINIT:
-  CV *project;
+  HV *project;
   AM_GUTS *guts;
   MAGIC *mg;
   USHORT activeVar[4];
@@ -373,7 +373,7 @@ _fillandcount(...)
   USHORT *intersect, *intersectlist;
   USHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
-  project = (CV *) SvRV(ST(0));
+  project = (HV *) SvRV(ST(0));
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
 

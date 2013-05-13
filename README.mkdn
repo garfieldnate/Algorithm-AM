@@ -131,7 +131,7 @@ The following options are available:
 - \-probability
 
     Sets the probability of including any one data item.  Default:
-    `undef`.
+    `undef`. (TODO: what's undef do here?)
 
 - \-repeat
 

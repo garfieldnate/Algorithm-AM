@@ -3,6 +3,7 @@ use Algorithm::AM;
 use warnings;
 use FindBin qw($Bin);
 use Path::Tiny;
+use Test::More tests => 1;
 
 my $p = Algorithm::AM->new( path($Bin, 'data', 'finnverb'), -commas => 'no', -given => 'exclude' );
 
@@ -56,10 +57,11 @@ $end = sub {
     print "Number of correct predictions: $count\n";
 };
 
-$p->(
+$p->classify(
     -beginhook     => $begin,
     -endtesthook   => $countsub,
     -endrepeathook => $endrepeat,
     -endhook       => $end
 );
 
+ok(1);
