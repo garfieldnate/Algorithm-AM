@@ -87,30 +87,23 @@ sub new {## no critic (RequireArgUnpacking)
     my $class = ref($proto) || $proto;
     $project = ''
         if $proto =~ /^-/;
+    my $self = bless {}, $class;
 
     #don't buffer error messages
     *STDOUT->autoflush();
 
-    unless ($project) {
-        carp "Project not specified";
-        $logger->warn('No test items can be run');
-        return sub { };
-    }
+    croak 'Must specify project'
+        unless ($project);
+
+    croak 'Project has no data file'
+        unless ( -e "$project/data" );
 
     $logger->info("Initializing project $project");
 
-    unless ( -e "$project/data" ) {
-        carp "Project $project has no data file";
-        $logger->warn('No test items can be run');
-        return sub { };
-    }
-
     my (%opts) = @_;
-    unless ( exists $opts{-commas} ) {
-        carp "Project $project did not specify comma formatting";
-        $logger->warn('No test items can be run');
-        return sub { };
-    }
+    croak "Project $project did no specify comma formatting"
+        unless exists $opts{-commas};
+
     my ( $bigsep, $smallsep );
     if ( $opts{-commas} eq 'yes' ) {
         $bigsep   = qr{\s*,\s*};
@@ -121,10 +114,8 @@ sub new {## no critic (RequireArgUnpacking)
         $smallsep = qr{};
     }
     else {
-        carp "Project $project did not specify comma formatting correctly";
-        $logger->warn(q{(must specify -commas => 'yes' or -commas => 'no')});
-        $logger->warn('No test items can be run');
-        return sub { };
+        croak "Project $project did not specify comma formatting correctly;\n" .
+            q{(must specify -commas => 'yes' or -commas => 'no')};
     }
 
     my ( $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs )
