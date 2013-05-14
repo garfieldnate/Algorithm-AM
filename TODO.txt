@@ -18,16 +18,20 @@ tests!
 		nulls				(done)
 			include			(done)
 			exclude			(done)
+				this is different from what Java AM does
 		given				(done)
 			include			(done)
 			exclude			(done)
 	formats
 		commas=yes/no		(done)
 		future arff, csv, etc.?
-	gangs
-	skipset
+	gangs					(done)
+		this needs to be made into a hash that can be retrieved
+		needs better printing
+	skipset					(done)
+		this needs to be made into a hash that can be retrieved
 	repeat					(done)
-	probability
+	probability				(not sure how to test)
 	hooks
 		will probably provide a better way to test everything else
 allow user to specify input format
