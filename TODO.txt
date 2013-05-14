@@ -2,13 +2,13 @@ Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)
 
 Make printing clearer (label gangs, etc.)
-Make a test out of the known good behavior of finnverb.pl
 put argument handling in one place
 
 remove references to 'the red book'; put all documentation in the code!
 output something about the number of features in the vectors contained in a data file
 
 Read through documentation, update/clean if necessary
+	Include Wikipedia pictures
 Look at API. Update/clean if necessary.
 Create an AM old stuff branch
 tests!
