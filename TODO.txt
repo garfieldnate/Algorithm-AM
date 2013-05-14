@@ -21,12 +21,15 @@ tests!
 		given
 			include
 			exclude
-	formats- commas=yes/no (future arff, csv, etc.?)
+	formats
+		commas=yes/no (done)
+		future arff, csv, etc.?
 	gangs
 	skipset
-	repeat
+	repeat (done)
 	probability
 	hooks
+		will probably provide a better way to test everything else
 allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
