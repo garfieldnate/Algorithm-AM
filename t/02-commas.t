@@ -22,7 +22,7 @@ my $am = Algorithm::AM->new(
 );
 $am->classify();
 my $results = read_file($results_path);
-like_string($results,qr/e   4   30.769%\v+r   9   69.231%/, 'Chapter 3 data, counting pointers')
+like_string($results,qr/e\s+4\s+30.769%\v+r\s+9\s+69.231%/, 'Chapter 3 data, counting pointers')
 	or diag $results;
 
 #clean up the amcpresults file

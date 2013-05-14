@@ -15,18 +15,18 @@ tests!
 	classification accuracy:
 		normal, quadratic	(done)
 		normal, linear 		(done)
-		nulls
-			include
-			exclude
-		given
-			include
-			exclude
+		nulls				(done)
+			include			(done)
+			exclude			(done)
+		given				(done)
+			include			(done)
+			exclude			(done)
 	formats
-		commas=yes/no (done)
+		commas=yes/no		(done)
 		future arff, csv, etc.?
 	gangs
 	skipset
-	repeat (done)
+	repeat					(done)
 	probability
 	hooks
 		will probably provide a better way to test everything else
