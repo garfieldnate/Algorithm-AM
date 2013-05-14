@@ -35,13 +35,14 @@ tests!
 	hooks
 		will probably provide a better way to test everything else
 		hooks:
-			-beginhook
-			-endhook
-			-begintesthook
-			-endtesthook
-			-endrepeathook
-			-beginrepeathook
+			-beginhook			(done)
+			-endhook			(done)
+			-begintesthook		(done)
+			-endtesthook		(done)
+			-endrepeathook		(done)
+			-beginrepeathook	(done)
 			-datahook
+				return type
 		variables:
 			beginning:			(done)
 				@outcomelist
@@ -53,15 +54,15 @@ tests!
 				$curTestOutcome
 				@curTestItem
 				$curTestSpec
-			per-iteration:
+			per-iteration:		(done)
 				$probability
 				$pass
 				$datacap
-			end:
+			end:				(done)
 				@sum
 				$pointertotal
 				$pointermax
-			formatting:
+			formatting:			(skip)
 				$dformat
 				$sformat
 				$oformat

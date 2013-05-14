@@ -685,7 +685,7 @@ TOP
         $high    = "";
 
         unless ($grandtotal) {
-            $logger->info('No data items considered.  No prediction possible.');
+            $logger->warn('No data items considered.  No prediction possible.');
             next;
         }
 
