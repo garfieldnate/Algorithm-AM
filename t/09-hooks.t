@@ -1,12 +1,13 @@
 #test hooks
-use feature 'say';
+use strict;
+use warnings;
 use Test::More 0.88;
 plan tests => 1;
 use Algorithm::AM;
 use FindBin qw($Bin);
 use Path::Tiny;
 
-my $project_path = path($Bin, 'data', 'chapter3');
+my $project_path = path($Bin, 'data', 'chapter3_multi_test');
 
 my $am = Algorithm::AM->new(
 	$project_path,
@@ -41,29 +42,33 @@ my @expected = qw(
 	datahook
 	endrepeathook
 	endtesthook
+	begintesthook
+	beginrepeathook
+	datahook
+	datahook
+	datahook
+	datahook
+	datahook
+	endrepeathook
+	beginrepeathook
+	datahook
+	datahook
+	datahook
+	datahook
+	datahook
+	endrepeathook
+	endtesthook
 	endhook
 );
-is_deeply(\@record, \@expected)
+is_deeply(\@record, \@expected, 'hooks called in expected order')
 	or note explain \@record;
 
 sub beginhook {
 	push @record, 'beginhook';
 }
 
-sub endhook {
-	push @record, 'endhook';
-}
-
 sub begintesthook {
 	push @record, 'begintesthook';
-}
-
-sub endtesthook {
-	push @record, 'endtesthook';
-}
-
-sub endrepeathook {
-	push @record, 'endrepeathook';
 }
 
 sub beginrepeathook {
@@ -72,4 +77,16 @@ sub beginrepeathook {
 
 sub datahook {
 	push @record, 'datahook';
+}
+
+sub endrepeathook {
+	push @record, 'endrepeathook';
+}
+
+sub endtesthook {
+	push @record, 'endtesthook';
+}
+
+sub endhook {
+	push @record, 'endhook';
 }

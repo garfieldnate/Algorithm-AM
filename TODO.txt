@@ -43,13 +43,13 @@ tests!
 			-beginrepeathook
 			-datahook
 		variables:
-			beginning:
+			beginning:			(done)
 				@outcomelist
 				%outcometonum
 				@outcome
 				@data
 				@spec
-			per-item:
+			per-item:			(done)
 				$curTestOutcome
 				@curTestItem
 				$curTestSpec
