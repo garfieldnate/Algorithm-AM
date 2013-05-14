@@ -11,5 +11,5 @@ pm_to_blib
 Makefile
 perl-module.sublime-workspace
 Algorithm-AM-*/
-**/amcpresults
+amcpresults
 *.tar.gz
