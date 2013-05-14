@@ -31,9 +31,44 @@ tests!
 	skipset					(done)
 		this needs to be made into a hash that can be retrieved
 	repeat					(done)
-	probability				(not sure how to test)
+	probability				(done)
 	hooks
 		will probably provide a better way to test everything else
+		hooks:
+			-beginhook
+			-endhook
+			-begintesthook
+			-endtesthook
+			-endrepeathook
+			-beginrepeathook
+			-datahook
+		variables:
+			beginning:
+				@outcomelist
+				%outcometonum
+				@outcome
+				@data
+				@spec
+			per-item:
+				$curTestOutcome
+				@curTestItem
+				$curTestSpec
+			per-iteration:
+				$probability
+				$pass
+				$datacap
+			end:
+				@sum
+				$pointertotal
+				$pointermax
+			formatting:
+				$dformat
+				$sformat
+				$oformat
+				$vformat
+				$pformat
+		bigcmp
+
 allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
