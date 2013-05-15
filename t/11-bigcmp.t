@@ -12,6 +12,7 @@ use vars qw(@sum);
 use subs qw(bigcmp);
 
 my $project_path = path($Bin, 'data', 'chapter3');
+my $results_path = path($project_path, 'amcpresults');
 
 my $am = Algorithm::AM->new(
 	$project_path,
@@ -20,6 +21,10 @@ my $am = Algorithm::AM->new(
 $am->classify(
 	-endhook => \&endhook,
 );
+
+#cleanup amcpresults file
+unlink $results_path
+	if -e $results_path;
 
 sub endhook {
 	test_bigcmp();

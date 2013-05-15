@@ -540,6 +540,8 @@ sub new {
 1;
 __DATA__
 
+#print to amcpresults file instead of to the screen
+$logger->remove('Screen');
 $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
@@ -592,7 +594,7 @@ foreach my $t (@testItems) {
     my $nullcontext = pack "b64", '0' x 64;
 
     ( $sec, $min, $hour ) = localtime();
-    $logger->info( sprintf( "Time: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
+    $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
     $logger->info("@curTestItem");
     $logger->info( sprintf( "0/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
 
@@ -701,8 +703,8 @@ TOP
                 )
             );
         }
-        $logger->info( sprintf( "$oformat  $gformat\n", "", '-' x $longest ) );
-        $logger->info( sprintf( "$oformat  $gformat\n", "", $grandtotal ) );
+        $logger->info( sprintf( "$oformat  $gformat", "", '-' x $longest ) );
+        $logger->info( sprintf( "$oformat  $gformat", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
             if ( $sum[$curTestOutcome] eq $high ) {
@@ -783,14 +785,14 @@ TOP
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $dformat  $oformat  $vformat\n",
+                            "$dashes   $dformat  $oformat  $vformat",
                             "", "", @vtemp
                         )
                     );
                 }
                 $logger->info(
                     sprintf(
-                        "%7.3f%%  $gformat x $dformat  $oformat\n",
+                        "%7.3f%%  $gformat x $dformat  $oformat",
                         100 * $gang{$k} / $grandtotal,
                         $p,
                         $contextsize{$k},
@@ -805,7 +807,7 @@ TOP
                     $i = $itemcontextchain[$i]
                   )
                 {
-                    $logger->info( sprintf "$pad  $vformat  $spec[$i]\n",
+                    $logger->info( sprintf "$pad  $vformat  $spec[$i]",
                         @{ $data[$i] } );
                 }
 ## end skip gang list
@@ -831,14 +833,14 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-"%7.3f%%  $gformat   $dformat  $oformat  $vformat\n",
+"%7.3f%%  $gformat   $dformat  $oformat  $vformat",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $dformat  $oformat  $vformat\n",
+                            "$dashes   $dformat  $oformat  $vformat",
                             "", "", @vtemp
                         )
                     );
@@ -847,7 +849,7 @@ TOP
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $gformat x $dformat  $oformat\n",
+                            "%7.3f%%  $gformat x $dformat  $oformat",
                             100 * $gangsort[$i] * $p / $grandtotal,
                             $p, $gangsort[$i], $outcomelist[$i]
                         )
@@ -855,7 +857,7 @@ TOP
 ## begin skip gang list
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
-                            sprintf( "$pad  $vformat  $spec[$_]\n",
+                            sprintf( "$pad  $vformat  $spec[$_]",
                                 @{ $data[$_] } )
                         );
                     }
@@ -877,11 +879,19 @@ TOP
 }
 
 ( $sec, $min, $hour ) = localtime();
-$logger->info( sprintf( "\nTime: %2s:%02s:%02s\n\n", $hour, $min, $sec ) );
+$logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
 
 &$endhook();
 
+#go back to printing to the screen
 $logger->remove('amcpresults');
+$logger->add(
+    Log::Dispatch::Screen->new(
+        name        => 'Screen',
+        min_level   => 'warning',
+        newline     => 1,
+    )
+);
 
 __END__
 

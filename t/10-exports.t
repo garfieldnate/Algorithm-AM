@@ -34,6 +34,7 @@ use vars qw(
 );
 
 my $project_path = path($Bin, 'data', 'chapter3_multi_test');
+my $results_path = path($project_path, 'amcpresults');
 
 my $am = Algorithm::AM->new(
 	$project_path,
@@ -50,6 +51,10 @@ $am->classify(
 	-endtesthook => \&endtesthook,
 	-endhook => \&endhook,
 );
+
+#cleanup amcpresults file
+unlink $results_path
+	if -e $results_path;
 
 sub beginhook {
 	test_beginning_vars('beginhook');
