@@ -450,9 +450,6 @@ sub new {
             s/## begin probability.*?## end probability//sg;
             s/Probability of including any one data item: \$probability\n//s;
         }
-        else {
-            s/All data items considered\n//s;
-        }
 
         if ( $skipset eq 'yes' ) {
             s/## begin analogical set.*?## end analogical set//sg;
@@ -619,7 +616,7 @@ foreach my $t (@testItems) {
 
         for ( my $i = $datacap ; $i ; ) {
             --$i;
-            next unless &$datahook($i);
+            ++$excludedData, next unless &$datahook($i);
 ## begin probability
             ++$excludedData, next if rand() > $probability;
 ## end probability
@@ -665,7 +662,6 @@ Given Context:  @curTestItem, $curTestSpec
 If context is in data file then exclude
 Include context even if it is in the data file
 Number of data items: @{[$datacap]}
-All data items considered
 Probability of including any one data item: $probability
 Total Excluded: $excludedData @{[ $eg ? " + test item" : "" ]}
 Nulls: exclude
