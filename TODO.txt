@@ -36,12 +36,14 @@ tests!
 		will probably provide a better way to test everything else
 		hooks:
 			-beginhook			(done)
+				delete once object orientation is in place
 			-endhook			(done)
+				delete once object orientation is in place
 			-begintesthook		(done)
 			-endtesthook		(done)
 			-endrepeathook		(done)
 			-beginrepeathook	(done)
-			-datahook
+			-datahook			(done)
 				return type
 		variables:
 			beginning:			(done)
@@ -68,7 +70,7 @@ tests!
 				$oformat
 				$vformat
 				$pformat
-		bigcmp
+		bigcmp					(done)
 
 allow user to specify input format
 	specify bigsep, littlesep
@@ -81,3 +83,4 @@ Fix import mechanism
 
 Release!
 	2.3? 2.4?
+	How about 2.31 as the final version with the same API, and then move to 2.4?
