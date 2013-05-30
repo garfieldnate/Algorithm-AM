@@ -1,4 +1,4 @@
-package Algorithm::AM;
+package Algorithm::AM::algorithm;
 use strict;
 use warnings;
 # ABSTRACT: How the Analogical Modeling algorithm works

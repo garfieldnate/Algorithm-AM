@@ -1,4 +1,4 @@
-package Algorithm::AM;
+package Algorithm::AM::lattice;
 use strict;
 use warnings;
 # ABSTRACT: How to store and manipulate large lattices in C
