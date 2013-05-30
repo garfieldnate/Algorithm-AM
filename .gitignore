@@ -12,4 +12,4 @@ Makefile
 perl-module.sublime-workspace
 Algorithm-AM-*/
 amcpresults
-./*.tar.gz
+/*.tar.gz
