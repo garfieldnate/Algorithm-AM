@@ -1,3 +1,5 @@
+Figure out why tests fail on *nix
+
 Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)
 
@@ -11,66 +13,6 @@ Read through documentation, update/clean if necessary
 	Include Wikipedia pictures
 Look at API. Update/clean if necessary.
 Create an AM old stuff branch
-tests!
-	classification accuracy:
-		normal, quadratic	(done)
-		normal, linear 		(done)
-		nulls				(done)
-			include			(done)
-			exclude			(done)
-				this is different from what Java AM does
-		given				(done)
-			include			(done)
-			exclude			(done)
-	formats
-		commas=yes/no		(done)
-		future arff, csv, etc.?
-	gangs					(done)
-		this needs to be made into a hash that can be retrieved
-		needs better printing
-	skipset					(done)
-		this needs to be made into a hash that can be retrieved
-	repeat					(done)
-	probability				(done)
-	hooks
-		will probably provide a better way to test everything else
-		hooks:
-			-beginhook			(done)
-				delete once object orientation is in place
-			-endhook			(done)
-				delete once object orientation is in place
-			-begintesthook		(done)
-			-endtesthook		(done)
-			-endrepeathook		(done)
-			-beginrepeathook	(done)
-			-datahook			(done)
-				return type
-		variables:
-			beginning:			(done)
-				@outcomelist
-				%outcometonum
-				@outcome
-				@data
-				@spec
-			per-item:			(done)
-				$curTestOutcome
-				@curTestItem
-				$curTestSpec
-			per-iteration:		(done)
-				$probability
-				$pass
-				$datacap
-			end:				(done)
-				@sum
-				$pointertotal
-				$pointermax
-			formatting:			(skip)
-				$dformat
-				$sformat
-				$oformat
-				$vformat
-				$pformat
-		bigcmp					(done)
 
 allow user to specify input format
 	specify bigsep, littlesep
@@ -80,7 +22,3 @@ get rid of difficult (but extremely cool) __DATA__ hack
 	Maybe use Text::Template or Template toolkit instead of hand markings
 Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table
-
-Release!
-	2.3? 2.4?
-	How about 2.31 as the final version with the same API, and then move to 2.4?
