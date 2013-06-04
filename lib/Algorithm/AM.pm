@@ -303,7 +303,9 @@ sub new {
     my (@testItems) = <$test_fh>;
     close $test_fh;
     #cross-platform chomp
-    @testItems = map {s/[\n\r]+$//; $_} @testItems;
+    map {           ##no critic (ProhibitMutatingListFunctions)
+        s/[\n\r]+$//
+    } @testItems;
     my $item;
     ( undef, $item ) = split /$bigsep/, $testItems[0];
 

@@ -3,6 +3,8 @@ Revision history for AM-Algorithm
 
 {{$NEXT}}
 
+2.33      2013-06-03 22:22:10 America/Los_Angeles
+    Changed chomp mechanism so Windows files can be used in testing on *nix
 2.32      2013-05-30 14:37:09 America/Los_Angeles
     Fixed package declarations in POD files, which prevented listing on metacpan
 2.31      2013-05-15 15:22:32 America/Los_Angeles
