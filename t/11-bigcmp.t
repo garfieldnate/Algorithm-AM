@@ -27,12 +27,13 @@ unlink $results_path
 	if -e $results_path;
 
 sub endhook {
-	test_bigcmp();
+	test_bigcmp(@_);
 }
 
 #compare the pointer counts, which should be 4 and 9 for the chapter 3 data
 sub test_bigcmp {
-	my ($a, $b) = @sum[1,2];
+	my ($data) = @_;
+	my ($a, $b) = @{$data->{sum}}[1,2];
 	is("$a", '4', 'compare 9');
 	is("$b", '9', 'and 4');
 	is(bigcmp($a, $b), -1, '4 is smaller than 9');

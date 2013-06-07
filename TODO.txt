@@ -2,6 +2,10 @@ Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table
 
 Return classification data in a structure instead of printing it.
+	Perhaps split into several structures?
+	Use Hash::Tie or something like that for scalars
+
+Put format vars into optional Export?
 
 Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)

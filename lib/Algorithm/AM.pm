@@ -458,43 +458,43 @@ sub new {
             $beginhook = $opts{-beginhook};
         }
         unless ( defined $beginhook ) {
-            s/&\$beginhook\(\)//;
+            s/\$beginhook->.*//;
         }
         if ( exists $opts{-begintesthook} ) {
             $begintesthook = $opts{-begintesthook};
         }
         unless ( defined $begintesthook ) {
-            s/&\$begintesthook\(\)//;
+            s/\$begintesthook->.*//;
         }
         if ( exists $opts{-beginrepeathook} ) {
             $beginrepeathook = $opts{-beginrepeathook};
         }
         unless ( defined $beginrepeathook ) {
-            s/&\$beginrepeathook\(\)//;
+            s/\$beginrepeathook->.*//;
         }
         if ( exists $opts{-datahook} ) {
             $datahook = $opts{-datahook};
         }
         unless ( defined $datahook ) {
-            s/next unless &\$datahook\(\$i\)//;
+            s/next unless \$datahook->\(\$i, \$data\)//;
         }
         if ( exists $opts{-endrepeathook} ) {
             $endrepeathook = $opts{-endrepeathook};
         }
         unless ( defined $endrepeathook ) {
-            s/&\$endrepeathook\(\)//;
+            s/\$endrepeathook->.*//;
         }
         if ( exists $opts{-endtesthook} ) {
             $endtesthook = $opts{-endtesthook};
         }
         unless ( defined $endtesthook ) {
-            s/&\$endtesthook\(\)//;
+            s/\$endtesthook->.*//;
         }
         if ( exists $opts{-endhook} ) {
             $endhook = $opts{-endhook};
         }
         unless ( defined $endhook ) {
-            s/&\$endhook\(\)//;
+            s/\$endhook->.*//;
         }
 
 ## stuff to be exported
