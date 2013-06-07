@@ -37,11 +37,6 @@ my %import;
 
 ## Useful variables exported and documented
 
-#end vars
-$import{'@sum'}          = 'local *main::sum = \@sum';
-$import{'$pointertotal'} = 'local *main::pointertotal = \$grandtotal';
-$import{'$pointermax'}   = 'local *main::pointermax = \$high';
-
 #format vars
 $import{'$dformat'} = 'local *main::dformat = \$dformat';
 $import{'$sformat'} = 'local *main::sformat = \$sformat';
@@ -527,6 +522,11 @@ sub new {
         $data->{probability} = \$probability;
         $data->{pass} = \$pass;
         $data->{datacap} = \$datacap;
+
+        #end vars
+        $data->{sum} = \@sum;
+        $data->{pointertotal} = \$grandtotal;
+        $data->{pointermax} = \$high;
 
         my $importlist = join ";", values %import;
         eval "$importlist;$_"; ## no critic (ProhibitStringyEval)

@@ -158,14 +158,14 @@ sub test_iter_vars {
 #test setting of vars for classification results
 sub test_end_vars {
 	my ($hook_name, $data) = @_;
-	my $subtotals = [@sum[1,2]];
+	my $subtotals = [@{$data->{sum}}[1,2]];
 	if(${$data->{curTestOutcome}} == 2){
 		is_deeply($subtotals, [4, 4], $hook_name . ': @sum');
-		is($pointertotal, 8, $hook_name . ': $pointertotal');
-		is($pointermax, 4, $hook_name . ': $pointermax');
+		is(${$data->{pointertotal}}, 8, $hook_name . ': $pointertotal');
+		is(${$data->{pointermax}}, 4, $hook_name . ': $pointermax');
 	}else{
 		is_deeply($subtotals, [4, 9], $hook_name . ': correct subtotals');
-		is($pointertotal, 13, $hook_name . ': $pointertotal');
-		is($pointermax, 9, $hook_name . ': $pointermax');
+		is(${$data->{pointertotal}}, 13, $hook_name . ': $pointertotal');
+		is(${$data->{pointermax}}, 9, $hook_name . ': $pointermax');
 	}
 }
