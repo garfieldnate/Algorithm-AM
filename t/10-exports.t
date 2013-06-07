@@ -14,12 +14,6 @@ use Path::Tiny;
 
 use vars qw(
 
-	@outcomelist
-	%outcometonum
-	@outcome
-	@data
-	@spec
-
 	$curTestOutcome
 	@curTestItem
 	$curTestSpec
@@ -57,57 +51,58 @@ unlink $results_path
 	if -e $results_path;
 
 sub beginhook {
-	test_beginning_vars('beginhook');
+	test_beginning_vars_new('beginhook', @_);
 }
 
 sub begintesthook {
-	test_beginning_vars('begintesthook');
+	test_beginning_vars_new('begintesthook', @_);
 	test_item_vars('begintesthook');
 }
 
 sub beginrepeathook {
-	test_beginning_vars('beginrepeathook');
+	test_beginning_vars_new('beginrepeathook', @_);
 	test_item_vars('beginrepeathook');
 	test_iter_vars('beginrepeathook');
 }
 
 sub datahook {
-	test_beginning_vars('datahook');
+	#$_[0] is $i
+	test_beginning_vars_new('datahook', $_[1]);
 	test_item_vars('datahook');
 	test_iter_vars('datahook');
 	return 1;
 }
 sub endrepeathook {
-	test_beginning_vars('endrepeathook');
+	test_beginning_vars_new('endrepeathook', @_);
 	test_item_vars('endrepeathook');
 	test_iter_vars('endrepeathook');
 	test_end_vars('endrepeathook');
 }
 
 sub endtesthook {
-	test_beginning_vars('endtesthook');
+	test_beginning_vars_new('endtesthook', @_);
 	test_item_vars('endtesthook');
 	test_end_vars('endtesthook');
 }
 
 sub endhook {
-	test_beginning_vars('endhook');
+	test_beginning_vars_new('endhook', @_);
 }
 
 #check vars available from beginning to end of classification
-sub test_beginning_vars {
-	my ($hook_name) = @_;
+sub test_beginning_vars_new {
+	my ($hook_name, $data) = @_;
 	#TODO: export something better than this; why should we have to skip 0?
-	is_deeply(\@outcomelist, ['','e','r'], $hook_name . ': @outcomelist')
-		or note explain \@outcomelist;
+	is_deeply($data->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
+		or note explain $data->{outcomelist};
 	#why should we need this?
-	is_deeply(\%outcometonum, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
-		or note explain \@outcomelist;
+	is_deeply($data->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
+		or note explain $data->{outcometonum};
 	#why not [e,r,r,r,r]?
-	is_deeply(\@outcome, [1,2,2,2,2], $hook_name . ': @outcome')
-		or note explain \@outcome;
+	is_deeply($data->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
+		or note explain $data->{outcome};
 	is_deeply(
-		\@data,
+		$data->{data},
 		[
 			['3', '1', '0'],
 			['2', '1', '0'],
@@ -117,9 +112,9 @@ sub test_beginning_vars {
         ],
         $hook_name . ': @data'
     )
-		or note explain \@data;
-	is_deeply(\@spec, [('myCommentHere') x 5], $hook_name . ': @spec')
-		or note explain \@spec;
+		or note explain $data->{data};
+	is_deeply($data->{spec}, [('myCommentHere') x 5], $hook_name . ': @spec')
+		or note explain $data->{spec};
 }
 
 #check vars available per test

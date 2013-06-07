@@ -1,4 +1,7 @@
-Figure out why tests fail on *nix
+Fix import mechanism
+	pass info to hooks as arguments instead of messing with the symbol table
+
+Return classification data in a structure instead of printing it.
 
 Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)
@@ -20,5 +23,3 @@ allow user to specify input format
 get rid of difficult (but extremely cool) __DATA__ hack
 	At first, put __DATA__ in a separate file for easier browsing
 	Maybe use Text::Template or Template toolkit instead of hand markings
-Fix import mechanism
-	pass info to hooks as arguments instead of messing with the symbol table

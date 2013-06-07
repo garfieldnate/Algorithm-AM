@@ -37,11 +37,11 @@ my %import;
 
 ## Useful variables exported and documented
 
-$import{'@outcomelist'}  = 'local *main::outcomelist = \@outcomelist';
-$import{'%outcometonum'} = 'local *main::outcometonum = \%outcometonum';
-$import{'@outcome'}      = 'local *main::outcome = \@outcome';
-$import{'@data'}         = 'local *main::data = \@data';
-$import{'@spec'}         = 'local *main::spec = \@spec';
+$import{'@outcomelist'}  = '$data->{outcomelist} = \@outcomelist;';
+$import{'%outcometonum'} = '$data->{outcometonum} = \%outcometonum;';
+$import{'@outcome'}      = '$data->{outcome} = \@outcome; $data->{outcome} = \@outcome;';
+$import{'@data'}         = '$data->{data} = \@data;';
+$import{'@spec'}         = '$data->{spec} = \@spec;';
 
 $import{'$curTestOutcome'} = 'local *main::curTestOutcome = \$curTestOutcome';
 $import{'@curTestItem'}    = 'local *main::curTestItem = \@curTestItem';
@@ -516,6 +516,7 @@ sub new {
 
 ## stuff to be exported
         my ( $curTestOutcome, @curTestItem, $curTestSpec );
+        my $data;
         my $pass;
         my $datacap = @data;
         my $grandtotal;
@@ -556,7 +557,7 @@ $logger->add(
 
 my ( $sec, $min, $hour );
 
-&$beginhook();
+$beginhook->($data);
 
 my $left = scalar @testItems;
 foreach my $t (@testItems) {
@@ -581,7 +582,7 @@ foreach my $t (@testItems) {
     my $activeVar = @curTestItem;
 ## end include nulls
 
-    &$begintesthook();
+    $begintesthook->($data);
 
     {
         use integer;
@@ -603,7 +604,7 @@ foreach my $t (@testItems) {
 
     $pass = 0;
     while ( $pass < $repeat ) {
-        &$beginrepeathook();
+        $beginrepeathook->($data);
         $datacap = int($datacap);
 
         my $excludedData = 0;
@@ -621,7 +622,7 @@ foreach my $t (@testItems) {
 
         for ( my $i = $datacap ; $i ; ) {
             --$i;
-            ++$excludedData, next unless &$datahook($i);
+            ++$excludedData, next unless $datahook->($i, $data);
 ## begin probability
             ++$excludedData, next if rand() > $probability;
 ## end probability
@@ -872,19 +873,19 @@ TOP
 
     }
     continue {
-        &$endrepeathook();
+        $endrepeathook->($data);
         ++$pass;
         ( $sec, $min, $hour ) = localtime();
         $logger->info(
             sprintf( "$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
     }
-    &$endtesthook();
+    $endtesthook->($data);
 }
 
 ( $sec, $min, $hour ) = localtime();
 $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
 
-&$endhook();
+$endhook->($data);
 
 #go back to printing to the screen
 $logger->remove('amcpresults');
