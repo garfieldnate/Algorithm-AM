@@ -1,3 +1,6 @@
+# The example data set that always came with AM. Just run
+# to see output and make sure it doesn't die.
+
 use Algorithm::AM;
 # use strict; # not yet...
 use warnings;
