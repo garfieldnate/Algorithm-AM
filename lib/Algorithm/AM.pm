@@ -37,28 +37,12 @@ my %import;
 
 ## Useful variables exported and documented
 
-$import{'@outcomelist'}  = '$data->{outcomelist} = \@outcomelist;';
-$import{'%outcometonum'} = '$data->{outcometonum} = \%outcometonum;';
-$import{'@outcome'}      = '$data->{outcome} = \@outcome;';
-$import{'@data'}         = '$data->{data} = \@data;';
-$import{'@spec'}         = '$data->{spec} = \@spec;';
-
-$import{'$curTestOutcome'} = '$data->{curTestOutcome} = \$curTestOutcome;';
-$import{'@curTestItem'}    =
-    'local *main::curTestItem = \@curTestItem;
-    $data->{curTestItem} = \@curTestItem';
-$import{'$curTestSpec'}    =
-    'local *main::curTestSpec = \$curTestSpec;
-    $data->{curTestSpec} = \$curTestSpec';
-
-$import{'$probability'} = 'local *main::probability = \$probability';
-$import{'$pass'}        = 'local *main::pass = \$pass';
-$import{'$datacap'}     = 'local *main::datacap = \$datacap';
-
+#end vars
 $import{'@sum'}          = 'local *main::sum = \@sum';
 $import{'$pointertotal'} = 'local *main::pointertotal = \$grandtotal';
 $import{'$pointermax'}   = 'local *main::pointermax = \$high';
 
+#format vars
 $import{'$dformat'} = 'local *main::dformat = \$dformat';
 $import{'$sformat'} = 'local *main::sformat = \$sformat';
 $import{'$oformat'} = 'local *main::oformat = \$oformat';
@@ -526,6 +510,23 @@ sub new {
         my $grandtotal;
         my $high;
         my $gformat;
+
+        #beginning vars
+        $data->{outcomelist} = \@outcomelist;
+        $data->{outcometonum} = \%outcometonum;
+        $data->{outcome} = \@outcome;
+        $data->{data} = \@data;
+        $data->{spec} = \@spec;
+
+        #item vars
+        $data->{curTestOutcome} = \$curTestOutcome;
+        $data->{curTestItem} = \@curTestItem;
+        $data->{curTestSpec} = \$curTestSpec;
+
+        #iter vars
+        $data->{probability} = \$probability;
+        $data->{pass} = \$pass;
+        $data->{datacap} = \$datacap;
 
         my $importlist = join ";", values %import;
         eval "$importlist;$_"; ## no critic (ProhibitStringyEval)

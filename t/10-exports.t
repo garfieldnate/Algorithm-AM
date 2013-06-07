@@ -62,20 +62,20 @@ sub begintesthook {
 sub beginrepeathook {
 	test_beginning_vars('beginrepeathook', @_);
 	test_item_vars('beginrepeathook', @_);
-	test_iter_vars('beginrepeathook');
+	test_iter_vars('beginrepeathook', @_);
 }
 
 sub datahook {
 	#$_[0] is $i
 	test_beginning_vars('datahook', $_[1]);
 	test_item_vars('datahook', $_[1]);
-	test_iter_vars('datahook');
+	test_iter_vars('datahook', $_[1]);
 	return 1;
 }
 sub endrepeathook {
 	test_beginning_vars('endrepeathook', @_);
 	test_item_vars('endrepeathook', @_);
-	test_iter_vars('endrepeathook');
+	test_iter_vars('endrepeathook', @_);
 	test_end_vars('endrepeathook', @_);
 }
 
@@ -147,10 +147,12 @@ sub test_item_vars {
 
 #test variables available per iteration
 sub test_iter_vars {
-	my ($hook_name) = @_;
-	ok($pass == 0 || $pass == 1, $hook_name . ': $pass- only do 2 passes of the data');
-	is($probability, 1, $hook_name . ': $probability- 1 by default');
-	is($datacap, 5, $hook_name . ': $datacap is 5, the number of exemplars');
+	my ($hook_name, $data) = @_;
+	ok(
+		${$data->{pass}} == 0 || ${$data->{pass}} == 1,
+		$hook_name . ': $pass- only do 2 passes of the data');
+	is(${$data->{probability}}, 1, $hook_name . ': $probability- 1 by default');
+	is(${$data->{datacap}}, 5, $hook_name . ': $datacap is 5, the number of exemplars');
 }
 
 #test setting of vars for classification results
