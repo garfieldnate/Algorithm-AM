@@ -1709,12 +1709,13 @@ used.
 
 =head1 SEE ALSO
 
-Home page for Analogical Modeling:
+The <home page|http://humanities.byu.edu/am/> for Analogical Modeling
+includes information about current research and publications, awell as
+sample data sets.
 
-  http://humanities.byu.edu/am/
-
-Source code, documentation, and sample data sets are all available
-here.
+The L<Wikipedia article|http://en.wikipedia.org/wiki/Analogical_modeling>
+has details and illustrations explaining the utility and inner-workings
+of analogical modeling.
 
 =head1 AUTHOR
 
