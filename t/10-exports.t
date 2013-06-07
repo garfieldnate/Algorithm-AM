@@ -51,46 +51,46 @@ unlink $results_path
 	if -e $results_path;
 
 sub beginhook {
-	test_beginning_vars_new('beginhook', @_);
+	test_beginning_vars('beginhook', @_);
 }
 
 sub begintesthook {
-	test_beginning_vars_new('begintesthook', @_);
-	test_item_vars('begintesthook');
+	test_beginning_vars('begintesthook', @_);
+	test_item_vars('begintesthook', @_);
 }
 
 sub beginrepeathook {
-	test_beginning_vars_new('beginrepeathook', @_);
-	test_item_vars('beginrepeathook');
+	test_beginning_vars('beginrepeathook', @_);
+	test_item_vars('beginrepeathook', @_);
 	test_iter_vars('beginrepeathook');
 }
 
 sub datahook {
 	#$_[0] is $i
-	test_beginning_vars_new('datahook', $_[1]);
-	test_item_vars('datahook');
+	test_beginning_vars('datahook', $_[1]);
+	test_item_vars('datahook', $_[1]);
 	test_iter_vars('datahook');
 	return 1;
 }
 sub endrepeathook {
-	test_beginning_vars_new('endrepeathook', @_);
-	test_item_vars('endrepeathook');
+	test_beginning_vars('endrepeathook', @_);
+	test_item_vars('endrepeathook', @_);
 	test_iter_vars('endrepeathook');
-	test_end_vars('endrepeathook');
+	test_end_vars('endrepeathook', @_);
 }
 
 sub endtesthook {
-	test_beginning_vars_new('endtesthook', @_);
-	test_item_vars('endtesthook');
-	test_end_vars('endtesthook');
+	test_beginning_vars('endtesthook', @_);
+	test_item_vars('endtesthook', @_);
+	test_end_vars('endtesthook', @_);
 }
 
 sub endhook {
-	test_beginning_vars_new('endhook', @_);
+	test_beginning_vars('endhook', @_);
 }
 
 #check vars available from beginning to end of classification
-sub test_beginning_vars_new {
+sub test_beginning_vars {
 	my ($hook_name, $data) = @_;
 	#TODO: export something better than this; why should we have to skip 0?
 	is_deeply($data->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
@@ -121,26 +121,27 @@ sub test_beginning_vars_new {
 #there are two items, 312 and 313, marked with different specs and outcomes
 #check the spec, outcome, and feature variables
 sub test_item_vars {
-	my ($hook) = @_;
+	my ($hook, $data) = @_;
 
-	ok($curTestOutcome == 2 || $curTestOutcome == 1, $hook . ': $curTestOutcome');
-	if($curTestOutcome == 2){
+	ok(${$data->{curTestOutcome}} == 2 || ${$data->{curTestOutcome}} == 1,
+		$hook . ': $curTestOutcome');
+	if(${$data->{curTestOutcome}} == 2){
 		like(
-			$curTestSpec,
+			${$data->{curTestSpec}},
 			qr/first test item$/,
 			$hook . ': $curTestSpec'
 		);
 
-		is_deeply(\@curTestItem, [3,1,3], $hook . ': @curTestItem')
-			or print $curTestSpec;
+		is_deeply($data->{curTestItem}, [3,1,3], $hook . ': @curTestItem')
+			or note explain $data->{curTestItem};
 	}else{
 		like(
-			$curTestSpec,
+			${$data->{curTestSpec}},
 			qr/second test item$/,
 			$hook . ': $curTestSpec'
 		);
-		is_deeply(\@curTestItem, [3,1,2], $hook . ': @curTestItem')
-			or print $curTestSpec;
+		is_deeply($data->{curTestItem}, [3,1,2], $hook . ': @curTestItem')
+			or note explain $data->{curTestItem};
 	}
 }
 
@@ -154,9 +155,9 @@ sub test_iter_vars {
 
 #test setting of vars for classification results
 sub test_end_vars {
-	my ($hook_name) = @_;
+	my ($hook_name, $data) = @_;
 	my $subtotals = [@sum[1,2]];
-	if($curTestOutcome == 2){
+	if(${$data->{curTestOutcome}} == 2){
 		is_deeply($subtotals, [4, 4], $hook_name . ': @sum');
 		is($pointertotal, 8, $hook_name . ': $pointertotal');
 		is($pointermax, 4, $hook_name . ': $pointermax');

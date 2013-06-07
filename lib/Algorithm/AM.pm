@@ -39,13 +39,17 @@ my %import;
 
 $import{'@outcomelist'}  = '$data->{outcomelist} = \@outcomelist;';
 $import{'%outcometonum'} = '$data->{outcometonum} = \%outcometonum;';
-$import{'@outcome'}      = '$data->{outcome} = \@outcome; $data->{outcome} = \@outcome;';
+$import{'@outcome'}      = '$data->{outcome} = \@outcome;';
 $import{'@data'}         = '$data->{data} = \@data;';
 $import{'@spec'}         = '$data->{spec} = \@spec;';
 
-$import{'$curTestOutcome'} = 'local *main::curTestOutcome = \$curTestOutcome';
-$import{'@curTestItem'}    = 'local *main::curTestItem = \@curTestItem';
-$import{'$curTestSpec'}    = 'local *main::curTestSpec = \$curTestSpec';
+$import{'$curTestOutcome'} = '$data->{curTestOutcome} = \$curTestOutcome;';
+$import{'@curTestItem'}    =
+    'local *main::curTestItem = \@curTestItem;
+    $data->{curTestItem} = \@curTestItem';
+$import{'$curTestSpec'}    =
+    'local *main::curTestSpec = \$curTestSpec;
+    $data->{curTestSpec} = \$curTestSpec';
 
 $import{'$probability'} = 'local *main::probability = \$probability';
 $import{'$pass'}        = 'local *main::pass = \$pass';
