@@ -8,6 +8,7 @@ Return classification data in a structure instead of printing it.
 Put format vars into optional Export?
 
 Write guide on porting old AM code.
+Eliminate outcometonum
 
 Figure out 'cannot remove directory' errors from dzil release
 Figure out good project organization to allow dual builders (MB and EUMM)

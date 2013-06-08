@@ -909,7 +909,7 @@ __END__
   use Algorithm::AM;
 
   my $p = Algorithm::AM->new('finnverb', -commas => 'no');
-  $p->();
+  $p->classify();
 
 =head1 DESCRIPTION
 
@@ -1092,31 +1092,29 @@ and prepare them for analysis.  To actually do any work, read on.
 To run an already initialized project with the defaults set at
 initialization time, use the following:
 
-  $p->();
+  $p->classify();
 
-Yep, that's all there is to it.  The call to C<new()> in
-C<Algorithm::AM> returns a reference to a subroutine, so to run it all
-you need to do is dereference it.
+Yep, that's all there is to it.
 
 Of course, you can override the defaults.  Any of the options set at
 initialization can be temporarily overridden.  So, for instance, you
 can run your project twice, once including nulls and once excluding
 them, as follows:
 
-  $p->(-nulls => 'include');
-  $p->(-nulls => 'exclude');
+  $p->classify(-nulls => 'include');
+  $p->classify(-nulls => 'exclude');
 
 Or, if you didn't specify a value at initialization time and accepted
 the default, you can merely use
 
-  $p->(-nulls => 'include');
-  $p->();
+  $p->classify(-nulls => 'include');
+  $p->classify();
 
 Or you can play with the probabilities:
 
-  $p->(-probability => 0.5, -repeat => 2);
-  $p->(-probability => 0.2, -repeat => 5);
-  $p->(-probability => 0.1, -repeat => 10);
+  $p->classify(-probability => 0.5, -repeat => 2);
+  $p->classify(-probability => 0.2, -repeat => 5);
+  $p->classify(-probability => 0.1, -repeat => 10);
 
 =head2 Output
 
@@ -1132,11 +1130,11 @@ do it the "obvious" way; the following won't work:
   open FH2, ">results02";
   open FH1, ">results01";
   select FH5;
-  $p->(-probability => 0.5, -repeat => 2);
+  $p->classify(-probability => 0.5, -repeat => 2);
   select FH2;
-  $p->(-probability => 0.2, -repeat => 5);
+  $p->classify(-probability => 0.2, -repeat => 5);
   select FH1;
-  $p->(-probability => 0.1, -repeat => 10);
+  $p->classify(-probability => 0.1, -repeat => 10);
   close FH1;
   close FH2;
   close FH5;
@@ -1179,7 +1177,7 @@ This hook is called after all test items are run.
 Example: To send all the output from a run to another file, you can do
 the following:
 
-  $p->(-beginhook => sub {open FH, ">myoutput"; select FH;},
+  $p->classify(-beginhook => sub {open FH, ">myoutput"; select FH;},
        -endhook => sub {close FH;});
 
 =item -begintesthook
@@ -1203,7 +1201,7 @@ use the variables C<$curTestOutcome>, C<$pointermax>, and C<@sum>:
     ## must use eq instead of == in following statement
     ++$count if $sum[$curTestOutcome] eq $pointermax;
   };
-  $p->(-endtesthook => $countsub,
+  $p->classify(-endtesthook => $countsub,
        -endhook => sub {print "Number of correct predictions: $count\n";});
 
 =item -beginrepeathook
@@ -1224,7 +1222,7 @@ item, you can use the variables C<$probability> and C<$pass>:
     $probability = (0.5, 0.2)[$pass];
     select((FH5, FH2)[$pass]);
   };
-  $p->(-beginrepeathook => $repeatsub);
+  $p->classify(-beginrepeathook => $repeatsub);
 
 Then on iteration 0, the test item is analyzed with the probability of
 any data item being included set to 0.5, with output sent to file
@@ -1274,7 +1272,7 @@ the variables C<@curTestItem>, C<@outcome>, and C<%outcometonum>:
     return 1 unless $outcome[$_[0]] eq $outcometonum{'a-oi'};
     return 0;
   };
-  $p->(-datahook => $datasub);
+  $p->classify(-datahook => $datasub);
 
 =back
 
@@ -1420,14 +1418,14 @@ number of data items considered decreases.  Here's one way to do it:
   $repeatsub = sub {
     $datacap = (1, 0.5, 0.25)[$pass] * scalar @data;
   };
-  $p->(-repeat => 3, -beginrepeathook => $repeatsub);
+  $p->classify(-repeat => 3, -beginrepeathook => $repeatsub);
 
 Note that this will give different results than the following:
 
   $repeatsub = sub {
     $probability = (1, 0.5, 0.25)[$pass];
   };
-  $p->(-probability => 1, -repeat => 3, -beginrepeathook => $repeatsub);
+  $p->classify(-probability => 1, -repeat => 3, -beginrepeathook => $repeatsub);
 
 The first way would be useful for modeling how predictions change as
 more examples are gathered -- say, as a child grows older (though the
@@ -1607,7 +1605,7 @@ for each test item.  Here's one way to do it:
       $correct;
     print "\n\n";
   };
-  $p->(-probability => 0.005, -repeat => 5,
+  $p->classify(-probability => 0.005, -repeat => 5,
        -begintesthook => $begintest, -endrepeathook => $endrepeat, -endtesthook => $endtest);
 
 =head2 Creating a Confusion Matrix
@@ -1658,7 +1656,7 @@ Here's one way to do it:
       print "\n\n";
     }
   };
-  $p->(-probability => 0.005, -repeat => 5,
+  $p->classify(-probability => 0.005, -repeat => 5,
        -beginhook => $begin, -endrepeathook => $endrepeat, -endhook => $end);
 
 
