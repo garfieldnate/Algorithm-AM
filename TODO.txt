@@ -5,6 +5,14 @@ Return classification data in a structure instead of printing it.
 	Perhaps split into several structures?
 	Use Hash::Tie or something like that for scalars
 
+Refactor variables plan:
+	I think beginning vars should just be in the AM object;
+	format vars should also be in the AM object
+	usage of outcometonum should be replaced with a method
+	@sum should be replaced with something with index starting at 0
+		possibly rename to "subtotals"
+
+
 Put format vars into optional Export?
 
 Write guide on porting old AM code.
