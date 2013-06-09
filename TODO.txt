@@ -6,6 +6,10 @@ Mention that the specifier is the data unless otherwise specified
 
 Use Path::Tiny to get project file paths
 
+
+Current: but in $self the following: $excNull, $excGiven, $linear,
+            $probability, $repeat,   $skipset, $gangs
+
 Refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
 		classify() method should classify a single vector

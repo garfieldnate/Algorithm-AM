@@ -88,15 +88,14 @@ sub new {
     croak "Project $self->{project} did not specify comma formatting"
         unless exists $opts{-commas};
 
-    my ( $bigsep, $smallsep );
     given($opts{-commas}){
         when('yes'){
-            $bigsep   = qr{\s*,\s*};
-            $smallsep = qr{\s+};
+            $self->{bigsep}   = qr{\s*,\s*};
+            $self->{smallsep} = qr{\s+};
         }
         when('no'){
-            $bigsep   = qr{\s+};
-            $smallsep = qr{};
+            $self->{bigsep}   = qr{\s+};
+            $self->{smallsep} = qr{};
         }
         default{
             croak "Project $self->{project} did not specify comma formatting correctly;\n" .
@@ -167,7 +166,7 @@ sub new {
 
     #TODO: put in a hash so everything can be labeled
     my (@projectdefaults) = (
-        $bigsep,      $smallsep, $excNull, $excGiven, $linear,
+        $excNull, $excGiven, $linear,
         $probability, $repeat,   $skipset, $gangs
     );
 
@@ -197,7 +196,7 @@ sub new {
       or carp "Couldn't open $self->{project}/data" and return { };
     while (<$dataset_fh>) {
         s/[\n\r]+$//;#cross-platform chomp
-        my ( $outcome, $data, $spec ) = split /$bigsep/, $_, 3;
+        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
         $spec ||= $data;
         my $l;
 
@@ -205,7 +204,7 @@ sub new {
         push @spec,    $spec;
         $l = length $spec;
         $slen = $l if $l > $slen;
-        my @datavar = split /$smallsep/, $data;
+        my @datavar = split /$self->{smallsep}/, $data;
         push @data, \@datavar;
         my $i;
         for ( $i = 0 ; $i < @datavar ; ++$i ) {
@@ -291,10 +290,10 @@ sub new {
         s/[\n\r]+$//
     } @testItems;
     my $item;
-    ( undef, $item ) = split /$bigsep/, $testItems[0];
+    ( undef, $item ) = split /$self->{bigsep}/, $testItems[0];
 
     #$maxvar is the number of features in the item
-    my $maxvar = scalar split /$smallsep/, $item;
+    my $maxvar = scalar split /$self->{smallsep}/, $item;
     $logger->info('...done');
 
     splice @vlen, $maxvar;
@@ -339,7 +338,7 @@ sub new {
         my (%opts) = @_;
 
         my (
-            $bigsep,      $smallsep, $excNull, $excGiven, $linear,
+            $excNull, $excGiven, $linear,
             $probability, $repeat,   $skipset, $gangs
         ) = @projectdefaults;
 
@@ -573,18 +572,18 @@ foreach my $t (@testItems) {
 ## parse test item
 
     my $curTestItem;
-    ( $curTestOutcome, $curTestItem, $curTestSpec ) = split /$bigsep/, $t, 3;
+    ( $curTestOutcome, $curTestItem, $curTestSpec ) = split /$self->{bigsep}/, $t, 3;
     $curTestOutcome = $octonum{$curTestOutcome};
     $curTestSpec ||= "";
 
 ## begin exclude nulls
     my $eq = 0;
-    @curTestItem = split /$smallsep/, $curTestItem;
+    @curTestItem = split /$self->{smallsep}/, $curTestItem;
     $eq += ( $_ eq '=' ) foreach @curTestItem;
     my $activeVar = @curTestItem - $eq;
 ## end exclude nulls
 ## begin include nulls
-    @curTestItem = split /$smallsep/, $curTestItem;
+    @curTestItem = split /$self->{smallsep}/, $curTestItem;
     my $activeVar = @curTestItem;
 ## end include nulls
 
