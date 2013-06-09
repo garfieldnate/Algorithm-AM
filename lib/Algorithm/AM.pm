@@ -78,13 +78,14 @@ sub new {
 
     croak 'Must specify project'
         unless ($project);
+    $self->{project} = $project;
 
     croak 'Project has no data file'
-        unless ( -e "$project/data" );
+        unless ( -e "$self->{project}/data" );
 
-    $logger->info("Initializing project $project");
+    $logger->info("Initializing project $self->{project}");
 
-    croak "Project $project did no specify comma formatting"
+    croak "Project $self->{project} did not specify comma formatting"
         unless exists $opts{-commas};
 
     my ( $bigsep, $smallsep );
@@ -98,7 +99,7 @@ sub new {
             $smallsep = qr{};
         }
         default{
-            croak "Project $project did not specify comma formatting correctly;\n" .
+            croak "Project $self->{project} did not specify comma formatting correctly;\n" .
                 q{(must specify -commas => 'yes' or -commas => 'no')};
         }
     }
@@ -108,7 +109,7 @@ sub new {
 
     if ( exists $opts{-nulls} ) {
         if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
-            carp "Project $project did not specify option -nulls correctly";
+            carp "Project $self->{project} did not specify option -nulls correctly";
             $logger->warn(q{(must be 'include' or 'exclude')});
             $logger->warn(q{Will use default value of 'exclude'});
         }
@@ -119,7 +120,7 @@ sub new {
 
     if ( exists $opts{-given} ) {
         if ( $opts{-given} !~ /(in|ex)clude/ ) {
-            carp "Project $project did not specify option -given correctly";
+            carp "Project $self->{project} did not specify option -given correctly";
             $logger->warn(q{(must be 'include' or 'exclude')});
             $logger->warn(q{Will use default value of 'exclude'});
         }
@@ -130,7 +131,7 @@ sub new {
 
     if ( exists $opts{-linear} ) {
         if ( $opts{-linear} !~ /(yes|no)/ ) {
-            carp "Project $project did not specify option -linear correctly";
+            carp "Project $self->{project} did not specify option -linear correctly";
             $logger->warn(q{(must be 'yes' or 'no')});
             $logger->warn(q{Will use default value of 'no'});
         }
@@ -144,7 +145,7 @@ sub new {
 
     if ( exists $opts{-skipset} ) {
         if ( $opts{-skipset} !~ /yes|no/ ) {
-            carp "Project $project did not specify option -skipset correctly";
+            carp "Project $self->{project} did not specify option -skipset correctly";
             $logger->warn(q{(must be 'yes' or 'no')});
             $logger->warn(q{Will use default value of 'yes'});
         }
@@ -155,7 +156,7 @@ sub new {
 
     if ( exists $opts{-gangs} ) {
         if ( $opts{-gangs} !~ /yes|summary|no/ ) {
-            carp "Project $project did not specify option -gangs correctly";
+            carp "Project $self->{project} did not specify option -gangs correctly";
             $logger->warn(q{(must be 'yes', 'summary', or 'no')});
             $logger->warn(q{Will use default value of 'no'});
         }
@@ -186,12 +187,14 @@ sub new {
 ## data file
 
     my ( @outcome, @data, @spec );
+    #length of longest specifier
     my $slen = 0;
     my @vlen = (0) x 60;
 
     #TODO: create a subroutine for this
-    open my $dataset_fh, '<', "$project/data" ## no critic (RequireBriefOpen)
-      or carp "Couldn't open $project/data" and return { };
+
+    open my $dataset_fh, '<', "$self->{project}/data" ## no critic (RequireBriefOpen)
+      or carp "Couldn't open $self->{project}/data" and return { };
     while (<$dataset_fh>) {
         s/[\n\r]+$//;#cross-platform chomp
         my ( $outcome, $data, $spec ) = split /$bigsep/, $_, 3;
@@ -210,8 +213,6 @@ sub new {
             $vlen[$i] = $l if $l > $vlen[$i];
         }
         $logger->debug( 'Data file: ' . scalar(@data) );
-##    last if $specifyFreq and ($specifyFreq == @data);
-
     }
     close $dataset_fh;
     my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
@@ -230,8 +231,8 @@ sub new {
     my $olen = 0;
 
     my $outcomecounter = 0;
-    if ( -e "$project/outcome" ) {
-        open my $outcome_fh, '<', "$project/outcome";
+    if ( -e "$self->{project}/outcome" ) {
+        open my $outcome_fh, '<', "$self->{project}/outcome";
         while (<$outcome_fh>) {
             s/[\n\r]+$//;#cross-platform chomp
             my ( $oc, $outcome ) = split /\s+/, $_, 2;
@@ -279,10 +280,10 @@ sub new {
 
     $logger->info('Test file...');
     my $test_fh;
-    open $test_fh, '<', "$project/test"
-      or carp "Couldn't open $project/test"
+    open $test_fh, '<', "$self->{project}/test"
+      or carp "Couldn't open $self->{project}/test"
       and $logger->warn('Will run data file against itself')
-      and open $test_fh, '<', "$project/data";
+      and open $test_fh, '<', "$self->{project}/data";
     my (@testItems) = <$test_fh>;
     close $test_fh;
     #cross-platform chomp
@@ -323,7 +324,7 @@ sub new {
         ## variables are all referred to somewhere, so that the closure
         ## works properly
         my (@fake);
-        @fake = \( $project, $amsub );
+        @fake = \( $self, $amsub );
         @fake = \(
             @outcome, @data, @spec, @itemcontextchain, @datatocontext,
             $sformat, $dformat
@@ -344,7 +345,7 @@ sub new {
 
         if ( exists $opts{-nulls} ) {
             if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
-                carp "Project $project did not specify option -nulls correctly";
+                carp "Project $self->{project} did not specify option -nulls correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
                 $logger->warn(q{Will use default value of '$excNull'});
             }
@@ -355,7 +356,7 @@ sub new {
 
         if ( exists $opts{-given} ) {
             if ( $opts{-given} !~ /(in|ex)clude/ ) {
-                carp "Project $project did not specify option -given correctly";
+                carp "Project $self->{project} did not specify option -given correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
                 $logger->warn(q{Will use default value of '$excGiven'});
             }
@@ -367,7 +368,7 @@ sub new {
         if ( exists $opts{-linear} ) {
             if ( $opts{-linear} !~ /(yes|no)/ ) {
                 carp
-                  "Project $project did not specify option -linear correctly";
+                  "Project $self->{project} did not specify option -linear correctly";
                 $logger->warn(q{(must be 'yes' or 'no')});
                 $logger->warn(q{Will use default value of '$linear'});
             }
@@ -382,7 +383,7 @@ sub new {
         if ( exists $opts{-skipset} ) {
             if ( $opts{-skipset} !~ /yes|no/ ) {
                 carp
-                  "Project $project did not specify option -skipset correctly";
+                  "Project $self->{project} did not specify option -skipset correctly";
                 $logger->warn(q{(must be 'yes' or 'no')});
                 $logger->warn(q{Will use default value of '$skipset'});
             }
@@ -393,7 +394,7 @@ sub new {
 
         if ( exists $opts{-gangs} ) {
             if ( $opts{-gangs} !~ /yes|summary|no/ ) {
-                carp "Project $project did not specify option -gangs correctly";
+                carp "Project $self->{project} did not specify option -gangs correctly";
                 $logger->warn(q{(must be 'yes', 'summary', or 'no')});
                 $logger->warn(q{Will use default value of '$gangs'});
             }
@@ -555,7 +556,7 @@ $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
         min_level => 'debug',
-        filename  => "$project/amcpresults",
+        filename  => "$self->{project}/amcpresults",
         newline => 1
     )
 );
@@ -1519,7 +1520,7 @@ items.  Justifies right.
 
 =item $sformat
 
-Leaves enough space to hold a specifier.  Justifies left.
+Leaves enough space to hold any of the specifiers in the data set.  Justifies left.
 
 =item $oformat
 

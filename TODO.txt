@@ -1,19 +1,28 @@
 Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table
 
-Return classification data in a structure instead of printing it.
-	Perhaps split into several structures?
-	Use Hash::Tie or something like that for scalars
+Define "specifier" early on in the documentation. Give the anatomy of a data file.
+Mention that the specifier is the data unless otherwise specified
 
-Refactor variables plan:
+Use Path::Tiny to get project file paths
+
+Refactoring plan:
+	Algorithm::AM object should be a single classifier, not a batch runner.
+		classify() method should classify a single vector
+		Should move iteration, and iter vars, into a separate class.
+			This will make testing much easier, since we can then simply return classification outcomes in a single variable and test it, instead of testing printed output or accumulating outcomes and testing them.
+		Don't print as we go; provide print methods
+			also provide method for grabbing format variables
+			pass the AM object to hooks so that these are usable
 	I think beginning vars should just be in the AM object;
 	format vars should also be in the AM object
 	usage of outcometonum should be replaced with a method
 	@sum should be replaced with something with index starting at 0
 		possibly rename to "subtotals"
+	I think endvars should be a return value besides being available in the hook.
+		should probably also return the entire analogical set...
 
-
-Put format vars into optional Export?
+Stop using symbol table to pass format variables
 
 Write guide on porting old AM code.
 Eliminate outcometonum
