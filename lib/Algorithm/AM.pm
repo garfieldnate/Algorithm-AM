@@ -185,11 +185,11 @@ sub new {
 
     my ( @outcome, @data, @spec );
     #length of longest specifier
-    my $slen = 0;
-    my @vlen = (0) x 60;
 
     #TODO: create a subroutine for this
 
+    my $slen = 0;
+    my @vlen = (0) x 60;
     open my $dataset_fh, '<', "$self->{project}/data" ## no critic (RequireBriefOpen)
       or carp "Couldn't open $self->{project}/data" and return { };
     while (<$dataset_fh>) {
@@ -204,8 +204,8 @@ sub new {
         $slen = $l if $l > $slen;
         my @datavar = split /$self->{smallsep}/, $data;
         push @data, \@datavar;
-        my $i;
-        for ( $i = 0 ; $i < @datavar ; ++$i ) {
+
+        for my $i (0 .. $#datavar ) {
             $l = length $datavar[$i];
             $vlen[$i] = $l if $l > $vlen[$i];
         }
@@ -244,13 +244,7 @@ sub new {
     else {
         $logger->info('...will use data file');
         my %oc = ();
-##    map { ++$oc{$_} } @outcome;
-        my $l = 0;
-        foreach (@outcome) {
-            ++$oc{$_};
-            ++$l;
-            $logger->debug("$l");
-        }
+        map { ++$oc{$_} } @outcome;
         foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
             $octonum{$_}      = ++$outcomecounter;
             $outcometonum{$_} = $outcomecounter;
@@ -258,14 +252,8 @@ sub new {
             push @ocl,         $_;
         }
     }
-##  @outcome = map { $octonum{$_} } @outcome;
-    my $l = 0;
     $logger->info('...converting outcomes to indices');
-    foreach (@outcome) {
-        $_ = $octonum{$_};
-        ++$l;
-        $logger->debug("$l");
-    }
+    @outcome = map { $octonum{$_} } @outcome;
     foreach (@outcomelist) {
         my $l;
         $l = length;
@@ -296,7 +284,7 @@ sub new {
     $logger->info('...done');
 
     splice @vlen, $maxvar;
-    my $vformat = join " ", map { "%-$_.${_}s" } @vlen;
+    $self->{vformat} = join " ", map { "%-$_.${_}s" } @vlen;
 
     my @activeVar;
     {
@@ -321,13 +309,13 @@ sub new {
         ## The following lines are here just to make sure that these
         ## variables are all referred to somewhere, so that the closure
         ## works properly
-        my (@fake);
-        @fake = \( $self, $amsub );
+        my @fake;
+        @fake = \( $amsub );
         @fake = \(
             @outcome, @data, @spec, @itemcontextchain, @datatocontext
         );
         @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum, $oformat );
-        @fake = \( @testItems,   $vformat, @activeVar );
+        @fake = \( @testItems, @activeVar );
         @fake = \(
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
             %gang, @sum
@@ -497,7 +485,6 @@ sub new {
         my $datacap = @data;
         my $grandtotal;
         my $high;
-        my $gformat;
 
         #beginning vars
         $data->{outcomelist} = \@outcomelist;
@@ -529,6 +516,10 @@ sub new {
         hv_store(%$self, 'sformat', $sformat);
         my $dformat = $self->{dformat};
         hv_store(%$self, 'dformat', $dformat);
+        my $vformat = $self->{vformat};
+        hv_store(%$self, 'vformat', $vformat);
+        my $gformat = $self->{gformat};
+        hv_store(%$self, 'gformat', $gformat);
 
         my $importlist = join ";", values %import;
         eval "$importlist;$_"; ## no critic (ProhibitStringyEval)
@@ -696,7 +687,7 @@ TOP
         $grandtotal = $pointers{'grandtotal'};
         # print Dumper \%pointers;
         my $longest = length $grandtotal;
-        $gformat = "%$longest.${longest}s";
+        $self->{gformat} = "%$longest.${longest}s";
         $high    = "";
 
         unless ($grandtotal) {
@@ -715,13 +706,13 @@ TOP
               and $n gt $high;#TODO: it having a semi-colon here right?
             $logger->info(
                 sprintf(
-                    "$oformat  $gformat  %7.3f%%",
+                    "$oformat  $self->{gformat}  %7.3f%%",
                     $outcomelist[$i], $n, 100 * $n / $grandtotal
                 )
             );
         }
-        $logger->info( sprintf( "$oformat  $gformat", "", '-' x $longest ) );
-        $logger->info( sprintf( "$oformat  $gformat", "", $grandtotal ) );
+        $logger->info( sprintf( "$oformat  $self->{gformat}", "", '-' x $longest ) );
+        $logger->info( sprintf( "$oformat  $self->{gformat}", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
             if ( $sum[$curTestOutcome] eq $high ) {
@@ -752,7 +743,7 @@ TOP
             my $p = $pointers{ $datatocontext[$i] };
             $logger->info(
                 sprintf(
-                    "$oformat  $self->{sformat}  $gformat  %7.3f%%",
+                    "$oformat  $self->{sformat}  $self->{gformat}  %7.3f%%",
                     $outcomelist[ $outcome[$i] ], $spec[$i],
                     $p,                           100 * $p / $grandtotal
                 )
@@ -764,7 +755,7 @@ TOP
         #TODO: explain the magic below
         $logger->info('Gang effects');
         my $dashes = '-' x ( $longest + 10 );
-        my $pad = " " x length sprintf "%7.3f%%  $gformat x $self->{dformat}  $oformat",
+        my $pad = " " x length sprintf "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
           0, '0', 0, "";
         foreach my $k (
             sort {
@@ -795,21 +786,21 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $gformat   $self->{dformat}  $oformat  $vformat",
+                            "%7.3f%%  $self->{gformat}   $self->{dformat}  $oformat  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $oformat  $vformat",
+                            "$dashes   $self->{dformat}  $oformat  $self->{vformat}",
                             "", "", @vtemp
                         )
                     );
                 }
                 $logger->info(
                     sprintf(
-                        "%7.3f%%  $gformat x $self->{dformat}  $oformat",
+                        "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
                         100 * $gang{$k} / $grandtotal,
                         $p,
                         $contextsize{$k},
@@ -824,7 +815,7 @@ TOP
                     $i = $itemcontextchain[$i]
                   )
                 {
-                    $logger->info( sprintf "$pad  $vformat  $spec[$i]",
+                    $logger->info( sprintf "$pad  $self->{vformat}  $spec[$i]",
                         @{ $data[$i] } );
                 }
 ## end skip gang list
@@ -850,14 +841,14 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-"%7.3f%%  $gformat   $self->{dformat}  $oformat  $vformat",
+"%7.3f%%  $self->{gformat}   $self->{dformat}  $oformat  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $oformat  $vformat",
+                            "$dashes   $self->{dformat}  $oformat  $self->{vformat}",
                             "", "", @vtemp
                         )
                     );
@@ -866,7 +857,7 @@ TOP
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $gformat x $self->{dformat}  $oformat",
+                            "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
                             100 * $gangsort[$i] * $p / $grandtotal,
                             $p, $gangsort[$i], $outcomelist[$i]
                         )
@@ -874,7 +865,7 @@ TOP
 ## begin skip gang list
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
-                            sprintf( "$pad  $vformat  $spec[$_]",
+                            sprintf( "$pad  $self->{vformat}  $spec[$_]",
                                 @{ $data[$_] } )
                         );
                     }
