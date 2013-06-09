@@ -7,7 +7,7 @@ Change values of excNull and excGiven to 1/0 or something more booleanish.
 
 Use Path::Tiny to get project file paths
 
-  NOTICE: used Array::RefElem hack to help with probability refactoring for now. We'll need to pass $self along later.
+  NOTICE: used Array::RefElem hack to help with refactoring probability, sformat, and dformat for now. We'll need to pass $self along later.
 
 Refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.

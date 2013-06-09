@@ -215,8 +215,9 @@ sub new {
     my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
     my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
 ## $vformat done after reading test file
-    my $sformat = "%-$slen.${slen}s";
-    my $dformat = "%" . ( scalar @data ) . ".0u";
+
+    $self->{sformat} = "%-$slen.${slen}s";
+    $self->{dformat} = "%" . ( scalar @data ) . ".0u";
 
 ## outcome file
 
@@ -323,8 +324,7 @@ sub new {
         my (@fake);
         @fake = \( $self, $amsub );
         @fake = \(
-            @outcome, @data, @spec, @itemcontextchain, @datatocontext,
-            $sformat, $dformat
+            @outcome, @data, @spec, @itemcontextchain, @datatocontext
         );
         @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum, $oformat );
         @fake = \( @testItems,   $vformat, @activeVar );
@@ -523,6 +523,12 @@ sub new {
         $data->{sum} = \@sum;
         $data->{pointertotal} = \$grandtotal;
         $data->{pointermax} = \$high;
+
+        #TODO: this is a hack to aid refactoring
+        my $sformat = $self->{sformat};
+        hv_store(%$self, 'sformat', $sformat);
+        my $dformat = $self->{dformat};
+        hv_store(%$self, 'dformat', $dformat);
 
         my $importlist = join ";", values %import;
         eval "$importlist;$_"; ## no critic (ProhibitStringyEval)
@@ -746,7 +752,7 @@ TOP
             my $p = $pointers{ $datatocontext[$i] };
             $logger->info(
                 sprintf(
-                    "$oformat  $sformat  $gformat  %7.3f%%",
+                    "$oformat  $self->{sformat}  $gformat  %7.3f%%",
                     $outcomelist[ $outcome[$i] ], $spec[$i],
                     $p,                           100 * $p / $grandtotal
                 )
@@ -758,7 +764,7 @@ TOP
         #TODO: explain the magic below
         $logger->info('Gang effects');
         my $dashes = '-' x ( $longest + 10 );
-        my $pad = " " x length sprintf "%7.3f%%  $gformat x $dformat  $oformat",
+        my $pad = " " x length sprintf "%7.3f%%  $gformat x $self->{dformat}  $oformat",
           0, '0', 0, "";
         foreach my $k (
             sort {
@@ -789,21 +795,21 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $gformat   $dformat  $oformat  $vformat",
+                            "%7.3f%%  $gformat   $self->{dformat}  $oformat  $vformat",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $dformat  $oformat  $vformat",
+                            "$dashes   $self->{dformat}  $oformat  $vformat",
                             "", "", @vtemp
                         )
                     );
                 }
                 $logger->info(
                     sprintf(
-                        "%7.3f%%  $gformat x $dformat  $oformat",
+                        "%7.3f%%  $gformat x $self->{dformat}  $oformat",
                         100 * $gang{$k} / $grandtotal,
                         $p,
                         $contextsize{$k},
@@ -844,14 +850,14 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-"%7.3f%%  $gformat   $dformat  $oformat  $vformat",
+"%7.3f%%  $gformat   $self->{dformat}  $oformat  $vformat",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $dformat  $oformat  $vformat",
+                            "$dashes   $self->{dformat}  $oformat  $vformat",
                             "", "", @vtemp
                         )
                     );
@@ -860,7 +866,7 @@ TOP
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $gformat x $dformat  $oformat",
+                            "%7.3f%%  $gformat x $self->{dformat}  $oformat",
                             100 * $gangsort[$i] * $p / $grandtotal,
                             $p, $gangsort[$i], $outcomelist[$i]
                         )
