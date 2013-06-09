@@ -108,8 +108,9 @@ sub new {
     $self->{excGiven} = 'exclude';
     $self->{linear} = 'no';
     $self->{probability} = undef;
-    my ($repeat, $skipset, $gangs )
-      = ( 1, 'yes', 'no' );
+    $self->{repeat} = '1';
+    $self->{skipset} = 'yes';
+    $self->{gangs} = 'no';
 
     if ( exists $opts{-nulls} ) {
         if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
@@ -144,8 +145,8 @@ sub new {
         }
     }
 
-    $self->{probability} = $opts{-probability} if exists $opts{-probability};
-    $repeat      = $opts{-repeat}      if exists $opts{-repeat};
+    $self->{probability}    = $opts{-probability} if exists $opts{-probability};
+    $self->{repeat}                 = $opts{-repeat}      if exists $opts{-repeat};
 
     if ( exists $opts{-skipset} ) {
         if ( $opts{-skipset} !~ /yes|no/ ) {
@@ -154,7 +155,7 @@ sub new {
             $logger->warn(q{Will use default value of 'yes'});
         }
         else {
-            $skipset = $opts{-skipset};
+            $self->{skipset} = $opts{-skipset};
         }
     }
 
@@ -165,14 +166,9 @@ sub new {
             $logger->warn(q{Will use default value of 'no'});
         }
         else {
-            $gangs = $opts{-gangs};
+            $self->{gangs} = $opts{-gangs};
         }
     }
-
-    #TODO: put in a hash so everything can be labeled
-    my (@projectdefaults) = (
-        $repeat,   $skipset, $gangs
-    );
 
 ## The following is in case I decide later to allow hooks to be set at
 ## initialization time as well as at run time
@@ -341,10 +337,6 @@ sub new {
 
         my (%opts) = @_;
 
-        my (
-            $repeat,   $skipset, $gangs
-        ) = @projectdefaults;
-
         if ( exists $opts{-nulls} ) {
             if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
                 carp "Project $self->{project} did not specify option -nulls correctly";
@@ -380,17 +372,17 @@ sub new {
         }
 
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
-        $repeat      = $opts{-repeat}      if exists $opts{-repeat};
+        $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
         if ( exists $opts{-skipset} ) {
             if ( $opts{-skipset} !~ /yes|no/ ) {
                 carp
                   "Project $self->{project} did not specify option -skipset correctly";
                 $logger->warn(q{(must be 'yes' or 'no')});
-                $logger->warn(q{Will use default value of '$skipset'});
+                $logger->warn(qq{Will use default value of '$self->{skipset}'});
             }
             else {
-                $skipset = $opts{-skipset};
+                $self->{skipset} = $opts{-skipset};
             }
         }
 
@@ -398,10 +390,10 @@ sub new {
             if ( $opts{-gangs} !~ /yes|summary|no/ ) {
                 carp "Project $self->{project} did not specify option -gangs correctly";
                 $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-                $logger->warn(q{Will use default value of '$gangs'});
+                $logger->warn(qq{Will use default value of '$self->{gangs}'});
             }
             else {
-                $gangs = $opts{-gangs};
+                $self->{gangs} = $opts{-gangs};
             }
         }
 
@@ -440,12 +432,12 @@ sub new {
             s/Probability of including any one data item: \$self->{probability}\n//s;
         }
 
-        if ( $skipset eq 'yes' ) {
+        if ( $self->{skipset} eq 'yes' ) {
             s/## begin analogical set.*?## end analogical set//sg;
         }
 
-        if ( $gangs ne 'yes' ) {
-            if ( $gangs eq 'summary' ) {
+        if ( $self->{gangs} ne 'yes' ) {
+            if ( $self->{gangs} eq 'summary' ) {
                 s/## begin skip gang list.*?## end skip gang list//sg;
             }
             else {
@@ -611,10 +603,10 @@ foreach my $t (@testItems) {
     ( $sec, $min, $hour ) = localtime();
     $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
     $logger->info("@curTestItem");
-    $logger->info( sprintf( "0/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
+    $logger->info( sprintf( "0/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
 
     $pass = 0;
-    while ( $pass < $repeat ) {
+    while ( $pass < $self->{repeat} ) {
         $beginrepeathook->($data);
         $datacap = int($datacap);
 
@@ -889,7 +881,7 @@ TOP
         ++$pass;
         ( $sec, $min, $hour ) = localtime();
         $logger->info(
-            sprintf( "$pass/$repeat  %2s:%02s:%02s", $hour, $min, $sec ) );
+            sprintf( "$pass/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
     }
     $endtesthook->($data);
 }
