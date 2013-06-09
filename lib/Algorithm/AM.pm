@@ -103,8 +103,10 @@ sub new {
         }
     }
 
-    my ( $excNull, $excGiven, $linear, $probability, $repeat, $skipset, $gangs )
-      = ( 'exclude', 'exclude', 'no', undef, 1, 'yes', 'no' );
+    $self->{excNull} = 'exclude';
+    $self->{excGiven} = 'exclude';
+    my ($linear, $probability, $repeat, $skipset, $gangs )
+      = ( 'no', undef, 1, 'yes', 'no' );
 
     if ( exists $opts{-nulls} ) {
         if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
@@ -113,7 +115,7 @@ sub new {
             $logger->warn(q{Will use default value of 'exclude'});
         }
         else {
-            $excNull = $opts{-nulls};
+            $self->{excNull} = $opts{-nulls};
         }
     }
 
@@ -124,7 +126,7 @@ sub new {
             $logger->warn(q{Will use default value of 'exclude'});
         }
         else {
-            $excGiven = $opts{-given};
+            $self->{excGiven} = $opts{-given};
         }
     }
 
@@ -166,7 +168,7 @@ sub new {
 
     #TODO: put in a hash so everything can be labeled
     my (@projectdefaults) = (
-        $excNull, $excGiven, $linear,
+        $linear,
         $probability, $repeat,   $skipset, $gangs
     );
 
@@ -338,7 +340,7 @@ sub new {
         my (%opts) = @_;
 
         my (
-            $excNull, $excGiven, $linear,
+            $linear,
             $probability, $repeat,   $skipset, $gangs
         ) = @projectdefaults;
 
@@ -346,10 +348,10 @@ sub new {
             if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
                 carp "Project $self->{project} did not specify option -nulls correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(q{Will use default value of '$excNull'});
+                $logger->warn(qq{Will use default value of '$self->{excNull}'});
             }
             else {
-                $excNull = $opts{-nulls};
+                $self->{excNull} = $opts{-nulls};
             }
         }
 
@@ -357,10 +359,10 @@ sub new {
             if ( $opts{-given} !~ /(in|ex)clude/ ) {
                 carp "Project $self->{project} did not specify option -given correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(q{Will use default value of '$excGiven'});
+                $logger->warn(qq{Will use default value of '$self->{excGiven}'});
             }
             else {
-                $excGiven = $opts{-given};
+                $self->{excGiven} = $opts{-given};
             }
         }
 
@@ -405,7 +407,7 @@ sub new {
         #TODO: what is $subsource used for?
         local $_ = $subsource;
 
-        if ( $excNull eq 'exclude' ) {
+        if ( $self->{excNull} eq 'exclude' ) {
             s/## begin include nulls.*?## end include nulls//sg;
             s/Nulls: include\n//s;
         }
@@ -414,7 +416,7 @@ sub new {
             s/Nulls: exclude\n//s;
         }
 
-        if ( $excGiven eq 'exclude' ) {
+        if ( $self->{excGiven} eq 'exclude' ) {
             s/## begin include given.*?## end include given//sg;
             s/Include context even if it is in the data file\n//s;
         }
@@ -664,7 +666,8 @@ foreach my $t (@testItems) {
         if ( exists $subtooutcome{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
-            delete $subtooutcome{$nullcontext}, ++$eg if $excGiven;
+            # TODO: this doesn't look right. Should it check if excGiven is 'include'?
+            delete $subtooutcome{$nullcontext}, ++$eg if $self->{excGiven};
 ## end exclude given;
         }
 

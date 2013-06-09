@@ -3,6 +3,7 @@ Fix import mechanism
 
 Define "specifier" early on in the documentation. Give the anatomy of a data file.
 Mention that the specifier is the data unless otherwise specified
+Change values of excNull and excGiven to 1/0 or something more booleanish.
 
 Use Path::Tiny to get project file paths
 
