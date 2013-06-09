@@ -4,6 +4,7 @@ package Algorithm::AM;
 use strict;
 use warnings;
 use feature 'switch';
+use Array::RefElem qw(hv_store);
 
 # VERSION;
 
@@ -105,8 +106,10 @@ sub new {
 
     $self->{excNull} = 'exclude';
     $self->{excGiven} = 'exclude';
-    my ($linear, $probability, $repeat, $skipset, $gangs )
-      = ( 'no', undef, 1, 'yes', 'no' );
+    $self->{linear} = 'no';
+    $self->{probability} = undef;
+    my ($repeat, $skipset, $gangs )
+      = ( 1, 'yes', 'no' );
 
     if ( exists $opts{-nulls} ) {
         if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
@@ -137,11 +140,11 @@ sub new {
             $logger->warn(q{Will use default value of 'no'});
         }
         else {
-            $linear = $opts{-linear};
+            $self->{linear} = $opts{-linear};
         }
     }
 
-    $probability = $opts{-probability} if exists $opts{-probability};
+    $self->{probability} = $opts{-probability} if exists $opts{-probability};
     $repeat      = $opts{-repeat}      if exists $opts{-repeat};
 
     if ( exists $opts{-skipset} ) {
@@ -168,8 +171,7 @@ sub new {
 
     #TODO: put in a hash so everything can be labeled
     my (@projectdefaults) = (
-        $linear,
-        $probability, $repeat,   $skipset, $gangs
+        $repeat,   $skipset, $gangs
     );
 
 ## The following is in case I decide later to allow hooks to be set at
@@ -340,8 +342,7 @@ sub new {
         my (%opts) = @_;
 
         my (
-            $linear,
-            $probability, $repeat,   $skipset, $gangs
+            $repeat,   $skipset, $gangs
         ) = @projectdefaults;
 
         if ( exists $opts{-nulls} ) {
@@ -371,14 +372,14 @@ sub new {
                 carp
                   "Project $self->{project} did not specify option -linear correctly";
                 $logger->warn(q{(must be 'yes' or 'no')});
-                $logger->warn(q{Will use default value of '$linear'});
+                $logger->warn(qq{Will use default value of '$self->{linear}'});
             }
             else {
-                $linear = $opts{-linear};
+                $self->{linear} = $opts{-linear};
             }
         }
 
-        $probability = $opts{-probability} if exists $opts{-probability};
+        $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $repeat      = $opts{-repeat}      if exists $opts{-repeat};
 
         if ( exists $opts{-skipset} ) {
@@ -425,7 +426,7 @@ sub new {
             s/If context is in data file then exclude\n//s;
         }
 
-        if ( $linear eq 'yes' ) {
+        if ( $self->{linear} eq 'yes' ) {
             s/_fillandcount\(X\)/_fillandcount(0)/;
             s/Gang: squared\n//s;
         }
@@ -434,9 +435,9 @@ sub new {
             s/Gang: linear\n//s;
         }
 
-        if ( not defined $probability ) {
+        if ( not defined $self->{probability} ) {
             s/## begin probability.*?## end probability//sg;
-            s/Probability of including any one data item: \$probability\n//s;
+            s/Probability of including any one data item: \$self->{probability}\n//s;
         }
 
         if ( $skipset eq 'yes' ) {
@@ -521,7 +522,10 @@ sub new {
         $data->{curTestSpec} = \$curTestSpec;
 
         #iter vars
-        $data->{probability} = \$probability;
+        #TODO: this is a hack to help while refactoring
+        my $probability = $self->{probability};
+        hv_store(%$data, 'probability', $probability);
+        $data->{probability} = $probability;
         $data->{pass} = \$pass;
         $data->{datacap} = \$datacap;
 
@@ -631,7 +635,7 @@ foreach my $t (@testItems) {
             --$i;
             ++$excludedData, next unless $datahook->($i, $data);
 ## begin probability
-            ++$excludedData, next if rand() > $probability;
+            ++$excludedData, next if rand() > $self->{probability};
 ## end probability
             my @dataItem = @{ $data[$i] };
             my @alist    = @activeVar;
@@ -676,7 +680,7 @@ Given Context:  @curTestItem, $curTestSpec
 If context is in data file then exclude
 Include context even if it is in the data file
 Number of data items: @{[$datacap]}
-Probability of including any one data item: $probability
+Probability of including any one data item: $self->{probability}
 Total Excluded: $excludedData @{[ $eg ? " + test item" : "" ]}
 Nulls: exclude
 Nulls: include

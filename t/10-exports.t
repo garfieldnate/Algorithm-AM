@@ -152,7 +152,7 @@ sub test_iter_vars {
 	ok(
 		${$data->{pass}} == 0 || ${$data->{pass}} == 1,
 		$hook_name . ': $pass- only do 2 passes of the data');
-	is(${$data->{probability}}, 1, $hook_name . ': $probability- 1 by default');
+	is($data->{probability}, 1, $hook_name . ': $probability- 1 by default');
 	is(${$data->{datacap}}, 5, $hook_name . ': $datacap is 5, the number of exemplars');
 }
 

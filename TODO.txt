@@ -8,8 +8,9 @@ Change values of excNull and excGiven to 1/0 or something more booleanish.
 Use Path::Tiny to get project file paths
 
 
-Current: but in $self the following: $excNull, $excGiven, $linear,
-            $probability, $repeat,   $skipset, $gangs
+Current: but in $self the following: $repeat,   $skipset, $gangs
+  NOTICE: used Array::RefElem hack to help for now. We'll need to pass $self along.
+Next: to make this work, download Array::RefElem and tie hash values for $probability
 
 Refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
