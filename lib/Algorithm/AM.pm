@@ -4,6 +4,9 @@ package Algorithm::AM;
 use strict;
 use warnings;
 use feature 'switch';
+use Exporter::Easy (
+    OK => ['bigcmp']
+);
 use Array::RefElem qw(hv_store);
 
 # VERSION;
@@ -44,11 +47,6 @@ $import{'$sformat'} = 'local *main::sformat = \$sformat';
 $import{'$oformat'} = 'local *main::oformat = \$oformat';
 $import{'$vformat'} = 'local *main::vformat = \$vformat';
 $import{'$pformat'} = 'local *main::pformat = \$gformat';
-
-$import{'bigcmp'} = 'local *main::bigcmp = sub {
-     my($a,$b) = @_;
-     return (length($a) <=> length($b)) || ($a cmp $b);
-   }';
 
 ## Other variables to be exported some day
 ## $import{'@itemcontextchain'} =
@@ -542,6 +540,11 @@ sub new {
         \%pointers,             \%gang,         \@sum
     );
     return $self;
+}
+
+sub bigcmp {
+    my($a,$b) = @_;
+    return (length($a) <=> length($b)) || ($a cmp $b);
 }
 
 1;

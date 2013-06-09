@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More 0.88;
 plan tests => 5;
-use Algorithm::AM;
+use Algorithm::AM qw(bigcmp);
 use FindBin qw($Bin);
 use Path::Tiny;
 use Data::Dumper;
