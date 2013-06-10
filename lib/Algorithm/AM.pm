@@ -7,7 +7,6 @@ use feature 'switch';
 use Exporter::Easy (
     OK => ['bigcmp']
 );
-use Array::RefElem qw(hv_store);
 
 # VERSION;
 
@@ -39,30 +38,14 @@ $subsource =~ s/__END__.*//s;
 
 my %import;
 
-## Useful variables exported and documented
-
-#format vars
-$import{'$dformat'} = 'local *main::dformat = \$dformat';
-$import{'$sformat'} = 'local *main::sformat = \$sformat';
-$import{'$oformat'} = 'local *main::oformat = \$oformat';
-$import{'$vformat'} = 'local *main::vformat = \$vformat';
-$import{'$pformat'} = 'local *main::pformat = \$gformat';
-
-## Other variables to be exported some day
-## $import{'@itemcontextchain'} =
-##   'local *main::itemcontextchain = \@itemcontextchain';
-## $import{'@datatocontext'} =
-##   'local *main::datatocontext = \@datatocontext';
-## $import{'%itemcontextchainhead'} =
-##   'local *main::itemcontextchainhead = \%itemcontextchainhead';
-## $import{'%subtooutcome'} =
-##   'local *main::subtooutcome = \%subtooutcome';
-## $import{'%contextsize'} =
-##   'local *main::contextsize = \%contextsize';
-## $import{'%pointers'} =
-##   'local *main::pointers = \%pointers';
-## $import{'%gang'} =
-##   'local *main::gang = \%gang';
+## TODO: variables to be exported some day
+## @itemcontextchain
+## @datatocontext
+## %itemcontextchainhead
+## %subtooutcome
+## %contextsize
+## %pointers
+## %gang
 
 sub new {
     my ($proto, $project, %opts) = @_;
@@ -259,7 +242,7 @@ sub new {
         $l = length;
         $olen = $l if $l > $olen;
     }
-    my $oformat = "%-$olen.${olen}s";
+    $self->{oformat} = "%-$olen.${olen}s";
     $logger->info('...done');
 
 ## test file
@@ -314,7 +297,7 @@ sub new {
         @fake = \(
             @outcome, @data, @spec, @itemcontextchain, @datatocontext
         );
-        @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum, $oformat );
+        @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum);
         @fake = \( @testItems, @activeVar );
         @fake = \(
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
@@ -457,7 +440,7 @@ sub new {
             $datahook = $opts{-datahook};
         }
         unless ( defined $datahook ) {
-            s/next unless \$datahook->\(\$i, \$data\)//;
+            s/next unless \$datahook->\([^)]+\)//;
         }
         if ( exists $opts{-endrepeathook} ) {
             $endrepeathook = $opts{-endrepeathook};
@@ -494,15 +477,12 @@ sub new {
         $data->{spec} = \@spec;
 
         #item vars
+        #TODO: stop using sclar pointers here...
         $data->{curTestOutcome} = \$curTestOutcome;
         $data->{curTestItem} = \@curTestItem;
         $data->{curTestSpec} = \$curTestSpec;
 
         #iter vars
-        #TODO: this is a hack to help while refactoring
-        my $probability = $self->{probability};
-        hv_store(%$data, 'probability', $probability);
-        $data->{probability} = $probability;
         $data->{pass} = \$pass;
         $data->{datacap} = \$datacap;
 
@@ -511,21 +491,9 @@ sub new {
         $data->{pointertotal} = \$grandtotal;
         $data->{pointermax} = \$high;
 
-        #TODO: this is a hack to aid refactoring
-        my $sformat = $self->{sformat};
-        hv_store(%$self, 'sformat', $sformat);
-        my $dformat = $self->{dformat};
-        hv_store(%$self, 'dformat', $dformat);
-        my $vformat = $self->{vformat};
-        hv_store(%$self, 'vformat', $vformat);
-        my $gformat = $self->{gformat};
-        hv_store(%$self, 'gformat', $gformat);
-
-        my $importlist = join ";", values %import;
-        eval "$importlist;$_"; ## no critic (ProhibitStringyEval)
+        eval $_; ## no critic (ProhibitStringyEval)
         $logger->warn($@)
           if $@;
-
     };
 
     # bless $amsub, $class;
@@ -560,7 +528,7 @@ $logger->add(
 
 my ( $sec, $min, $hour );
 
-$beginhook->($data);
+$beginhook->($self, $data);
 
 my $left = scalar @testItems;
 foreach my $t (@testItems) {
@@ -585,7 +553,7 @@ foreach my $t (@testItems) {
     my $activeVar = @curTestItem;
 ## end include nulls
 
-    $begintesthook->($data);
+    $begintesthook->($self, $data);
 
     {
         use integer;
@@ -607,7 +575,7 @@ foreach my $t (@testItems) {
 
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
-        $beginrepeathook->($data);
+        $beginrepeathook->($self, $data);
         $datacap = int($datacap);
 
         my $excludedData = 0;
@@ -625,7 +593,7 @@ foreach my $t (@testItems) {
 
         for ( my $i = $datacap ; $i ; ) {
             --$i;
-            ++$excludedData, next unless $datahook->($i, $data);
+            ++$excludedData, next unless $datahook->($self, $data, $i);
 ## begin probability
             ++$excludedData, next if rand() > $self->{probability};
 ## end probability
@@ -706,13 +674,13 @@ TOP
               and $n gt $high;#TODO: it having a semi-colon here right?
             $logger->info(
                 sprintf(
-                    "$oformat  $self->{gformat}  %7.3f%%",
+                    "$self->{oformat}  $self->{gformat}  %7.3f%%",
                     $outcomelist[$i], $n, 100 * $n / $grandtotal
                 )
             );
         }
-        $logger->info( sprintf( "$oformat  $self->{gformat}", "", '-' x $longest ) );
-        $logger->info( sprintf( "$oformat  $self->{gformat}", "", $grandtotal ) );
+        $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", '-' x $longest ) );
+        $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
             if ( $sum[$curTestOutcome] eq $high ) {
@@ -743,7 +711,7 @@ TOP
             my $p = $pointers{ $datatocontext[$i] };
             $logger->info(
                 sprintf(
-                    "$oformat  $self->{sformat}  $self->{gformat}  %7.3f%%",
+                    "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
                     $outcomelist[ $outcome[$i] ], $spec[$i],
                     $p,                           100 * $p / $grandtotal
                 )
@@ -755,7 +723,7 @@ TOP
         #TODO: explain the magic below
         $logger->info('Gang effects');
         my $dashes = '-' x ( $longest + 10 );
-        my $pad = " " x length sprintf "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
+        my $pad = " " x length sprintf "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
           0, '0', 0, "";
         foreach my $k (
             sort {
@@ -786,21 +754,21 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $self->{gformat}   $self->{dformat}  $oformat  $self->{vformat}",
+                            "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $oformat  $self->{vformat}",
+                            "$dashes   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             "", "", @vtemp
                         )
                     );
                 }
                 $logger->info(
                     sprintf(
-                        "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
+                        "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
                         100 * $gang{$k} / $grandtotal,
                         $p,
                         $contextsize{$k},
@@ -841,14 +809,14 @@ TOP
                     no warnings;
                     $logger->info(
                         sprintf(
-"%7.3f%%  $self->{gformat}   $self->{dformat}  $oformat  $self->{vformat}",
+"%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
                             $gang{$k}, "", "", @curTestItem
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $oformat  $self->{vformat}",
+                            "$dashes   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             "", "", @vtemp
                         )
                     );
@@ -857,7 +825,7 @@ TOP
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $self->{gformat} x $self->{dformat}  $oformat",
+                            "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
                             100 * $gangsort[$i] * $p / $grandtotal,
                             $p, $gangsort[$i], $outcomelist[$i]
                         )
@@ -877,19 +845,19 @@ TOP
 
     }
     continue {
-        $endrepeathook->($data);
+        $endrepeathook->($self, $data);
         ++$pass;
         ( $sec, $min, $hour ) = localtime();
         $logger->info(
             sprintf( "$pass/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
     }
-    $endtesthook->($data);
+    $endtesthook->($self, $data);
 }
 
 ( $sec, $min, $hour ) = localtime();
 $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
 
-$endhook->($data);
+$endhook->($self, $data);
 
 #go back to printing to the screen
 $logger->remove('amcpresults');

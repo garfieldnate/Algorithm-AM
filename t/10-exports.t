@@ -67,9 +67,9 @@ sub beginrepeathook {
 
 sub datahook {
 	#$_[0] is $i
-	test_beginning_vars('datahook', $_[1]);
-	test_item_vars('datahook', $_[1]);
-	test_iter_vars('datahook', $_[1]);
+	test_beginning_vars('datahook', @_);
+	test_item_vars('datahook', @_);
+	test_iter_vars('datahook', @_);
 	return 1;
 }
 
@@ -92,7 +92,7 @@ sub endhook {
 
 #check vars available from beginning to end of classification
 sub test_beginning_vars {
-	my ($hook_name, $data) = @_;
+	my ($hook_name, $am, $data) = @_;
 	#TODO: export something better than this; why should we have to skip 0?
 	is_deeply($data->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
 		or note explain $data->{outcomelist};
@@ -122,7 +122,7 @@ sub test_beginning_vars {
 #there are two items, 312 and 313, marked with different specs and outcomes
 #check the spec, outcome, and feature variables
 sub test_item_vars {
-	my ($hook, $data) = @_;
+	my ($hook, $am, $data) = @_;
 
 	ok(${$data->{curTestOutcome}} == 2 || ${$data->{curTestOutcome}} == 1,
 		$hook . ': $curTestOutcome');
@@ -148,17 +148,17 @@ sub test_item_vars {
 
 #test variables available per iteration
 sub test_iter_vars {
-	my ($hook_name, $data) = @_;
+	my ($hook_name, $am, $data) = @_;
 	ok(
 		${$data->{pass}} == 0 || ${$data->{pass}} == 1,
 		$hook_name . ': $pass- only do 2 passes of the data');
-	is($data->{probability}, 1, $hook_name . ': $probability- 1 by default');
+	is($am->{probability}, 1, $hook_name . ': $probability- 1 by default');
 	is(${$data->{datacap}}, 5, $hook_name . ': $datacap is 5, the number of exemplars');
 }
 
 #test setting of vars for classification results
 sub test_end_vars {
-	my ($hook_name, $data) = @_;
+	my ($hook_name, $am, $data) = @_;
 	my $subtotals = [@{$data->{sum}}[1,2]];
 	if(${$data->{curTestOutcome}} == 2){
 		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');

@@ -71,7 +71,7 @@ unlink $results_path
 #now check that the return value of datahook is correctly interpreted
 $am->classify(
 	-datahook 	=> sub {
-		my ($index) = @_;
+		my ($am, $data, $index) = @_;
 		#will be false for index 0, so index 0 will be removed
 		return $index;
 	},

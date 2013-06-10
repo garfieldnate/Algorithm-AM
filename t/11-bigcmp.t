@@ -32,7 +32,7 @@ sub endhook {
 
 #compare the pointer counts, which should be 4 and 9 for the chapter 3 data
 sub test_bigcmp {
-	my ($data) = @_;
+	my ($am, $data) = @_;
 	my ($a, $b) = @{$data->{sum}}[1,2];
 	is("$a", '4', 'compare 9');
 	is("$b", '9', 'and 4');

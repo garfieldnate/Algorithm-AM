@@ -17,7 +17,7 @@ my $p = Algorithm::AM->new(
 my $count    = 0;
 my @confusion;
 my $countsub = sub {
-    my ($data) = @_;
+    my ($am, $data) = @_;
     my $sum = $data->{sum};
     my $pointermax = $data->{pointermax};
     my $curTestOutcome = ${$data->{curTestOutcome}};
@@ -29,7 +29,7 @@ my $begin = sub {
     @confusion = ();
 };
 my $endrepeat = sub {
-    my ($data) = @_;
+    my ($am, $data) = @_;
     my $sum = $data->{sum};
     my $curTestOutcome = ${$data->{curTestOutcome}};
     my $pointermax = $data->{pointermax};
@@ -54,7 +54,7 @@ my $endrepeat = sub {
 };
 
 my $end = sub {
-    my ($data) = @_;
+    my ($am, $data) = @_;
     my $outcomelist = $data->{outcomelist};
 
     for my $i ( 1 .. $#$outcomelist ) {
@@ -63,11 +63,11 @@ my $end = sub {
             $total += $i;
         }
         next unless $total;
-        printf "Test items with outcome $oformat were predicted as follows:\n",
+        printf "Test items with outcome $am->{oformat} were predicted as follows:\n",
           $outcomelist->[$i];
         for my $j ( 1 .. $#$outcomelist ) {
             next unless ( my $t = $confusion[$i][$j] );
-            printf "%7.3f%% $oformat  (%i/%i)\n", 100 * $t / $total,
+            printf "%7.3f%% $am->{oformat}  (%i/%i)\n", 100 * $t / $total,
               $outcomelist->[$j], $t, $total;
         }
         if ( my $t = $confusion[$i][0] ) {
