@@ -543,21 +543,21 @@ foreach my $t (@testItems) {
     my $eq = 0;
     $data->{curTestItem} = [split /$self->{smallsep}/, $curTestItem];
     $eq += ( $_ eq '=' ) foreach @{ $data->{curTestItem} };
-    my $activeVar = @{ $data->{curTestItem} } - $eq;
+    $self->{activeVar} = @{ $data->{curTestItem} } - $eq;
 ## end exclude nulls
 ## begin include nulls
     $data->{curTestItem}  = [split /$self->{smallsep}/, $curTestItem];
-    my $activeVar = @{ $data->{curTestItem} };
+    $self->{activeVar} = @{ $data->{curTestItem} };
 ## end include nulls
 
     $begintesthook->($self, $data);
 
     {
         use integer;
-        my $half = $activeVar / 2;
+        my $half = $self->{activeVar} / 2;
         $activeVar[0] = $half / 2;
         $activeVar[1] = $half - $activeVar[0];
-        $half         = $activeVar - $half;
+        $half         = $self->{activeVar} - $half;
         $activeVar[2] = $half / 2;
         $activeVar[3] = $half - $activeVar[2];
     }
@@ -644,7 +644,7 @@ Nulls: exclude
 Nulls: include
 Gang: linear
 Gang: squared
-Number of active variables: $activeVar
+Number of active variables: $self->{activeVar}
 TOP
         $logger->info('Test item is in the data.')
           if $testindata;
