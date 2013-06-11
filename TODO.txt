@@ -1,3 +1,5 @@
+Next: move $eg and $excludedData into $self, then create print_summary method with contents of 636-648.
+
 Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table
 
@@ -6,8 +8,6 @@ Mention that the specifier is the data unless otherwise specified
 Change values of excNull and excGiven to 1/0 or something more booleanish.
 
 Use Path::Tiny to get project file paths
-
-  NOTICE: used Array::RefElem hack to help with refactoring probability, [sdov[pg]]format, and dformat for now. We'll need to pass $self along later.
 
 Refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
