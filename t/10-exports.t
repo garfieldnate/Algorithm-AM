@@ -118,7 +118,7 @@ sub test_item_vars {
 			$hook . ': $curTestSpec'
 		);
 
-		is_deeply($data->{curTestItem}, [3,1,3], $hook . ': @curTestItem')
+		is_deeply($data->{curTestItem}, [3,1,3], $hook . ': @{ $data->{curTestItem} }')
 			or note explain $data->{curTestItem};
 	}else{
 		like(
@@ -126,7 +126,7 @@ sub test_item_vars {
 			qr/second test item$/,
 			$hook . ': $curTestSpec'
 		);
-		is_deeply($data->{curTestItem}, [3,1,2], $hook . ': @curTestItem')
+		is_deeply($data->{curTestItem}, [3,1,2], $hook . ': @{ $data->{curTestItem} }')
 			or note explain $data->{curTestItem};
 	}
 }

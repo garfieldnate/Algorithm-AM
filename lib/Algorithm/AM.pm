@@ -462,7 +462,7 @@ sub new {
         }
 
 ## stuff to be exported
-        my ( $curTestOutcome, @curTestItem);
+        my ( $curTestOutcome);
         my $data;
         my $pass;
         my $datacap = @data;
@@ -479,7 +479,6 @@ sub new {
         #item vars
         #TODO: stop using sclar pointers here...
         $data->{curTestOutcome} = \$curTestOutcome;
-        $data->{curTestItem} = \@curTestItem;
 
         #iter vars
         $data->{pass} = \$pass;
@@ -543,13 +542,13 @@ foreach my $t (@testItems) {
 
 ## begin exclude nulls
     my $eq = 0;
-    @curTestItem = split /$self->{smallsep}/, $curTestItem;
-    $eq += ( $_ eq '=' ) foreach @curTestItem;
-    my $activeVar = @curTestItem - $eq;
+    $data->{curTestItem} = [split /$self->{smallsep}/, $curTestItem];
+    $eq += ( $_ eq '=' ) foreach @{ $data->{curTestItem} };
+    my $activeVar = @{ $data->{curTestItem} } - $eq;
 ## end exclude nulls
 ## begin include nulls
-    @curTestItem = split /$self->{smallsep}/, $curTestItem;
-    my $activeVar = @curTestItem;
+    $data->{curTestItem}  = [split /$self->{smallsep}/, $curTestItem];
+    my $activeVar = @{ $data->{curTestItem} };
 ## end include nulls
 
     $begintesthook->($self, $data);
@@ -569,7 +568,7 @@ foreach my $t (@testItems) {
 
     ( $sec, $min, $hour ) = localtime();
     $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
-    $logger->info("@curTestItem");
+    $logger->info("@{ $data->{curTestItem} }");
     $logger->info( sprintf( "0/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
 
     $pass = 0;
@@ -605,9 +604,9 @@ foreach my $t (@testItems) {
                 my $c = 0;
                 for ( ; $a ; --$a ) {
 ## begin exclude nulls
-                    ++$j while $curTestItem[$j] eq '=';
+                    ++$j while ${ $data->{curTestItem} }[$j] eq '=';
 ## end exclude nulls
-                    $c = ( $c << 1 ) | ( $curTestItem[$j] ne $dataItem[$j] );
+                    $c = ( $c << 1 ) | ( ${ $data->{curTestItem} }[$j] ne $dataItem[$j] );
                     ++$j;
                 }
                 push @clist, $c;
@@ -635,7 +634,7 @@ foreach my $t (@testItems) {
         }
 
         $logger->info(<<TOP);
-Given Context:  @curTestItem, $data->{curTestSpec}
+Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}
 If context is in data file then exclude
 Include context even if it is in the data file
 Number of data items: @{[$datacap]}
@@ -733,7 +732,7 @@ TOP
         {
             my @clist   = unpack "S!4", $k;
             my @alist   = @activeVar;
-            my (@vtemp) = @curTestItem;
+            my (@vtemp) = @{ $data->{curTestItem} };
             my $j       = 1;
             while (@alist) {
                 my $a = pop @alist;
@@ -755,7 +754,7 @@ TOP
                         sprintf(
                             "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
-                            $gang{$k}, "", "", @curTestItem
+                            $gang{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
@@ -810,7 +809,7 @@ TOP
                         sprintf(
 "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
                             100 * $gang{$k} / $grandtotal,
-                            $gang{$k}, "", "", @curTestItem
+                            $gang{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
