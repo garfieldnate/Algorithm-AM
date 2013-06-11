@@ -465,7 +465,6 @@ sub new {
         my ( $curTestOutcome);
         my $data;
         my $pass;
-        my $datacap = @data;
         my $grandtotal;
         my $high;
 
@@ -475,6 +474,7 @@ sub new {
         $data->{outcome} = \@outcome;
         $data->{data} = \@data;
         $data->{spec} = \@spec;
+        $data->{datacap} = @data;
 
         #item vars
         #TODO: stop using sclar pointers here...
@@ -482,7 +482,6 @@ sub new {
 
         #iter vars
         $data->{pass} = \$pass;
-        $data->{datacap} = \$datacap;
 
         #end vars
         $data->{sum} = \@sum;
@@ -574,7 +573,7 @@ foreach my $t (@testItems) {
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
         $beginrepeathook->($self, $data);
-        $datacap = int($datacap);
+        $data->{datacap} = int($data->{datacap});
 
         my $excludedData = 0;
         my $testindata   = 0;
@@ -589,7 +588,7 @@ foreach my $t (@testItems) {
             $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
         }
 
-        for ( my $i = $datacap ; $i ; ) {
+        for ( my $i = $data->{datacap} ; $i ; ) {
             --$i;
             ++$excludedData, next unless $datahook->($self, $data, $i);
 ## begin probability
@@ -633,11 +632,12 @@ foreach my $t (@testItems) {
 ## end exclude given;
         }
 
+        #TODO: choose Nulls and Gang value here instead of in regex for eval string
         $logger->info(<<TOP);
 Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}
 If context is in data file then exclude
 Include context even if it is in the data file
-Number of data items: @{[$datacap]}
+Number of data items: @{[$data->{datacap}]}
 Probability of including any one data item: $self->{probability}
 Total Excluded: $excludedData @{[ $eg ? " + test item" : "" ]}
 Nulls: exclude
