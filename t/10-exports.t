@@ -12,21 +12,6 @@ use Algorithm::AM;
 use FindBin qw($Bin);
 use Path::Tiny;
 
-use vars qw(
-
-	$curTestOutcome
-	@curTestItem
-	$curTestSpec
-
-	$pass
-	$probability
-	$datacap
-
-	@sum
-	$pointertotal
-	$pointermax
-);
-
 my $project_path = path($Bin, 'data', 'chapter3_multi_test');
 my $results_path = path($project_path, 'amcpresults');
 
@@ -128,7 +113,7 @@ sub test_item_vars {
 		$hook . ': $curTestOutcome');
 	if(${$data->{curTestOutcome}} == 2){
 		like(
-			${$data->{curTestSpec}},
+			$data->{curTestSpec},
 			qr/first test item$/,
 			$hook . ': $curTestSpec'
 		);
@@ -137,7 +122,7 @@ sub test_item_vars {
 			or note explain $data->{curTestItem};
 	}else{
 		like(
-			${$data->{curTestSpec}},
+			$data->{curTestSpec},
 			qr/second test item$/,
 			$hook . ': $curTestSpec'
 		);

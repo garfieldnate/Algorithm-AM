@@ -462,7 +462,7 @@ sub new {
         }
 
 ## stuff to be exported
-        my ( $curTestOutcome, @curTestItem, $curTestSpec );
+        my ( $curTestOutcome, @curTestItem);
         my $data;
         my $pass;
         my $datacap = @data;
@@ -480,7 +480,6 @@ sub new {
         #TODO: stop using sclar pointers here...
         $data->{curTestOutcome} = \$curTestOutcome;
         $data->{curTestItem} = \@curTestItem;
-        $data->{curTestSpec} = \$curTestSpec;
 
         #iter vars
         $data->{pass} = \$pass;
@@ -538,9 +537,9 @@ foreach my $t (@testItems) {
 ## parse test item
 
     my $curTestItem;
-    ( $curTestOutcome, $curTestItem, $curTestSpec ) = split /$self->{bigsep}/, $t, 3;
+    ( $curTestOutcome, $curTestItem, $data->{curTestSpec} ) = split /$self->{bigsep}/, $t, 3;
     $curTestOutcome = $octonum{$curTestOutcome};
-    $curTestSpec ||= "";
+    $data->{curTestSpec} ||= "";
 
 ## begin exclude nulls
     my $eq = 0;
@@ -636,7 +635,7 @@ foreach my $t (@testItems) {
         }
 
         $logger->info(<<TOP);
-Given Context:  @curTestItem, $curTestSpec
+Given Context:  @curTestItem, $data->{curTestSpec}
 If context is in data file then exclude
 Include context even if it is in the data file
 Number of data items: @{[$datacap]}
