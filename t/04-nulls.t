@@ -8,7 +8,7 @@ use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-plan tests => 2;
+plan tests => 4;
 
 my $project_path = path($Bin, 'data', 'chapter3_null_feat');
 my $results_path = path($project_path, 'amcpresults');
@@ -23,8 +23,12 @@ my $am = Algorithm::AM->new(
 );
 $am->classify();
 my $results = read_file($results_path);
-like_string($results,qr/e\s+3\s+30.000%\v+r\s+7\s+70.000%/, 'Exclude nulls')
+like_string($results,qr/e\s+3\s+30.000%\v+r\s+7\s+70.000%/,
+    'Results with exclude nulls')
 	or diag $results;
+like_string($results, qr/Nulls: exclude/,
+    'Printing with exclude nulls')
+    or diag $results;
 
 #clean up the amcpresults file
 unlink $results_path
@@ -35,6 +39,9 @@ $am->classify(-nulls => 'include');
 my $results = read_file($results_path);
 like_string($results,qr/r\s+5\s+100.000%/, 'Include nulls')
 	or diag $results;
+like_string($results, qr/Nulls: include/,
+    'Printing with exclude nulls')
+    or diag $results;
 
 #clean up the amcpresults file
 unlink $results_path
