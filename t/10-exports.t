@@ -150,10 +150,10 @@ sub test_end_vars {
 	if(${$data->{curTestOutcome}} == 2){
 		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');
 		is(${$data->{pointertotal}}, '8', $hook_name . ': $pointertotal');
-		is(${$data->{pointermax}}, '4', $hook_name . ': $pointermax');
+		is($data->{pointermax}, '4', $hook_name . ': $pointermax');
 	}else{
 		is_deeply($subtotals, ['4', '9'], $hook_name . ': correct subtotals');
 		is(${$data->{pointertotal}}, '13', $hook_name . ': $pointertotal');
-		is(${$data->{pointermax}}, '9', $hook_name . ': $pointermax');
+		is($data->{pointermax}, '9', $hook_name . ': $pointermax');
 	}
 }

@@ -466,7 +466,6 @@ sub new {
         my $data;
         my $pass;
         my $grandtotal;
-        my $high;
 
         #beginning vars
         $data->{outcomelist} = \@outcomelist;
@@ -486,7 +485,6 @@ sub new {
         #end vars
         $data->{sum} = \@sum;
         $data->{pointertotal} = \$grandtotal;
-        $data->{pointermax} = \$high;
 
         eval $_; ## no critic (ProhibitStringyEval)
         $logger->warn($@)
@@ -640,7 +638,7 @@ Include context even if it is in the data file
 Number of data items: @{[$data->{datacap}]}
 Probability of including any one data item: $self->{probability}
 Total Excluded: $self->{excludedData} @{[ $self->{eg} ? " + test item" : "" ]}
-Nulls: exclude
+Nulls: $self->{excNull}
 Nulls: include
 Gang: linear
 Gang: squared
@@ -654,7 +652,7 @@ TOP
         # print Dumper \%pointers;
         my $longest = length $grandtotal;
         $self->{gformat} = "%$longest.${longest}s";
-        $high    = "";
+        $data->{pointermax}    = "";
 
         unless ($grandtotal) {
             $logger->warn('No data items considered.  No prediction possible.');
@@ -666,10 +664,10 @@ TOP
         for ( my $i = 1 ; $i < @outcomelist ; ++$i ) {
             my $n;
             next unless $n = $sum[$i];
-            $high = $n
-              if length($n) > length($high)
-              or length($n) == length($high)
-              and $n gt $high;#TODO: it having a semi-colon here right?
+            $data->{pointermax} = $n
+              if length($n) > length($data->{pointermax})
+              or length($n) == length($data->{pointermax})
+              and $n gt $data->{pointermax};#TODO: it having a semi-colon here right?
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{gformat}  %7.3f%%",
@@ -681,7 +679,7 @@ TOP
         $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
-            if ( $sum[$curTestOutcome] eq $high ) {
+            if ( $sum[$curTestOutcome] eq $data->{pointermax} ) {
                 $logger->info('Correct outcome predicted.');
             }
             else {

@@ -6,7 +6,8 @@ use Algorithm::AM;
 use warnings;
 use FindBin qw($Bin);
 use Path::Tiny;
-use Test::More tests => 2;
+use Test::More;
+plan tests => 2;
 use Test::NoWarnings;
 
 my $p = Algorithm::AM->new(
@@ -87,4 +88,4 @@ $p->classify(
     -endhook       => $end
 );
 
-ok(1);
+is($count, 161, '161 items correctly predicted');
