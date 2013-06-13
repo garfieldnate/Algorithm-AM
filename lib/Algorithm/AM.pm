@@ -371,34 +371,27 @@ sub new {
 
         if ( $self->{excNull} eq 'exclude' ) {
             s/## begin include nulls.*?## end include nulls//sg;
-            s/Nulls: include\n//s;
         }
         else {
             s/## begin exclude nulls.*?## end exclude nulls//sg;
-            s/Nulls: exclude\n//s;
         }
 
         if ( $self->{excGiven} eq 'exclude' ) {
             s/## begin include given.*?## end include given//sg;
-            s/Include context even if it is in the data file\n//s;
         }
         else {
             s/## begin exclude given.*?## end exclude given//sg;
-            s/If context is in data file then exclude\n//s;
         }
 
         if ( $self->{linear} eq 'yes' ) {
             s/_fillandcount\(X\)/_fillandcount(0)/;
-            s/Gang: squared\n//s;
         }
         else {
             s/_fillandcount\(X\)/_fillandcount(1)/;
-            s/Gang: linear\n//s;
         }
 
         if ( not defined $self->{probability} ) {
             s/## begin probability.*?## end probability//sg;
-            s/Probability of including any one data item: \$self->{probability}\n//s;
         }
 
         if ( $self->{skipset} eq 'yes' ) {
@@ -505,6 +498,29 @@ sub new {
 sub bigcmp {
     my($a,$b) = @_;
     return (length($a) <=> length($b)) || ($a cmp $b);
+}
+
+# TODO: should probably be separate methods:
+# print_config and print_data_stats
+sub print_summary {
+    my ($self, $data) = @_;
+
+    $logger->info(
+        "Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}");
+    $logger->info('If context is in data file then exclude')
+        if $self->{excGiven} eq 'exclude';
+    $logger->info('Include context even if it is in the data file')
+        if $self->{excGiven} eq 'include';
+    $logger->info("Number of data items: @{[$data->{datacap}]}");
+    $logger->info('Probability of including any one data item: ' .
+        $self->{probability})
+        if $self->{probability};
+    $logger->info("Total Excluded: $self->{excludedData} " .
+        qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
+    $logger->info("Nulls: $self->{excNull}");
+    $logger->info($self->{linear} eq 'yes'
+        ? 'Gang: linear' : 'Gang: squared');
+    $logger->info("Number of active variables: $self->{activeVar}");
 }
 
 1;
@@ -631,19 +647,7 @@ foreach my $t (@testItems) {
         }
 
         #TODO: choose Nulls and Gang value here instead of in regex for eval string
-        $logger->info(<<TOP);
-Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}
-If context is in data file then exclude
-Include context even if it is in the data file
-Number of data items: @{[$data->{datacap}]}
-Probability of including any one data item: $self->{probability}
-Total Excluded: $self->{excludedData} @{[ $self->{eg} ? " + test item" : "" ]}
-Nulls: $self->{excNull}
-Nulls: include
-Gang: linear
-Gang: squared
-Number of active variables: $self->{activeVar}
-TOP
+        $self->print_summary($data);
         $logger->info('Test item is in the data.')
           if $testindata;
 

@@ -1,5 +1,6 @@
 Next: create print_summary method with contents of 636--648.
 
+make sure decisions on what is in $self and what is in $data are good
 Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table
 
