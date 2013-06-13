@@ -7,7 +7,9 @@ use Test::More 0.88;
 #test_item_vars contains three tests and is run for most handlers (32 times)
 #test_iter_vars contains three tests and is run for most handlers (28 times)
 #test_end_vars contains three tests and is run by two handlers (total 6 times)
-plan tests => 5*34 + 3*32 + 3*28 + 3*6;
+#1 more for Test::NoWarnings
+plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 1;
+use Test::NoWarnings;
 use Algorithm::AM;
 use FindBin qw($Bin);
 use Path::Tiny;

@@ -1,10 +1,12 @@
 #test hooks
 use strict;
 use warnings;
-use Test::More 0.88;
-plan tests => 3;
-use Test::LongString;
 use Algorithm::AM;
+use Test::More 0.88;
+plan tests => 4;
+use Test::NoWarnings;
+use Test::LongString;
+
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;

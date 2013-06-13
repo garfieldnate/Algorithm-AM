@@ -2,11 +2,11 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 5;
+plan tests => 6;
+use Test::NoWarnings;
 use Algorithm::AM qw(bigcmp);
 use FindBin qw($Bin);
 use Path::Tiny;
-use Data::Dumper;
 
 use vars qw(@sum);
 use subs qw(bigcmp);

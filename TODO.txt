@@ -1,4 +1,4 @@
-Next: move $eg and $excludedData into $self, then create print_summary method with contents of 636-648.
+Next: create print_summary method with contents of 636--648.
 
 Fix import mechanism
 	pass info to hooks as arguments instead of messing with the symbol table

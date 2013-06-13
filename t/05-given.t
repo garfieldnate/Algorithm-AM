@@ -3,12 +3,14 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
+plan tests => 3;
+use Test::NoWarnings;
 use Test::LongString;
+
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-plan tests => 2;
 
 my $project_path = path($Bin, 'data', 'chapter3_given');
 my $results_path = path($project_path, 'amcpresults');

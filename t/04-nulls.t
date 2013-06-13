@@ -3,12 +3,14 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
+plan tests => 5;
+use Test::NoWarnings;
 use Test::LongString;
+
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-plan tests => 4;
 
 my $project_path = path($Bin, 'data', 'chapter3_null_feat');
 my $results_path = path($project_path, 'amcpresults');
@@ -36,7 +38,7 @@ unlink $results_path
 
 
 $am->classify(-nulls => 'include');
-my $results = read_file($results_path);
+$results = read_file($results_path);
 like_string($results,qr/r\s+5\s+100.000%/, 'Include nulls')
 	or diag $results;
 like_string($results, qr/Nulls: include/,

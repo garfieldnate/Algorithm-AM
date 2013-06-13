@@ -6,7 +6,8 @@ use Algorithm::AM;
 use warnings;
 use FindBin qw($Bin);
 use Path::Tiny;
-use Test::More tests => 1;
+use Test::More tests => 2;
+use Test::NoWarnings;
 
 my $p = Algorithm::AM->new(
     path($Bin, 'data', 'finnverb'),

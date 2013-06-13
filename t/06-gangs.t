@@ -4,11 +4,13 @@ use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
 use Test::LongString;
+plan tests => 6;
+use Test::NoWarnings;
+
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-plan tests => 5;
 
 my $project_path = path($Bin, 'data', 'chapter3');
 my $results_path = path($project_path, 'amcpresults');
@@ -42,7 +44,7 @@ unlink $results_path
 	if -e $results_path;
 
 $am->classify(-gangs => 'yes');
-my $results = read_file($results_path);
+$results = read_file($results_path);
 like_string($results,qr/3 1 1\s+myCommentHere/, q{'-gangs => summary' lists gang exemplars})
 	or diag $results;
 like_string($results,qr/\s*23.077%\s+3\s+3 1 2/, q{'-gangs => summary' lists gang effects})
