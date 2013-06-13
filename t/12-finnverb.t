@@ -2,7 +2,7 @@
 # to see output and make sure it doesn't die.
 
 use Algorithm::AM;
-# use strict; # not yet...
+use strict; # not yet...
 use warnings;
 use FindBin qw($Bin);
 use Path::Tiny;
