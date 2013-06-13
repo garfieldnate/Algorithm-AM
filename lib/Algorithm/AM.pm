@@ -575,9 +575,9 @@ foreach my $t (@testItems) {
         $beginrepeathook->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
-        my $excludedData = 0;
+        $self->{excludedData} = 0;
         my $testindata   = 0;
-        my $eg           = 0;
+        $self->{eg}      = 0;
 
         %contextsize          = ();
         %itemcontextchainhead = ();
@@ -590,9 +590,9 @@ foreach my $t (@testItems) {
 
         for ( my $i = $data->{datacap} ; $i ; ) {
             --$i;
-            ++$excludedData, next unless $datahook->($self, $data, $i);
+            ++$self->{excludedData}, next unless $datahook->($self, $data, $i);
 ## begin probability
-            ++$excludedData, next if rand() > $self->{probability};
+            ++$self->{excludedData}, next if rand() > $self->{probability};
 ## end probability
             my @dataItem = @{ $data[$i] };
             my @alist    = @activeVar;
@@ -628,7 +628,7 @@ foreach my $t (@testItems) {
             ++$testindata;
 ## begin exclude given
             # TODO: this doesn't look right. Should it check if excGiven is 'include'?
-            delete $subtooutcome{$nullcontext}, ++$eg if $self->{excGiven};
+            delete $subtooutcome{$nullcontext}, ++$self->{eg} if $self->{excGiven};
 ## end exclude given;
         }
 
@@ -639,7 +639,7 @@ If context is in data file then exclude
 Include context even if it is in the data file
 Number of data items: @{[$data->{datacap}]}
 Probability of including any one data item: $self->{probability}
-Total Excluded: $excludedData @{[ $eg ? " + test item" : "" ]}
+Total Excluded: $self->{excludedData} @{[ $self->{eg} ? " + test item" : "" ]}
 Nulls: exclude
 Nulls: include
 Gang: linear
