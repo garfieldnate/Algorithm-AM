@@ -599,9 +599,11 @@ foreach my $t (@testItems) {
 
         for ( my $i = $data->{datacap} ; $i ; ) {
             --$i;
-            ++$self->{excludedData}, next unless $datahook->($self, $data, $i);
+            ++$self->{excludedData}, next
+                unless $datahook->($self, $data, $i);
 ## begin probability
-            ++$self->{excludedData}, next if rand() > $self->{probability};
+            ++$self->{excludedData}, next
+                if rand() > $self->{probability};
 ## end probability
             my @dataItem = @{ $data[$i] };
             my @alist    = @activeVar;
