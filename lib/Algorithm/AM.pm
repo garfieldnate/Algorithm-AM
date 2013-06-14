@@ -48,7 +48,20 @@ my %import;
 ## %gang
 
 sub new {
-    my ($proto, $project, %opts) = @_;
+    my ($proto, $project, @opts) = @_;
+
+    #todo: check for bad options
+    my %opts = (
+        exclude_null     => 1,
+        exclude_given    => 1,
+        linear      => 'no',
+        probability => undef,
+        repeat      => '1',
+        skipset     => 'yes',
+        gangs       => 'no',
+        @opts
+    );
+
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
     $project = ''
@@ -85,8 +98,8 @@ sub new {
         }
     }
 
-    $self->{excNull} = 1;
-    $self->{excGiven} = 1;
+    $self->{exclude_given} = $opts{exclude_given};
+    $self->{exclude_null} = 1;
     $self->{linear} = 'no';
     $self->{probability} = undef;
     $self->{repeat} = '1';
@@ -96,29 +109,13 @@ sub new {
     if ( exists $opts{-nulls} ) {
         given($opts{-nulls}){
             when('include'){
-                $self->{excNull} = 0;
+                $self->{exclude_null} = 0;
             }
             when('exclude'){
-                $self->{excNull} = 1;
+                $self->{exclude_null} = 1;
             }
             default {
                 carp "Project $self->{project} did not specify option -nulls correctly";
-                $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(q{Will use default value of 'exclude'});
-            }
-        }
-    }
-
-    if ( exists $opts{-given} ) {
-        given($opts{-given}){
-            when('include'){
-                $self->{excGiven} = 0;
-            }
-            when('exclude'){
-                $self->{excGiven} = 1;
-            }
-            default {
-                carp "Project $self->{project} did not specify option -given correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
                 $logger->warn(q{Will use default value of 'exclude'});
             }
@@ -313,16 +310,24 @@ sub new {
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
             %gang, @sum
         );
-
-        my (%opts) = @_;
+        my %opts = (
+            exclude_null    => $self->{exclude_null},
+            exclude_given   => $self->{exclude_given},
+            linear          => $self->{linear},
+            probability     => $self->{probability},
+            repeat          => $self->{repeat},
+            skipset         => $self->{skipset},
+            gangs           => $self->{gangs},
+            @_
+        );
 
         if ( exists $opts{-nulls} ) {
             given($opts{-nulls}){
                 when('include'){
-                    $self->{excNull} = 0;
+                    $self->{exclude_null} = 0;
                 }
                 when('exclude'){
-                    $self->{excNull} = 1;
+                    $self->{exclude_null} = 1;
                 }
                 default {
                     carp "Project $self->{project} did not specify option -nulls correctly";
@@ -331,22 +336,6 @@ sub new {
                 }
             }
         }
-
-    if ( exists $opts{-given} ) {
-        given($opts{-given}){
-            when('include'){
-                $self->{excGiven} = 0;
-            }
-            when('exclude'){
-                $self->{excGiven} = 1;
-            }
-            default {
-                carp "Project $self->{project} did not specify option -given correctly";
-                $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(q{Will use default value of 'exclude'});
-            }
-        }
-    }
 
         if ( exists $opts{-linear} ) {
             if ( $opts{-linear} !~ /(yes|no)/ ) {
@@ -360,6 +349,7 @@ sub new {
             }
         }
 
+        $self->{exclude_given} = $opts{exclude_given};
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
@@ -389,14 +379,14 @@ sub new {
         #TODO: what is $subsource used for?
         local $_ = $subsource;
 
-        if ( $self->{excNull} ) {
+        if ( $self->{exclude_null} ) {
             s/## begin include nulls.*?## end include nulls//sg;
         }
         else {
             s/## begin exclude nulls.*?## end exclude nulls//sg;
         }
 
-        if ( $self->{excGiven} ) {
+        if ( $self->{exclude_given} ) {
             s/## begin include given.*?## end include given//sg;
         }
         else {
@@ -528,16 +518,16 @@ sub print_summary {
     $logger->info(
         "Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}");
     $logger->info('If context is in data file then exclude')
-        if $self->{excGiven};
+        if $self->{exclude_given};
     $logger->info('Include context even if it is in the data file')
-        unless $self->{excGiven};
+        unless $self->{exclude_given};
     $logger->info("Number of data items: @{[$data->{datacap}]}");
     $logger->info('Probability of including any one data item: ' .
         $self->{probability})
         if $self->{probability};
     $logger->info("Total Excluded: $self->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
-    $logger->info('Nulls: ' . ($self->{excNull} ? 'exclude' : 'include') );
+    $logger->info('Nulls: ' . ($self->{exclude_null} ? 'exclude' : 'include') );
     $logger->info($self->{linear} eq 'yes'
         ? 'Gang: linear' : 'Gang: squared');
     $logger->info("Number of active variables: $self->{activeVar}");
@@ -661,8 +651,8 @@ foreach my $t (@testItems) {
         if ( exists $subtooutcome{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
-            # TODO: this doesn't look right. Why does it check excGiven?
-            delete $subtooutcome{$nullcontext}, ++$self->{eg} if $self->{excGiven};
+            # TODO: this doesn't look right. Why does it check exclude_given?
+            delete $subtooutcome{$nullcontext}, ++$self->{eg} if $self->{exclude_given};
 ## end exclude given;
         }
 

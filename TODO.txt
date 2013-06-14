@@ -1,4 +1,5 @@
 make sure decisions on what is in $self and what is in $data are good
+	so far, $self has options and $data has info about the input data
 
 Split print_summary into two methods: print_config and print_data_stats
 

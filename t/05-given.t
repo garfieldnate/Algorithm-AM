@@ -21,7 +21,7 @@ unlink $results_path
 my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
-	-given => 'exclude'
+	exclude_given => 1
 );
 $am->classify();
 my $results = read_file($results_path);
@@ -43,7 +43,7 @@ unlink $results_path
 	if -e $results_path;
 
 
-$am->classify(-given => 'include');
+$am->classify(exclude_given => 0);
 $results = read_file($results_path);
 
 like_string($results,qr/r\s+15\s+100.000%/, 'Include given')
