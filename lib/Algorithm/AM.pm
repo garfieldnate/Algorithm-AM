@@ -86,7 +86,7 @@ sub new {
     }
 
     $self->{excNull} = 'exclude';
-    $self->{excGiven} = 'exclude';
+    $self->{excGiven} = 1;
     $self->{linear} = 'no';
     $self->{probability} = undef;
     $self->{repeat} = '1';
@@ -105,13 +105,18 @@ sub new {
     }
 
     if ( exists $opts{-given} ) {
-        if ( $opts{-given} !~ /(in|ex)clude/ ) {
-            carp "Project $self->{project} did not specify option -given correctly";
-            $logger->warn(q{(must be 'include' or 'exclude')});
-            $logger->warn(q{Will use default value of 'exclude'});
-        }
-        else {
-            $self->{excGiven} = $opts{-given};
+        given($opts{-given}){
+            when('include'){
+                $self->{excGiven} = 0;
+            }
+            when('exclude'){
+                $self->{excGiven} = 1;
+            }
+            default {
+                carp "Project $self->{project} did not specify option -given correctly";
+                $logger->warn(q{(must be 'include' or 'exclude')});
+                $logger->warn(q{Will use default value of 'exclude'});
+            }
         }
     }
 
@@ -317,16 +322,21 @@ sub new {
             }
         }
 
-        if ( exists $opts{-given} ) {
-            if ( $opts{-given} !~ /(in|ex)clude/ ) {
+    if ( exists $opts{-given} ) {
+        given($opts{-given}){
+            when('include'){
+                $self->{excGiven} = 0;
+            }
+            when('exclude'){
+                $self->{excGiven} = 1;
+            }
+            default {
                 carp "Project $self->{project} did not specify option -given correctly";
                 $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(qq{Will use default value of '$self->{excGiven}'});
-            }
-            else {
-                $self->{excGiven} = $opts{-given};
+                $logger->warn(q{Will use default value of 'exclude'});
             }
         }
+    }
 
         if ( exists $opts{-linear} ) {
             if ( $opts{-linear} !~ /(yes|no)/ ) {
@@ -376,7 +386,7 @@ sub new {
             s/## begin exclude nulls.*?## end exclude nulls//sg;
         }
 
-        if ( $self->{excGiven} eq 'exclude' ) {
+        if ( $self->{excGiven} ) {
             s/## begin include given.*?## end include given//sg;
         }
         else {
@@ -508,9 +518,9 @@ sub print_summary {
     $logger->info(
         "Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}");
     $logger->info('If context is in data file then exclude')
-        if $self->{excGiven} eq 'exclude';
+        if $self->{excGiven};
     $logger->info('Include context even if it is in the data file')
-        if $self->{excGiven} eq 'include';
+        unless $self->{excGiven};
     $logger->info("Number of data items: @{[$data->{datacap}]}");
     $logger->info('Probability of including any one data item: ' .
         $self->{probability})
@@ -641,7 +651,7 @@ foreach my $t (@testItems) {
         if ( exists $subtooutcome{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
-            # TODO: this doesn't look right. Should it check if excGiven is 'include'?
+            # TODO: this doesn't look right. Why does it check excGiven?
             delete $subtooutcome{$nullcontext}, ++$self->{eg} if $self->{excGiven};
 ## end exclude given;
         }

@@ -13,7 +13,7 @@ Refactoring plan:
 		classify() method should classify a single vector
 		Should move iteration, and iter vars, into a separate class.
 			This will make testing much easier, since we can then simply return classification outcomes in a single variable and test it, instead of testing printed output or accumulating outcomes and testing them.
-		Don't print as we go; provide print methods
+		Don't print as we go; provide print methods or a verbose option
 			also provide method for grabbing format variables
 			pass the AM object to hooks so that these are usable
 	I think beginning vars should just be in the AM object;
