@@ -85,7 +85,7 @@ sub new {
         }
     }
 
-    $self->{excNull} = 'exclude';
+    $self->{excNull} = 1;
     $self->{excGiven} = 1;
     $self->{linear} = 'no';
     $self->{probability} = undef;
@@ -94,13 +94,18 @@ sub new {
     $self->{gangs} = 'no';
 
     if ( exists $opts{-nulls} ) {
-        if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
-            carp "Project $self->{project} did not specify option -nulls correctly";
-            $logger->warn(q{(must be 'include' or 'exclude')});
-            $logger->warn(q{Will use default value of 'exclude'});
-        }
-        else {
-            $self->{excNull} = $opts{-nulls};
+        given($opts{-nulls}){
+            when('include'){
+                $self->{excNull} = 0;
+            }
+            when('exclude'){
+                $self->{excNull} = 1;
+            }
+            default {
+                carp "Project $self->{project} did not specify option -nulls correctly";
+                $logger->warn(q{(must be 'include' or 'exclude')});
+                $logger->warn(q{Will use default value of 'exclude'});
+            }
         }
     }
 
@@ -312,13 +317,18 @@ sub new {
         my (%opts) = @_;
 
         if ( exists $opts{-nulls} ) {
-            if ( $opts{-nulls} !~ /(in|ex)clude/ ) {
-                carp "Project $self->{project} did not specify option -nulls correctly";
-                $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(qq{Will use default value of '$self->{excNull}'});
-            }
-            else {
-                $self->{excNull} = $opts{-nulls};
+            given($opts{-nulls}){
+                when('include'){
+                    $self->{excNull} = 0;
+                }
+                when('exclude'){
+                    $self->{excNull} = 1;
+                }
+                default {
+                    carp "Project $self->{project} did not specify option -nulls correctly";
+                    $logger->warn(q{(must be 'include' or 'exclude')});
+                    $logger->warn(q{Will use default value of 'exclude'});
+                }
             }
         }
 
@@ -379,7 +389,7 @@ sub new {
         #TODO: what is $subsource used for?
         local $_ = $subsource;
 
-        if ( $self->{excNull} eq 'exclude' ) {
+        if ( $self->{excNull} ) {
             s/## begin include nulls.*?## end include nulls//sg;
         }
         else {
@@ -527,7 +537,7 @@ sub print_summary {
         if $self->{probability};
     $logger->info("Total Excluded: $self->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
-    $logger->info("Nulls: $self->{excNull}");
+    $logger->info('Nulls: ' . ($self->{excNull} ? 'exclude' : 'include') );
     $logger->info($self->{linear} eq 'yes'
         ? 'Gang: linear' : 'Gang: squared');
     $logger->info("Number of active variables: $self->{activeVar}");
