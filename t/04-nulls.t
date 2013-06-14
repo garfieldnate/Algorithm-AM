@@ -21,7 +21,7 @@ unlink $results_path
 my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
-	-nulls => 'exclude'
+	exclude_nulls => 1,
 );
 $am->classify();
 my $results = read_file($results_path);
@@ -37,7 +37,7 @@ unlink $results_path
 	if -e $results_path;
 
 
-$am->classify(-nulls => 'include');
+$am->classify(exclude_nulls => 0);
 $results = read_file($results_path);
 like_string($results,qr/r\s+5\s+100.000%/, 'Include nulls')
 	or diag $results;

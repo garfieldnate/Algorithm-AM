@@ -52,7 +52,7 @@ sub new {
 
     #todo: check for bad options
     my %opts = (
-        exclude_null     => 1,
+        exclude_nulls     => 1,
         exclude_given    => 1,
         linear      => 'no',
         probability => undef,
@@ -99,7 +99,7 @@ sub new {
     }
 
     $self->{exclude_given} = $opts{exclude_given};
-    $self->{exclude_null} = 1;
+    $self->{exclude_nulls} = 1;
     $self->{linear} = 'no';
     $self->{probability} = undef;
     $self->{repeat} = '1';
@@ -109,10 +109,10 @@ sub new {
     if ( exists $opts{-nulls} ) {
         given($opts{-nulls}){
             when('include'){
-                $self->{exclude_null} = 0;
+                $self->{exclude_nulls} = 0;
             }
             when('exclude'){
-                $self->{exclude_null} = 1;
+                $self->{exclude_nulls} = 1;
             }
             default {
                 carp "Project $self->{project} did not specify option -nulls correctly";
@@ -311,7 +311,7 @@ sub new {
             %gang, @sum
         );
         my %opts = (
-            exclude_null    => $self->{exclude_null},
+            exclude_nulls    => $self->{exclude_nulls},
             exclude_given   => $self->{exclude_given},
             linear          => $self->{linear},
             probability     => $self->{probability},
@@ -320,22 +320,6 @@ sub new {
             gangs           => $self->{gangs},
             @_
         );
-
-        if ( exists $opts{-nulls} ) {
-            given($opts{-nulls}){
-                when('include'){
-                    $self->{exclude_null} = 0;
-                }
-                when('exclude'){
-                    $self->{exclude_null} = 1;
-                }
-                default {
-                    carp "Project $self->{project} did not specify option -nulls correctly";
-                    $logger->warn(q{(must be 'include' or 'exclude')});
-                    $logger->warn(q{Will use default value of 'exclude'});
-                }
-            }
-        }
 
         if ( exists $opts{-linear} ) {
             if ( $opts{-linear} !~ /(yes|no)/ ) {
@@ -350,6 +334,7 @@ sub new {
         }
 
         $self->{exclude_given} = $opts{exclude_given};
+        $self->{exclude_nulls} = $opts{exclude_nulls};
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
@@ -379,7 +364,7 @@ sub new {
         #TODO: what is $subsource used for?
         local $_ = $subsource;
 
-        if ( $self->{exclude_null} ) {
+        if ( $self->{exclude_nulls} ) {
             s/## begin include nulls.*?## end include nulls//sg;
         }
         else {
@@ -527,7 +512,7 @@ sub print_summary {
         if $self->{probability};
     $logger->info("Total Excluded: $self->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
-    $logger->info('Nulls: ' . ($self->{exclude_null} ? 'exclude' : 'include') );
+    $logger->info('Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include') );
     $logger->info($self->{linear} eq 'yes'
         ? 'Gang: linear' : 'Gang: squared');
     $logger->info("Number of active variables: $self->{activeVar}");
