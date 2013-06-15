@@ -57,7 +57,7 @@ sub new {
         linear      => 0,
         probability => undef,
         repeat      => '1',
-        skipset     => 'yes',
+        skipset     => 1,
         gangs       => 'no',
         @opts
     );
@@ -103,22 +103,11 @@ sub new {
     $self->{linear} = $opts{linear};
     $self->{probability} = undef;
     $self->{repeat} = '1';
-    $self->{skipset} = 'yes';
+    $self->{skipset} = $opts{skipset};
     $self->{gangs} = 'no';
 
     $self->{probability}    = $opts{-probability} if exists $opts{-probability};
     $self->{repeat}                 = $opts{-repeat}      if exists $opts{-repeat};
-
-    if ( exists $opts{-skipset} ) {
-        if ( $opts{-skipset} !~ /yes|no/ ) {
-            carp "Project $self->{project} did not specify option -skipset correctly";
-            $logger->warn(q{(must be 'yes' or 'no')});
-            $logger->warn(q{Will use default value of 'yes'});
-        }
-        else {
-            $self->{skipset} = $opts{-skipset};
-        }
-    }
 
     if ( exists $opts{-gangs} ) {
         if ( $opts{-gangs} !~ /yes|summary|no/ ) {
@@ -297,20 +286,9 @@ sub new {
         $self->{exclude_given} = $opts{exclude_given};
         $self->{exclude_nulls} = $opts{exclude_nulls};
         $self->{linear} = $opts{linear};
+        $self->{skipset} = $opts{skipset};
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
-
-        if ( exists $opts{-skipset} ) {
-            if ( $opts{-skipset} !~ /yes|no/ ) {
-                carp
-                  "Project $self->{project} did not specify option -skipset correctly";
-                $logger->warn(q{(must be 'yes' or 'no')});
-                $logger->warn(qq{Will use default value of '$self->{skipset}'});
-            }
-            else {
-                $self->{skipset} = $opts{-skipset};
-            }
-        }
 
         if ( exists $opts{-gangs} ) {
             if ( $opts{-gangs} !~ /yes|summary|no/ ) {
@@ -351,7 +329,7 @@ sub new {
             s/## begin probability.*?## end probability//sg;
         }
 
-        if ( $self->{skipset} eq 'yes' ) {
+        if ( $self->{skipset} ) {
             s/## begin analogical set.*?## end analogical set//sg;
         }
 
