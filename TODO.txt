@@ -1,5 +1,6 @@
-Next: refactor -gangs, -skipset to be like the others.
-	-gangs is a three way; leave for now...
+Next: refactor -gangs
+
+-gangs is a three way; leave for now...
 	- may need different refactoring in the future
 Make more boolean-ish where possible.
 Then put option handling in a separate method

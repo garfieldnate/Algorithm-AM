@@ -98,26 +98,26 @@ sub new {
         }
     }
 
-    $self->{exclude_given} = $opts{exclude_given};
-    $self->{exclude_nulls} = $opts{exclude_nulls};
-    $self->{linear} = $opts{linear};
-    $self->{probability} = undef;
-    $self->{repeat} = '1';
-    $self->{skipset} = $opts{skipset};
-    $self->{gangs} = 'no';
+    $self->{exclude_given}  = $opts{exclude_given};
+    $self->{exclude_nulls}  = $opts{exclude_nulls};
+    $self->{linear}         = $opts{linear};
+    $self->{probability}    = undef;
+    $self->{repeat}         = '1';
+    $self->{skipset}        = $opts{skipset};
 
     $self->{probability}    = $opts{-probability} if exists $opts{-probability};
-    $self->{repeat}                 = $opts{-repeat}      if exists $opts{-repeat};
+    $self->{repeat}         = $opts{-repeat}      if exists $opts{-repeat};
 
-    if ( exists $opts{-gangs} ) {
-        if ( $opts{-gangs} !~ /yes|summary|no/ ) {
-            carp "Project $self->{project} did not specify option -gangs correctly";
-            $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-            $logger->warn(q{Will use default value of 'no'});
-        }
-        else {
-            $self->{gangs} = $opts{-gangs};
-        }
+    # TODO: should change into two separate booleans;
+    # print_gangs, and print_gang_summaries (or something)
+    if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
+        carp "Project $self->{project} did not specify option gangs correctly";
+        $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+        $logger->warn(q{Will use default value of 'no'});
+        $self->{gangs} = 'no';
+    }
+    else {
+        $self->{gangs} = $opts{gangs};
     }
 
 ## The following is in case I decide later to allow hooks to be set at
@@ -290,15 +290,16 @@ sub new {
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
-        if ( exists $opts{-gangs} ) {
-            if ( $opts{-gangs} !~ /yes|summary|no/ ) {
-                carp "Project $self->{project} did not specify option -gangs correctly";
-                $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-                $logger->warn(qq{Will use default value of '$self->{gangs}'});
-            }
-            else {
-                $self->{gangs} = $opts{-gangs};
-            }
+        # TODO: should change into two separate booleans;
+        # print_gangs, and print_gang_summaries (or something)
+        if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
+            carp "Project $self->{project} did not specify option gangs correctly";
+            $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+            $logger->warn(q{Will use default value of 'no'});
+            $self->{gangs} = 'no';
+        }
+        else {
+            $self->{gangs} = $opts{gangs};
         }
 
         #TODO: what is $subsource used for?
