@@ -54,7 +54,7 @@ sub new {
     my %opts = (
         exclude_nulls     => 1,
         exclude_given    => 1,
-        linear      => 'no',
+        linear      => 0,
         probability => undef,
         repeat      => '1',
         skipset     => 'yes',
@@ -99,39 +99,12 @@ sub new {
     }
 
     $self->{exclude_given} = $opts{exclude_given};
-    $self->{exclude_nulls} = 1;
-    $self->{linear} = 'no';
+    $self->{exclude_nulls} = $opts{exclude_nulls};
+    $self->{linear} = $opts{linear};
     $self->{probability} = undef;
     $self->{repeat} = '1';
     $self->{skipset} = 'yes';
     $self->{gangs} = 'no';
-
-    if ( exists $opts{-nulls} ) {
-        given($opts{-nulls}){
-            when('include'){
-                $self->{exclude_nulls} = 0;
-            }
-            when('exclude'){
-                $self->{exclude_nulls} = 1;
-            }
-            default {
-                carp "Project $self->{project} did not specify option -nulls correctly";
-                $logger->warn(q{(must be 'include' or 'exclude')});
-                $logger->warn(q{Will use default value of 'exclude'});
-            }
-        }
-    }
-
-    if ( exists $opts{-linear} ) {
-        if ( $opts{-linear} !~ /(yes|no)/ ) {
-            carp "Project $self->{project} did not specify option -linear correctly";
-            $logger->warn(q{(must be 'yes' or 'no')});
-            $logger->warn(q{Will use default value of 'no'});
-        }
-        else {
-            $self->{linear} = $opts{-linear};
-        }
-    }
 
     $self->{probability}    = $opts{-probability} if exists $opts{-probability};
     $self->{repeat}                 = $opts{-repeat}      if exists $opts{-repeat};
@@ -321,20 +294,9 @@ sub new {
             @_
         );
 
-        if ( exists $opts{-linear} ) {
-            if ( $opts{-linear} !~ /(yes|no)/ ) {
-                carp
-                  "Project $self->{project} did not specify option -linear correctly";
-                $logger->warn(q{(must be 'yes' or 'no')});
-                $logger->warn(qq{Will use default value of '$self->{linear}'});
-            }
-            else {
-                $self->{linear} = $opts{-linear};
-            }
-        }
-
         $self->{exclude_given} = $opts{exclude_given};
         $self->{exclude_nulls} = $opts{exclude_nulls};
+        $self->{linear} = $opts{linear};
         $self->{probability} = $opts{-probability} if exists $opts{-probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
@@ -378,7 +340,7 @@ sub new {
             s/## begin exclude given.*?## end exclude given//sg;
         }
 
-        if ( $self->{linear} eq 'yes' ) {
+        if ( $self->{linear} ) {
             s/_fillandcount\(X\)/_fillandcount(0)/;
         }
         else {
@@ -513,8 +475,8 @@ sub print_summary {
     $logger->info("Total Excluded: $self->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
     $logger->info('Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include') );
-    $logger->info($self->{linear} eq 'yes'
-        ? 'Gang: linear' : 'Gang: squared');
+    $logger->info($self->{linear} ?
+        'Gang: linear' : 'Gang: squared');
     $logger->info("Number of active variables: $self->{activeVar}");
 }
 

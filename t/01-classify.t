@@ -37,7 +37,7 @@ like_string($results,qr/Gang: squared/, 'Chapter 3 data, counting occurences')
 unlink $results_path
 	if -e $results_path;
 
-$am->classify(-linear => 'yes');
+$am->classify(linear => 1);
 $results = read_file($results_path);
 like_string($results,qr/e\s+2\s+28.571%\v+r\s+5\s+71.429%/, 'Chapter 3 data, counting occurences')
     or diag $results;
