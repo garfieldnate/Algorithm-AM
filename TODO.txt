@@ -1,10 +1,9 @@
-Next: refactor -gangs
-
--gangs is a three way; leave for now...
-	- may need different refactoring in the future
 Make more boolean-ish where possible.
 Then put option handling in a separate method
 Then create $self directly through blessing options
+
+Refactor -gangs is a three way; leave for now...
+	- may need different refactoring in the future
 
 make sure decisions on what is in $self and what is in $data are good
 	so far, $self has options and $data has info about the input data

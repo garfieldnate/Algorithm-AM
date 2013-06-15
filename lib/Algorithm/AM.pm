@@ -101,12 +101,11 @@ sub new {
     $self->{exclude_given}  = $opts{exclude_given};
     $self->{exclude_nulls}  = $opts{exclude_nulls};
     $self->{linear}         = $opts{linear};
-    $self->{probability}    = undef;
+    $self->{probability}    = $opts{probability};
     $self->{repeat}         = '1';
     $self->{skipset}        = $opts{skipset};
 
-    $self->{probability}    = $opts{-probability} if exists $opts{-probability};
-    $self->{repeat}         = $opts{-repeat}      if exists $opts{-repeat};
+    $self->{repeat}         = $opts{-repeat} if exists $opts{-repeat};
 
     # TODO: should change into two separate booleans;
     # print_gangs, and print_gang_summaries (or something)
@@ -287,7 +286,7 @@ sub new {
         $self->{exclude_nulls} = $opts{exclude_nulls};
         $self->{linear} = $opts{linear};
         $self->{skipset} = $opts{skipset};
-        $self->{probability} = $opts{-probability} if exists $opts{-probability};
+        $self->{probability} = $opts{probability};
         $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
 
         # TODO: should change into two separate booleans;
@@ -450,7 +449,7 @@ sub print_summary {
     $logger->info("Number of data items: @{[$data->{datacap}]}");
     $logger->info('Probability of including any one data item: ' .
         $self->{probability})
-        if $self->{probability};
+        if defined $self->{probability};
     $logger->info("Total Excluded: $self->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
     $logger->info('Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include') );

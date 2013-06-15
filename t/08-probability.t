@@ -21,7 +21,7 @@ unlink $results_path
 my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
-	-probability => .9
+	probability => .9
 );
 $am->classify();
 my $results = read_file($results_path);
