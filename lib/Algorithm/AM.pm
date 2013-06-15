@@ -102,10 +102,8 @@ sub new {
     $self->{exclude_nulls}  = $opts{exclude_nulls};
     $self->{linear}         = $opts{linear};
     $self->{probability}    = $opts{probability};
-    $self->{repeat}         = '1';
     $self->{skipset}        = $opts{skipset};
-
-    $self->{repeat}         = $opts{-repeat} if exists $opts{-repeat};
+    $self->{repeat}         = $opts{repeat};
 
     # TODO: should change into two separate booleans;
     # print_gangs, and print_gang_summaries (or something)
@@ -287,7 +285,7 @@ sub new {
         $self->{linear} = $opts{linear};
         $self->{skipset} = $opts{skipset};
         $self->{probability} = $opts{probability};
-        $self->{repeat}      = $opts{-repeat}      if exists $opts{-repeat};
+        $self->{repeat}      = $opts{repeat};
 
         # TODO: should change into two separate booleans;
         # print_gangs, and print_gang_summaries (or something)

@@ -21,7 +21,7 @@ unlink $results_path
 my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
-	-repeat => 2,
+	repeat => 2,
 );
 $am->classify();
 my $results = read_file($results_path);

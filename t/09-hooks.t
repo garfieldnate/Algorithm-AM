@@ -17,7 +17,7 @@ my $results_path = path($project_path, 'amcpresults');
 my $am = Algorithm::AM->new(
 	$project_path,
 	-commas => 'no',
-	-repeat => 2,
+	repeat => 2,
 );
 
 #first test that each hook is called at the appropriate time
