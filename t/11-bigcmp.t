@@ -16,7 +16,7 @@ my $results_path = path($project_path, 'amcpresults');
 
 my $am = Algorithm::AM->new(
 	$project_path,
-	-commas => 'no',
+	commas => 'no',
 );
 $am->classify(
 	-endhook => \&endhook,

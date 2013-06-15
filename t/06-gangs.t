@@ -20,8 +20,8 @@ unlink $results_path
 
 my $am = Algorithm::AM->new(
 	$project_path,
-	-commas => 'no',
-	-gangs => 'no'
+	commas => 'no',
+	gangs => 'no'
 );
 $am->classify();
 my $results = read_file($results_path);

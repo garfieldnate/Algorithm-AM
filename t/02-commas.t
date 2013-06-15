@@ -20,7 +20,7 @@ unlink $results_path
 
 my $am = Algorithm::AM->new(
 	$project_path,
-	-commas => 'yes',
+	commas => 'yes',
 );
 $am->classify();
 my $results = read_file($results_path);

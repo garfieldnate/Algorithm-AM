@@ -1,8 +1,11 @@
-Make more boolean-ish where possible.
-Then put option handling in a separate method
-Then create $self directly through blessing options
+Next: combine option handling; project and commas is for the constructor,
+everything else for both
 
-Refactor -gangs is a three way; leave for now...
+move hooks into $self
+
+
+Refactor -gangs
+	- its a three way; leave for now...
 	- may need different refactoring in the future
 
 make sure decisions on what is in $self and what is in $data are good

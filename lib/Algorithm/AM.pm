@@ -3,6 +3,7 @@ package Algorithm::AM;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
 use strict;
 use warnings;
+use feature 'state';
 use feature 'switch';
 use Exporter::Easy (
     OK => ['bigcmp']
@@ -14,6 +15,7 @@ require XSLoader;
 XSLoader::load();
 
 use Carp;
+our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
 
 use Data::Dumper;
@@ -50,72 +52,27 @@ my %import;
 sub new {
     my ($proto, $project, @opts) = @_;
 
-    #todo: check for bad options
-    my %opts = (
-        exclude_nulls     => 1,
-        exclude_given    => 1,
-        linear      => 0,
-        probability => undef,
-        repeat      => '1',
-        skipset     => 1,
-        gangs       => 'no',
-        @opts
-    );
+    my $opts = _handle_options(@opts);
 
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
     $project = ''
         if $proto =~ /^-/;
-    my $self = bless {}, $class;
+
+    croak 'Must specify project'
+        unless ($project);
+    croak 'Project has no data file'
+        unless ( -e "$project/data" );
+
+    my $self = bless $opts, $class;
+    $self->{project} = $project;
 
     #don't buffer error messages
     *STDOUT->autoflush();
 
-    croak 'Must specify project'
-        unless ($project);
-    $self->{project} = $project;
 
-    croak 'Project has no data file'
-        unless ( -e "$self->{project}/data" );
 
     $logger->info("Initializing project $self->{project}");
-
-    croak "Project $self->{project} did not specify comma formatting"
-        unless exists $opts{-commas};
-
-    given($opts{-commas}){
-        when('yes'){
-            $self->{bigsep}   = qr{\s*,\s*};
-            $self->{smallsep} = qr{\s+};
-        }
-        when('no'){
-            $self->{bigsep}   = qr{\s+};
-            $self->{smallsep} = qr{};
-        }
-        default{
-            croak "Project $self->{project} did not specify comma formatting correctly;\n" .
-                q{(must specify -commas => 'yes' or -commas => 'no')};
-        }
-    }
-
-    $self->{exclude_given}  = $opts{exclude_given};
-    $self->{exclude_nulls}  = $opts{exclude_nulls};
-    $self->{linear}         = $opts{linear};
-    $self->{probability}    = $opts{probability};
-    $self->{skipset}        = $opts{skipset};
-    $self->{repeat}         = $opts{repeat};
-
-    # TODO: should change into two separate booleans;
-    # print_gangs, and print_gang_summaries (or something)
-    if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
-        carp "Project $self->{project} did not specify option gangs correctly";
-        $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-        $logger->warn(q{Will use default value of 'no'});
-        $self->{gangs} = 'no';
-    }
-    else {
-        $self->{gangs} = $opts{gangs};
-    }
 
 ## The following is in case I decide later to allow hooks to be set at
 ## initialization time as well as at run time
@@ -417,7 +374,6 @@ sub new {
           if $@;
     };
 
-    # bless $amsub, $class;
     *classify = $amsub
         or die "didn't work out";
     $self->_initialize(
@@ -426,6 +382,67 @@ sub new {
         \%pointers,             \%gang,         \@sum
     );
     return $self;
+}
+
+sub _handle_options {
+    my %opts = (
+        exclude_nulls     => 1,
+        exclude_given    => 1,
+        linear      => 0,
+        probability => undef,
+        repeat      => '1',
+        skipset     => 1,
+        gangs       => 'no',
+        @_
+    );
+
+    state $valid_args =
+    [qw(
+        exclude_nulls
+        exclude_given
+        linear
+        probability
+        repeat
+        skipset
+        gangs
+        commas
+    )];
+
+    for my $option (keys %opts){
+        if(!grep {$_ eq $option} @$valid_args){
+            croak "Unknown option $option";
+        }
+    }
+
+    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
+        unless exists $opts{commas};
+
+    given($opts{commas}){
+        when('yes'){
+            $opts{bigsep}   = qr{\s*,\s*};
+            $opts{smallsep} = qr{\s+};
+        }
+        when('no'){
+            $opts{bigsep}   = qr{\s+};
+            $opts{smallsep} = qr{};
+        }
+        default{
+            croak "Failed to specify comma formatting correctly;\n" .
+                q{(must specify -commas => 'yes' or -commas => 'no')};
+        }
+        delete $opts{commas};
+    }
+
+    # TODO: should change into two separate booleans;
+    # print_gangs, and print_gang_summaries (or something)
+    if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
+        carp "Failed to specify option 'gangs' correctly";
+        $logger->warn(q{(must be 'yes', 'summary', or 'no')});
+        $logger->warn(q{Will use default value of 'no'});
+        $opts{gangs} = 'no';
+    }
+
+    return \%opts;
 }
 
 sub bigcmp {

@@ -24,7 +24,7 @@ unlink $results_path
 my $am = Algorithm::AM->new(
 # my $am = AM::Parallel->new(
 	$project_path,
-	-commas => 'no',
+	commas => 'no',
 );
 $am->classify();
 my $results = read_file($results_path);

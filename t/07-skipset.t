@@ -20,7 +20,7 @@ unlink $results_path
 
 my $am = Algorithm::AM->new(
 	$project_path,
-	-commas => 'no',
+	commas => 'no',
 	skipset => 0
 );
 $am->classify();

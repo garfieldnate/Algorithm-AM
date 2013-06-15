@@ -12,8 +12,8 @@ use Test::NoWarnings;
 
 my $p = Algorithm::AM->new(
     path($Bin, 'data', 'finnverb'),
-    -commas => 'no',
-    -given => 'exclude'
+    commas => 'no',
+    exclude_given => 1,
 );
 
 my $count    = 0;
