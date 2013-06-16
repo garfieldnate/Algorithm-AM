@@ -24,13 +24,13 @@ my $am = Algorithm::AM->new(
 	probability => 1,
 );
 $am->classify(
-	-beginhook => \&beginhook,
-	-begintesthook => \&begintesthook,
-	-beginrepeathook => \&beginrepeathook,
-	-datahook => \&datahook,
-	-endrepeathook => \&endrepeathook,
-	-endtesthook => \&endtesthook,
-	-endhook => \&endhook,
+	beginhook => \&beginhook,
+	begintesthook => \&begintesthook,
+	beginrepeathook => \&beginrepeathook,
+	datahook => \&datahook,
+	endrepeathook => \&endrepeathook,
+	endtesthook => \&endtesthook,
+	endhook => \&endhook,
 );
 
 #cleanup amcpresults file

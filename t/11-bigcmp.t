@@ -19,7 +19,7 @@ my $am = Algorithm::AM->new(
 	commas => 'no',
 );
 $am->classify(
-	-endhook => \&endhook,
+	endhook => \&endhook,
 );
 
 #cleanup amcpresults file

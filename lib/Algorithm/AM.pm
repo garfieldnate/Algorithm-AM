@@ -59,7 +59,17 @@ sub new {
 
     my ($bigsep, $smallsep) = _check_project_opts($project, \%opts);
 
-    my $opts = _check_classify_opts(%opts);
+    #add default classification options and then check them all
+    my $opts = _check_classify_opts(
+        exclude_nulls     => 1,
+        exclude_given    => 1,
+        linear      => 0,
+        probability => undef,
+        repeat      => '1',
+        skipset     => 1,
+        gangs       => 'no',
+        %opts
+    );
 
     my $self = bless $opts, $class;
     $self->{project} = $project;
@@ -225,37 +235,14 @@ sub new {
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
             %gang, @sum
         );
-        my %opts = (
-            exclude_nulls    => $self->{exclude_nulls},
-            exclude_given   => $self->{exclude_given},
-            linear          => $self->{linear},
-            probability     => $self->{probability},
-            repeat          => $self->{repeat},
-            skipset         => $self->{skipset},
-            gangs           => $self->{gangs},
-            @_
-        );
 
-        $self->{exclude_given} = $opts{exclude_given};
-        $self->{exclude_nulls} = $opts{exclude_nulls};
-        $self->{linear} = $opts{linear};
-        $self->{skipset} = $opts{skipset};
-        $self->{probability} = $opts{probability};
-        $self->{repeat}      = $opts{repeat};
-
-        # TODO: should change into two separate booleans;
-        # print_gangs, and print_gang_summaries (or something)
-        if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
-            carp "Project $self->{project} did not specify option gangs correctly";
-            $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-            $logger->warn(q{Will use default value of 'no'});
-            $self->{gangs} = 'no';
-        }
-        else {
-            $self->{gangs} = $opts{gangs};
+        #check all input parameters and then save them in $self
+        my $opts = _check_classify_opts(@_);
+        for my $opt_name(keys $opts){
+            $self->{$opt_name} = $opts->{$opt_name};
         }
 
-        #TODO: what is $subsource used for?
+        # TODO: neat/ugly hack starts here...
         local $_ = $subsource;
 
         if ( $self->{exclude_nulls} ) {
@@ -300,44 +287,44 @@ sub new {
             $endrepeathook, $endtesthook, $endhook )
           = @hooks;
 
-        if ( exists $opts{-beginhook} ) {
-            $beginhook = $opts{-beginhook};
+        if ( exists $opts->{beginhook} ) {
+            $beginhook = $opts->{beginhook};
         }
         unless ( defined $beginhook ) {
             s/\$beginhook->.*//;
         }
-        if ( exists $opts{-begintesthook} ) {
-            $begintesthook = $opts{-begintesthook};
+        if ( exists $opts->{begintesthook} ) {
+            $begintesthook = $opts->{begintesthook};
         }
         unless ( defined $begintesthook ) {
             s/\$begintesthook->.*//;
         }
-        if ( exists $opts{-beginrepeathook} ) {
-            $beginrepeathook = $opts{-beginrepeathook};
+        if ( exists $opts->{beginrepeathook} ) {
+            $beginrepeathook = $opts->{beginrepeathook};
         }
         unless ( defined $beginrepeathook ) {
             s/\$beginrepeathook->.*//;
         }
-        if ( exists $opts{-datahook} ) {
-            $datahook = $opts{-datahook};
+        if ( exists $opts->{datahook} ) {
+            $datahook = $opts->{datahook};
         }
         unless ( defined $datahook ) {
             s/next unless \$datahook->\([^)]+\)//;
         }
-        if ( exists $opts{-endrepeathook} ) {
-            $endrepeathook = $opts{-endrepeathook};
+        if ( exists $opts->{endrepeathook} ) {
+            $endrepeathook = $opts->{endrepeathook};
         }
         unless ( defined $endrepeathook ) {
             s/\$endrepeathook->.*//;
         }
-        if ( exists $opts{-endtesthook} ) {
-            $endtesthook = $opts{-endtesthook};
+        if ( exists $opts->{endtesthook} ) {
+            $endtesthook = $opts->{endtesthook};
         }
         unless ( defined $endtesthook ) {
             s/\$endtesthook->.*//;
         }
-        if ( exists $opts{-endhook} ) {
-            $endhook = $opts{-endhook};
+        if ( exists $opts->{endhook} ) {
+            $endhook = $opts->{endhook};
         }
         unless ( defined $endhook ) {
             s/\$endhook->.*//;
@@ -418,16 +405,7 @@ sub _check_project_opts {
 }
 
 sub _check_classify_opts {
-    my %opts = (
-        exclude_nulls     => 1,
-        exclude_given    => 1,
-        linear      => 0,
-        probability => undef,
-        repeat      => '1',
-        skipset     => 1,
-        gangs       => 'no',
-        @_
-    );
+    my %opts = @_;
 
     state $valid_args =
     [qw(
@@ -438,6 +416,14 @@ sub _check_classify_opts {
         repeat
         skipset
         gangs
+
+        beginhook
+        beginrepeathook
+        begintesthook
+        datahook
+        endtesthook
+        endrepeathook
+        endhook
     )];
 
     for my $option (keys %opts){
@@ -448,7 +434,7 @@ sub _check_classify_opts {
 
     # TODO: should change into two separate booleans;
     # print_gangs, and print_gang_summaries (or something)
-    if ( $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
+    if ( $opts{gangs} && $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
         carp "Failed to specify option 'gangs' correctly";
         $logger->warn(q{(must be 'yes', 'summary', or 'no')});
         $logger->warn(q{Will use default value of 'no'});

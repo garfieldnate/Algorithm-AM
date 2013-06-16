@@ -24,7 +24,7 @@ my $am = Algorithm::AM->new(
 #by recording the call of each hook in @record
 my @record;
 my @args;
-push @args, ("-$_", record_hook($_))
+push @args, ("$_", record_hook($_))
 	for qw(
 		beginhook
 		begintesthook
@@ -72,13 +72,13 @@ unlink $results_path
 
 #now check that the return value of datahook is correctly interpreted
 $am->classify(
-	-datahook 	=> sub {
+	datahook 	=> sub {
 		my ($am, $data, $index) = @_;
 		#will be false for index 0, so index 0 will be removed
 		return $index;
 	},
-	-repeat => 1,
-	-gangs => 'yes',
+	repeat => 1,
+	gangs => 'yes',
 );
 
 my $results = read_file($results_path);

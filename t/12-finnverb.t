@@ -82,10 +82,10 @@ my $end = sub {
 };
 
 $p->classify(
-    -beginhook     => $begin,
-    -endtesthook   => $countsub,
-    -endrepeathook => $endrepeat,
-    -endhook       => $end
+    beginhook     => $begin,
+    endtesthook   => $countsub,
+    endrepeathook => $endrepeat,
+    endhook       => $end
 );
 
 is($count, 161, '161 items correctly predicted');
