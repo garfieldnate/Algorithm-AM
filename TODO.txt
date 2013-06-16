@@ -1,22 +1,35 @@
-Create tests to check for for errors that should be thrown, or warnings
+Next: Use Path::Tiny to get project file paths
+
+-Create tests to check for errors that should be thrown, or warnings
 that should be issued
 
-Refactor -gangs
-	- its a three way; leave for now...
-	- may need different refactoring in the future
+-Move data/outcome file slurping into separate methods
+-allow user to specify input format
+	specify bigsep, littlesep
+	specify comment character
 
-make sure decisions on what is in $self and what is in $data are good
+##Printing TODOs:
+-Split print_summary into two methods: print_config and print_data_stats
+-Make printing clearer (label gangs, etc.)
+-output something about the number of features in the vectors contained in a data file (I think this is done. Just make it clearer?)
+-Refactor gangs param into two different boolean params
+
+## Other TODOs:
+
+-Figure out 'cannot remove directory' errors from dzil release
+-Figure out good project organization to allow dual builders (MB and EUMM)
+-Create an AM old stuff branch
+
+-make sure decisions on what is in $self and what is in $data are good
 	so far, $self has options and $data has info about the input data
 
-Split print_summary into two methods: print_config and print_data_stats
+-Eliminate outcometonum
 
-Define "specifier" early on in the documentation. Give the anatomy of a data file.
-Mention that the specifier is the data unless otherwise specified
-Change values of excNull and excGiven to 1/0 or something more booleanish.
+-get rid of difficult (but extremely cool) __DATA__ hack
+	At first, put __DATA__ in a separate file for easier browsing
+	Maybe use Text::Template or Template toolkit instead of hand markings
 
-Use Path::Tiny to get project file paths
-
-Refactoring plan:
+#Eventual refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
 		classify() method should classify a single vector
 		Should move iteration, and iter vars, into a separate class.
@@ -32,36 +45,15 @@ Refactoring plan:
 	I think endvars should be a return value besides being available in the hook.
 		should probably also return the entire analogical set...
 
-Stop using symbol table to pass format variables
-
-Document how to import bigcmp
-
-Write guide on porting old AM code.
+## Documentation TODOs:
+-Write guide on porting old AM code.
 	classify, not ->()
 	variables
 	running batches
 	bigcmp
 	parameters
-
-Eliminate outcometonum
-
-Figure out 'cannot remove directory' errors from dzil release
-Figure out good project organization to allow dual builders (MB and EUMM)
-
-Make printing clearer (label gangs, etc.)
-put argument handling in one place
-
-remove references to 'the red book'; put all documentation in the code!
-output something about the number of features in the vectors contained in a data file
-
-Read through documentation, update/clean if necessary
+-Read through documentation, update/clean if necessary
 	Include Wikipedia pictures
-Look at API. Update/clean if necessary.
-Create an AM old stuff branch
-
-allow user to specify input format
-	specify bigsep, littlesep
-	specify comment character
-get rid of difficult (but extremely cool) __DATA__ hack
-	At first, put __DATA__ in a separate file for easier browsing
-	Maybe use Text::Template or Template toolkit instead of hand markings
+-Define "specifier" early on in the documentation. Give the anatomy of a data file.
+-Mention that the specifier is the data unless otherwise specified
+-remove references to 'the red book'; put all documentation in the code!
