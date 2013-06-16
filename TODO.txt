@@ -1,6 +1,3 @@
-Next: combine option handling; project and commas is for the constructor,
-everything else for both
-
 move hooks into $self
 
 Create tests to check for for errors that should be thrown, or warnings

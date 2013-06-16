@@ -57,24 +57,9 @@ sub new {
     $project = ''
         if $proto =~ /^-/;
 
-    my ($bigsep, $smallsep) = _check_project_opts($project, \%opts);
-
-    #add default classification options and then check them all
-    my $opts = _check_classify_opts(
-        exclude_nulls     => 1,
-        exclude_given    => 1,
-        linear      => 0,
-        probability => undef,
-        repeat      => '1',
-        skipset     => 1,
-        gangs       => 'no',
-        %opts
-    );
+    my $opts = _check_project_opts($project, \%opts);
 
     my $self = bless $opts, $class;
-    $self->{project} = $project;
-    $self->{bigsep} = $bigsep;
-    $self->{smallsep} = $smallsep;
 
     #don't buffer error messages
     *STDOUT->autoflush();
@@ -377,10 +362,12 @@ sub new {
 sub _check_project_opts {
     my ($project, $opts) = @_;
 
+    #first check $project and commas, which are allowed in the project
+    #constructor but not in the classify() method
     croak 'Must specify project'
-        unless ($project);
+        unless $project;
     croak 'Project has no data file'
-        unless ( -e "$project/data" );
+        unless -e "$project/data";
 
     croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
         unless exists $opts->{commas};
@@ -401,7 +388,22 @@ sub _check_project_opts {
         }
     }
     delete $opts->{commas};
-    return ($bigsep, $smallsep);
+
+    #add default classification options and then check all options
+    $opts = _check_classify_opts(
+        exclude_nulls     => 1,
+        exclude_given    => 1,
+        linear      => 0,
+        probability => undef,
+        repeat      => '1',
+        skipset     => 1,
+        gangs       => 'no',
+        %$opts
+    );
+    $opts->{project} = $project;
+    $opts->{bigsep} = $bigsep;
+    $opts->{smallsep} = $smallsep;
+    return $opts;
 }
 
 sub _check_classify_opts {
