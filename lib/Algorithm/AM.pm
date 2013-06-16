@@ -58,33 +58,15 @@ sub new {
         if $proto =~ /^-/;
 
     my $opts = _check_project_opts($project, \%opts);
-
     my $self = bless $opts, $class;
 
     #don't buffer error messages
     *STDOUT->autoflush();
 
-
-
     $logger->info("Initializing project $self->{project}");
 
-## The following is in case I decide later to allow hooks to be set at
-## initialization time as well as at run time
-
-    my ( $beginhook, $begintesthook, $beginrepeathook, $datahook,
-        $endrepeathook, $endtesthook, $endhook )
-      = ( undef, undef, undef, undef, undef, undef, undef );
-
-    #TODO: put in a hash so everything can be labeled
-    my (@hooks) = (
-        $beginhook, $begintesthook, $beginrepeathook, $datahook,
-        $endrepeathook, $endtesthook, $endhook
-    );
-
-## data file
-
+    ## read data file
     my ( @outcome, @data, @spec );
-    #length of longest specifier
 
     #TODO: create a subroutine for this
 
@@ -114,12 +96,13 @@ sub new {
     close $dataset_fh;
     my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
     my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
-## $vformat done after reading test file
+    ## $vformat done after reading test file
 
+    #length of longest specifier
     $self->{sformat} = "%-$slen.${slen}s";
     $self->{dformat} = "%" . ( scalar @data ) . ".0u";
 
-## outcome file
+    ## read outcome file
 
     $logger->info('Outcome file...');
     my (@outcomelist) = ('');
@@ -268,51 +251,26 @@ sub new {
             }
         }
 
-        my ( $beginhook, $begintesthook, $beginrepeathook, $datahook,
-            $endrepeathook, $endtesthook, $endhook )
-          = @hooks;
-
-        if ( exists $opts->{beginhook} ) {
-            $beginhook = $opts->{beginhook};
+        if (!exists $self->{beginhook} ) {
+            s/\$self->{beginhook}->.*//;
         }
-        unless ( defined $beginhook ) {
-            s/\$beginhook->.*//;
+        if (!exists $self->{begintesthook} ) {
+            s/\$self->{begintesthook}->.*//;
         }
-        if ( exists $opts->{begintesthook} ) {
-            $begintesthook = $opts->{begintesthook};
+        if (!exists $self->{beginrepeathook} ) {
+            s/\$self->{beginrepeathook}->.*//;
         }
-        unless ( defined $begintesthook ) {
-            s/\$begintesthook->.*//;
+        if (!exists $self->{datahook} ) {
+            s/next unless \$self->{datahook}->\([^)]+\)//;
         }
-        if ( exists $opts->{beginrepeathook} ) {
-            $beginrepeathook = $opts->{beginrepeathook};
+        if (!exists $self->{endrepeathook} ) {
+            s/\$self->{endrepeathook}->.*//;
         }
-        unless ( defined $beginrepeathook ) {
-            s/\$beginrepeathook->.*//;
+        if (!exists $self->{endtesthook} ) {
+            s/\$self->{endtesthook}->.*//;
         }
-        if ( exists $opts->{datahook} ) {
-            $datahook = $opts->{datahook};
-        }
-        unless ( defined $datahook ) {
-            s/next unless \$datahook->\([^)]+\)//;
-        }
-        if ( exists $opts->{endrepeathook} ) {
-            $endrepeathook = $opts->{endrepeathook};
-        }
-        unless ( defined $endrepeathook ) {
-            s/\$endrepeathook->.*//;
-        }
-        if ( exists $opts->{endtesthook} ) {
-            $endtesthook = $opts->{endtesthook};
-        }
-        unless ( defined $endtesthook ) {
-            s/\$endtesthook->.*//;
-        }
-        if ( exists $opts->{endhook} ) {
-            $endhook = $opts->{endhook};
-        }
-        unless ( defined $endhook ) {
-            s/\$endhook->.*//;
+        if (!exists $self->{endhook} ) {
+            s/\$self->{endhook}->.*//;
         }
 
 ## stuff to be exported
@@ -443,6 +401,8 @@ sub _check_classify_opts {
         $opts{gangs} = 'no';
     }
 
+    #todo: properly check types of parameters; hooks should be subs, etc.
+
     return \%opts;
 }
 
@@ -491,7 +451,7 @@ $logger->add(
 
 my ( $sec, $min, $hour );
 
-$beginhook->($self, $data);
+$self->{beginhook}->($self, $data);
 
 my $left = scalar @testItems;
 foreach my $t (@testItems) {
@@ -516,7 +476,7 @@ foreach my $t (@testItems) {
     $self->{activeVar} = @{ $data->{curTestItem} };
 ## end include nulls
 
-    $begintesthook->($self, $data);
+    $self->{begintesthook}->($self, $data);
 
     {
         use integer;
@@ -538,7 +498,7 @@ foreach my $t (@testItems) {
 
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
-        $beginrepeathook->($self, $data);
+        $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
         $self->{excludedData} = 0;
@@ -556,7 +516,7 @@ foreach my $t (@testItems) {
 
         for ( my $i = $data->{datacap} ; $i ; ) {
             --$i;
-            ++$self->{excludedData}, next unless $datahook->($self, $data, $i);
+            ++$self->{excludedData}, next unless $self->{datahook}->($self, $data, $i);
 ## begin probability
             ++$self->{excludedData}, next
                 if rand() > $self->{probability};
@@ -798,19 +758,19 @@ foreach my $t (@testItems) {
 
     }
     continue {
-        $endrepeathook->($self, $data);
+        $self->{endrepeathook}->($self, $data);
         ++$pass;
         ( $sec, $min, $hour ) = localtime();
         $logger->info(
             sprintf( "$pass/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
     }
-    $endtesthook->($self, $data);
+    $self->{endtesthook}->($self, $data);
 }
 
 ( $sec, $min, $hour ) = localtime();
 $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
 
-$endhook->($self, $data);
+$self->{endhook}->($self, $data);
 
 #go back to printing to the screen
 $logger->remove('amcpresults');

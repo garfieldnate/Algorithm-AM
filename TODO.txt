@@ -1,5 +1,3 @@
-move hooks into $self
-
 Create tests to check for for errors that should be thrown, or warnings
 that should be issued
 
@@ -43,6 +41,7 @@ Write guide on porting old AM code.
 	variables
 	running batches
 	bigcmp
+	parameters
 
 Eliminate outcometonum
 
