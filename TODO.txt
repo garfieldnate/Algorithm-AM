@@ -3,6 +3,8 @@ everything else for both
 
 move hooks into $self
 
+Create tests to check for for errors that should be thrown, or warnings
+that should be issued
 
 Refactor -gangs
 	- its a three way; leave for now...

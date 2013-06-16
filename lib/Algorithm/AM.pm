@@ -50,22 +50,21 @@ my %import;
 ## %gang
 
 sub new {
-    my ($proto, $project, @opts) = @_;
-
-    my $opts = _handle_options(@opts);
+    my ($proto, $project, %opts) = @_;
 
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
     $project = ''
         if $proto =~ /^-/;
 
-    croak 'Must specify project'
-        unless ($project);
-    croak 'Project has no data file'
-        unless ( -e "$project/data" );
+    my ($bigsep, $smallsep) = _check_project_opts($project, \%opts);
+
+    my $opts = _check_classify_opts(%opts);
 
     my $self = bless $opts, $class;
     $self->{project} = $project;
+    $self->{bigsep} = $bigsep;
+    $self->{smallsep} = $smallsep;
 
     #don't buffer error messages
     *STDOUT->autoflush();
@@ -384,7 +383,41 @@ sub new {
     return $self;
 }
 
-sub _handle_options {
+#check that the project has a data file,
+#and that the options have a legal commas value;
+#return bigsep and smallsep, the values used to parse the
+#project data files
+sub _check_project_opts {
+    my ($project, $opts) = @_;
+
+    croak 'Must specify project'
+        unless ($project);
+    croak 'Project has no data file'
+        unless ( -e "$project/data" );
+
+    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
+        unless exists $opts->{commas};
+
+    my ($bigsep, $smallsep);
+    given($opts->{commas}){
+        when('yes'){
+            $bigsep   = qr{\s*,\s*};
+            $smallsep = qr{\s+};
+        }
+        when('no'){
+            $bigsep   = qr{\s+};
+            $smallsep = qr{};
+        }
+        default{
+            croak "Failed to specify comma formatting correctly;\n" .
+                q{(must specify commas => 'yes' or commas => 'no')};
+        }
+    }
+    delete $opts->{commas};
+    return ($bigsep, $smallsep);
+}
+
+sub _check_classify_opts {
     my %opts = (
         exclude_nulls     => 1,
         exclude_given    => 1,
@@ -405,32 +438,12 @@ sub _handle_options {
         repeat
         skipset
         gangs
-        commas
     )];
 
     for my $option (keys %opts){
         if(!grep {$_ eq $option} @$valid_args){
             croak "Unknown option $option";
         }
-    }
-
-    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
-        unless exists $opts{commas};
-
-    given($opts{commas}){
-        when('yes'){
-            $opts{bigsep}   = qr{\s*,\s*};
-            $opts{smallsep} = qr{\s+};
-        }
-        when('no'){
-            $opts{bigsep}   = qr{\s+};
-            $opts{smallsep} = qr{};
-        }
-        default{
-            croak "Failed to specify comma formatting correctly;\n" .
-                q{(must specify -commas => 'yes' or -commas => 'no')};
-        }
-        delete $opts{commas};
     }
 
     # TODO: should change into two separate booleans;
@@ -471,6 +484,7 @@ sub print_summary {
     $logger->info($self->{linear} ?
         'Gang: linear' : 'Gang: squared');
     $logger->info("Number of active variables: $self->{activeVar}");
+    return;
 }
 
 1;
