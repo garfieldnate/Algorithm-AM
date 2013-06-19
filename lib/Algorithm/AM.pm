@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use feature 'state';
 use feature 'switch';
+use Path::Tiny;
 use Exporter::Easy (
     OK => ['bigcmp']
 );
@@ -72,8 +73,9 @@ sub new {
 
     my $slen = 0;
     my @vlen = (0) x 60;
-    open my $dataset_fh, '<', "$self->{project}/data" ## no critic (RequireBriefOpen)
-      or carp "Couldn't open $self->{project}/data" and return { };
+    my $data_path = path($self->{project}, 'data');
+    open my $dataset_fh, '<', $data_path ## no critic (RequireBriefOpen)
+      or carp "Couldn't open $data_path" and return { };
     while (<$dataset_fh>) {
         s/[\n\r]+$//;#cross-platform chomp
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
@@ -112,8 +114,9 @@ sub new {
     my $olen = 0;
 
     my $outcomecounter = 0;
-    if ( -e "$self->{project}/outcome" ) {
-        open my $outcome_fh, '<', "$self->{project}/outcome";
+    my $outcome_path = path($self->{project}, 'outcome');
+    if ( -e "$outcome_path" ) {
+        open my $outcome_fh, '<', "$outcome_path";
         while (<$outcome_fh>) {
             s/[\n\r]+$//;#cross-platform chomp
             my ( $oc, $outcome ) = split /\s+/, $_, 2;

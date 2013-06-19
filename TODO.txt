@@ -1,5 +1,3 @@
-Next: Use Path::Tiny to get project file paths
-
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
 
