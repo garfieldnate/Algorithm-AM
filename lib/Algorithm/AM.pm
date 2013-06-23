@@ -67,7 +67,7 @@ sub new {
     $logger->info("Initializing project $self->{project}");
 
     ## read data file
-    my ( @outcome, @data, @spec );
+    my ( @outcome, @spec );
 
     #TODO: create a subroutine for this
     my $data_path = path($self->{project}, 'data');
@@ -283,7 +283,6 @@ sub new {
         $data->{outcomelist} = \@outcomelist;
         $data->{outcometonum} = \%outcometonum;
         $data->{outcome} = \@outcome;
-        $data->{data} = $self->{data};
         $data->{spec} = \@spec;
         $data->{datacap} = @{$self->{data}};
 

@@ -90,7 +90,7 @@ sub test_beginning_vars {
 	is_deeply($data->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
 		or note explain $data->{outcome};
 	is_deeply(
-		$data->{data},
+		$am->{data},
 		[
 			['3', '1', '0'],
 			['2', '1', '0'],
@@ -100,7 +100,7 @@ sub test_beginning_vars {
         ],
         $hook_name . ': @data'
     )
-		or note explain $data->{data};
+		or note explain $am->{data};
 	is_deeply($data->{spec}, [('myCommentHere') x 5], $hook_name . ': @spec')
 		or note explain $data->{spec};
 }

@@ -1,7 +1,8 @@
+Next: move @outcome, @spec into $self. Then move data/outcome file slurping into separate methods
+
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
 
--Move data/outcome file slurping into separate methods
 -allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
@@ -20,6 +21,8 @@ that should be issued
 
 -make sure decisions on what is in $self and what is in $data are good
 	so far, $self has options and $data has info about the input data
+		Not so! Now $self has @data
+	It'd be better if $data had classification information (a result object) and $self had everything else
 
 -Eliminate outcometonum
 
