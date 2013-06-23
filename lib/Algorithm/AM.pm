@@ -71,8 +71,8 @@ sub new {
 
     #TODO: create a subroutine for this
 
-    my $slen = 0;
-    my @vlen = (0) x 60;
+    $self->{slen} = 0;
+    $self->{vlen} = [(0) x 60];
     my $data_path = path($self->{project}, 'data');
     open my $dataset_fh, '<', $data_path ## no critic (RequireBriefOpen)
       or carp "Couldn't open $data_path" and return { };
@@ -85,13 +85,13 @@ sub new {
         push @outcome, $outcome;
         push @spec,    $spec;
         $l = length $spec;
-        $slen = $l if $l > $slen;
+        $self->{slen} = $l if $l > $self->{slen};
         my @datavar = split /$self->{smallsep}/, $data;
         push @data, \@datavar;
 
         for my $i (0 .. $#datavar ) {
             $l = length $datavar[$i];
-            $vlen[$i] = $l if $l > $vlen[$i];
+            $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
         }
         $logger->debug( 'Data file: ' . scalar(@data) );
     }
@@ -101,7 +101,7 @@ sub new {
     ## $vformat done after reading test file
 
     #length of longest specifier
-    $self->{sformat} = "%-$slen.${slen}s";
+    $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
     $self->{dformat} = "%" . ( scalar @data ) . ".0u";
 
     ## read outcome file
@@ -169,8 +169,8 @@ sub new {
     my $maxvar = scalar split /$self->{smallsep}/, $item;
     $logger->info('...done');
 
-    splice @vlen, $maxvar;
-    $self->{vformat} = join " ", map { "%-$_.${_}s" } @vlen;
+    splice @{$self->{vlen}}, $maxvar;
+    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
 
     my @activeVar;
     {
