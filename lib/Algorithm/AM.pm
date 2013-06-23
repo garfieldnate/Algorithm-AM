@@ -86,21 +86,21 @@ sub new {
         $l = length $spec;
         $self->{slen} = $l if $l > $self->{slen};
         my @datavar = split /$self->{smallsep}/, $data;
-        push @data, \@datavar;
+        push @{$self->{data}}, \@datavar;
 
         for my $i (0 .. $#datavar ) {
             $l = length $datavar[$i];
             $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
         }
-        $logger->debug( 'Data file: ' . scalar(@data) );
+        $logger->debug( 'Data file: ' . scalar(@{$self->{data}}) );
     }
-    my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
-    my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
+    my (@itemcontextchain) = (0) x @{$self->{data}};    ## preemptive allocation of memory
+    my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
     ## $vformat done after reading test file
 
     #length of longest specifier
     $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
-    $self->{dformat} = "%" . ( scalar @data ) . ".0u";
+    $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
 
     ## read outcome file
 
@@ -195,7 +195,7 @@ sub new {
         my @fake;
         @fake = \( $amsub );
         @fake = \(
-            @outcome, @data, @spec, @itemcontextchain, @datatocontext
+            @outcome, @spec, @itemcontextchain, @datatocontext
         );
         @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum);
         @fake = \( @testItems, @activeVar );
@@ -283,9 +283,9 @@ sub new {
         $data->{outcomelist} = \@outcomelist;
         $data->{outcometonum} = \%outcometonum;
         $data->{outcome} = \@outcome;
-        $data->{data} = \@data;
+        $data->{data} = $self->{data};
         $data->{spec} = \@spec;
-        $data->{datacap} = @data;
+        $data->{datacap} = @{$self->{data}};
 
         #item vars
         #TODO: stop using sclar pointers here...
@@ -521,7 +521,7 @@ foreach my $t (@testItems) {
             ++$self->{excludedData}, next
                 if rand() > $self->{probability};
 ## end probability
-            my @dataItem = @{ $data[$i] };
+            my @dataItem = @{ $self->{data}->[$i] };
             my @alist    = @activeVar;
             my $j        = 0;
             my @clist    = ();
@@ -697,7 +697,7 @@ foreach my $t (@testItems) {
                   )
                 {
                     $logger->info( sprintf "$pad  $self->{vformat}  $spec[$i]",
-                        @{ $data[$i] } );
+                        @{ $self->{data}->[$i] } );
                 }
 ## end skip gang list
             }
@@ -747,7 +747,7 @@ foreach my $t (@testItems) {
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
                             sprintf( "$pad  $self->{vformat}  $spec[$_]",
-                                @{ $data[$_] } )
+                                @{ $self->{data}->[$_] } )
                         );
                     }
 ## end skip gang list
