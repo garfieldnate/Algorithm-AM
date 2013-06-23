@@ -70,13 +70,12 @@ sub new {
     my ( @outcome, @data, @spec );
 
     #TODO: create a subroutine for this
+    my $data_path = path($self->{project}, 'data');
+    my @data_set = $data_path->lines;
 
     $self->{slen} = 0;
     $self->{vlen} = [(0) x 60];
-    my $data_path = path($self->{project}, 'data');
-    open my $dataset_fh, '<', $data_path ## no critic (RequireBriefOpen)
-      or carp "Couldn't open $data_path" and return { };
-    while (<$dataset_fh>) {
+    for (@data_set) {
         s/[\n\r]+$//;#cross-platform chomp
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
         $spec ||= $data;
@@ -95,7 +94,6 @@ sub new {
         }
         $logger->debug( 'Data file: ' . scalar(@data) );
     }
-    close $dataset_fh;
     my (@itemcontextchain) = (0) x @data;    ## preemptive allocation of memory
     my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @data;
     ## $vformat done after reading test file
@@ -115,9 +113,9 @@ sub new {
 
     my $outcomecounter = 0;
     my $outcome_path = path($self->{project}, 'outcome');
-    if ( -e "$outcome_path" ) {
-        open my $outcome_fh, '<', "$outcome_path";
-        while (<$outcome_fh>) {
+    if ( $outcome_path->exists ) {
+        @data_set = $outcome_path->lines;
+        for (@data_set) {
             s/[\n\r]+$//;#cross-platform chomp
             my ( $oc, $outcome ) = split /\s+/, $_, 2;
             $octonum{$oc}           = ++$outcomecounter;
@@ -125,7 +123,6 @@ sub new {
             push @outcomelist, $outcome;
             push @ocl, $oc;
         }
-        close $outcome_fh;
     }
     else {
         $logger->info('...will use data file');
