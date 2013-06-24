@@ -67,7 +67,6 @@ sub new {
     $logger->info("Initializing project $self->{project}");
 
     ## read data file
-    my ( @spec );
 
     #TODO: create a subroutine for this
     my $data_path = path($self->{project}, 'data');
@@ -82,7 +81,7 @@ sub new {
         my $l;
 
         push @{$self->{outcome}}, $outcome;
-        push @spec, $spec;
+        push @{$self->{spec}}, $spec;
         $l = length $spec;
         $self->{slen} = $l if $l > $self->{slen};
         my @datavar = split /$self->{smallsep}/, $data;
@@ -195,7 +194,7 @@ sub new {
         my @fake;
         @fake = \( $amsub );
         @fake = \(
-            @spec, @itemcontextchain, @datatocontext
+            @itemcontextchain, @datatocontext
         );
         @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum);
         @fake = \( @testItems, @activeVar );
@@ -282,7 +281,6 @@ sub new {
         #beginning vars
         $data->{outcomelist} = \@outcomelist;
         $data->{outcometonum} = \%outcometonum;
-        $data->{spec} = \@spec;
         $data->{datacap} = @{$self->{data}};
 
         #item vars
@@ -623,7 +621,7 @@ foreach my $t (@testItems) {
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
-                    $outcomelist[ $self->{outcome}->[$i] ], $spec[$i],
+                    $outcomelist[ $self->{outcome}->[$i] ], $self->{spec}->[$i],
                     $p,                           100 * $p / $grandtotal
                 )
             );
@@ -694,7 +692,7 @@ foreach my $t (@testItems) {
                     $i = $itemcontextchain[$i]
                   )
                 {
-                    $logger->info( sprintf "$pad  $self->{vformat}  $spec[$i]",
+                    $logger->info( sprintf "$pad  $self->{vformat}  $self->{spec}->[$i]",
                         @{ $self->{data}->[$i] } );
                 }
 ## end skip gang list
@@ -744,7 +742,7 @@ foreach my $t (@testItems) {
 ## begin skip gang list
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
-                            sprintf( "$pad  $self->{vformat}  $spec[$_]",
+                            sprintf( "$pad  $self->{vformat}  $self->{spec}->[$_]",
                                 @{ $self->{data}->[$_] } )
                         );
                     }
