@@ -1,4 +1,4 @@
-Next: move @outcome, @spec into $self. Then move data/outcome file slurping into separate methods
+Next: move @spec into $self. Then move data/outcome file slurping into separate methods
 
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued

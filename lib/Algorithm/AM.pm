@@ -67,7 +67,7 @@ sub new {
     $logger->info("Initializing project $self->{project}");
 
     ## read data file
-    my ( @outcome, @spec );
+    my ( @spec );
 
     #TODO: create a subroutine for this
     my $data_path = path($self->{project}, 'data');
@@ -81,8 +81,8 @@ sub new {
         $spec ||= $data;
         my $l;
 
-        push @outcome, $outcome;
-        push @spec,    $spec;
+        push @{$self->{outcome}}, $outcome;
+        push @spec, $spec;
         $l = length $spec;
         $self->{slen} = $l if $l > $self->{slen};
         my @datavar = split /$self->{smallsep}/, $data;
@@ -127,7 +127,7 @@ sub new {
     else {
         $logger->info('...will use data file');
         my %oc = ();
-        map { ++$oc{$_} } @outcome;
+        map { ++$oc{$_} } @{$self->{outcome}};
         foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
             $octonum{$_}      = ++$outcomecounter;
             $outcometonum{$_} = $outcomecounter;
@@ -136,7 +136,7 @@ sub new {
         }
     }
     $logger->info('...converting outcomes to indices');
-    @outcome = map { $octonum{$_} } @outcome;
+    @{$self->{outcome}} = map { $octonum{$_} } @{$self->{outcome}};
     foreach (@outcomelist) {
         my $l;
         $l = length;
@@ -195,7 +195,7 @@ sub new {
         my @fake;
         @fake = \( $amsub );
         @fake = \(
-            @outcome, @spec, @itemcontextchain, @datatocontext
+            @spec, @itemcontextchain, @datatocontext
         );
         @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum);
         @fake = \( @testItems, @activeVar );
@@ -282,7 +282,6 @@ sub new {
         #beginning vars
         $data->{outcomelist} = \@outcomelist;
         $data->{outcometonum} = \%outcometonum;
-        $data->{outcome} = \@outcome;
         $data->{spec} = \@spec;
         $data->{datacap} = @{$self->{data}};
 
@@ -305,7 +304,7 @@ sub new {
     *classify = $amsub
         or die "didn't work out";
     $self->_initialize(
-        \@activeVar,            \@outcome,      \@itemcontextchain,
+        \@activeVar,            $self->{outcome},      \@itemcontextchain,
         \%itemcontextchainhead, \%subtooutcome, \%contextsize,
         \%pointers,             \%gang,         \@sum
     );
@@ -541,7 +540,7 @@ foreach my $t (@testItems) {
             $itemcontextchain[$i]           = $itemcontextchainhead{$context};
             $itemcontextchainhead{$context} = $i;
             ++$contextsize{$context};
-            my $outcome = $outcome[$i];
+            my $outcome = $self->{outcome}->[$i];
             if ( defined $subtooutcome{$context} ) {
                 $subtooutcome{$context} = 0
                   if $subtooutcome{$context} != $outcome;
@@ -624,7 +623,7 @@ foreach my $t (@testItems) {
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
-                    $outcomelist[ $outcome[$i] ], $spec[$i],
+                    $outcomelist[ $self->{outcome}->[$i] ], $spec[$i],
                     $p,                           100 * $p / $grandtotal
                 )
             );
@@ -712,9 +711,9 @@ foreach my $t (@testItems) {
                     $i = $itemcontextchain[$i]
                   )
                 {
-                    ++$gangsort[ $outcome[$i] ];
+                    ++$gangsort[ $self->{outcome}->[$i] ];
 ## begin skip gang list
-                    push @{ $ganglist[ $outcome[$i] ] }, $i;
+                    push @{ $ganglist[ $self->{outcome}->[$i] ] }, $i;
 ## end skip gang list
                 }
                 {

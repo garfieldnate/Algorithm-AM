@@ -87,8 +87,8 @@ sub test_beginning_vars {
 	is_deeply($data->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
 		or note explain $data->{outcometonum};
 	#why not [e,r,r,r,r]?
-	is_deeply($data->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
-		or note explain $data->{outcome};
+	is_deeply($am->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
+		or note explain $am->{outcome};
 	is_deeply(
 		$am->{data},
 		[
