@@ -1,7 +1,8 @@
-Next: Move data/outcome file slurping into separate methods
+Next: Move @outcomelist, @ocl, %octonum, %outcometonum, $olen, and $outcomecounter into $self and move outcome file slurping into separate method
 
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
+-Create tests for print formatting variables
 
 -allow user to specify input format
 	specify bigsep, littlesep
@@ -21,8 +22,8 @@ that should be issued
 
 -make sure decisions on what is in $self and what is in $data are good
 	so far, $self has options and $data has info about the input data
-		Not so! Now $self has @data
-	It'd be better if $data had classification information (a result object) and $self had everything else
+		Not so! Now $self has @data, @outcome, and @spec
+	It'd be better if $data had classification information (a result object), another variable had per-iteration information, and $self had everything else
 
 -Eliminate outcometonum
 

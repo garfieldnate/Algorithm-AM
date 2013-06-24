@@ -67,39 +67,16 @@ sub new {
     $logger->info("Initializing project $self->{project}");
 
     ## read data file
-
-    #TODO: create a subroutine for this
     my $data_path = path($self->{project}, 'data');
+    $data_path->exists or
+        croak "File $data_path does not exist!";
     my @data_set = $data_path->lines;
+    map {s/[\n\r]+$//; $_} @data_set;#cross-platform chomp
 
-    $self->{slen} = 0;
-    $self->{vlen} = [(0) x 60];
-    for (@data_set) {
-        s/[\n\r]+$//;#cross-platform chomp
-        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
-        $spec ||= $data;
-        my $l;
+    $self->_read_data_set(\@data_set);
 
-        push @{$self->{outcome}}, $outcome;
-        push @{$self->{spec}}, $spec;
-        $l = length $spec;
-        $self->{slen} = $l if $l > $self->{slen};
-        my @datavar = split /$self->{smallsep}/, $data;
-        push @{$self->{data}}, \@datavar;
-
-        for my $i (0 .. $#datavar ) {
-            $l = length $datavar[$i];
-            $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
-        }
-        $logger->debug( 'Data file: ' . scalar(@{$self->{data}}) );
-    }
     my (@itemcontextchain) = (0) x @{$self->{data}};    ## preemptive allocation of memory
     my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
-    ## $vformat done after reading test file
-
-    #length of longest specifier
-    $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
-    $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
 
     ## read outcome file
 
@@ -307,6 +284,35 @@ sub new {
         \%pointers,             \%gang,         \@sum
     );
     return $self;
+}
+
+#read data set, setting internal variables for processing and printing
+sub _read_data_set {
+    my ($self, $data_set) = @_;
+    $self->{slen} = 0;
+    $self->{vlen} = [(0) x 60];
+    for (@$data_set) {
+        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
+        $spec ||= $data;
+        my $l;
+
+        push @{$self->{outcome}}, $outcome;
+        push @{$self->{spec}}, $spec;
+        $l = length $spec;
+        $self->{slen} = $l if $l > $self->{slen};
+        my @datavar = split /$self->{smallsep}/, $data;
+        push @{$self->{data}}, \@datavar;
+
+        for my $i (0 .. $#datavar ) {
+            $l = length $datavar[$i];
+            $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
+        }
+        $logger->debug( 'Data file: ' . scalar(@{$self->{data}}) );
+    }
+    #length of longest specifier
+    $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
+    #length of integer hold number of data items
+    $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
 }
 
 #check that the project has a data file,
