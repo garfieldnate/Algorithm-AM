@@ -81,44 +81,7 @@ sub new {
     ## read outcome file
 
     $logger->info('Outcome file...');
-    my (@outcomelist) = ('');
-    my (@ocl)         = ('');
-    my %octonum;
-    my %outcometonum;
-    my $olen = 0;
-
-    my $outcomecounter = 0;
-    my $outcome_path = path($self->{project}, 'outcome');
-    if ( $outcome_path->exists ) {
-        @data_set = $outcome_path->lines;
-        for (@data_set) {
-            s/[\n\r]+$//;#cross-platform chomp
-            my ( $oc, $outcome ) = split /\s+/, $_, 2;
-            $octonum{$oc}           = ++$outcomecounter;
-            $outcometonum{$outcome} = $outcomecounter;
-            push @outcomelist, $outcome;
-            push @ocl, $oc;
-        }
-    }
-    else {
-        $logger->info('...will use data file');
-        my %oc = ();
-        map { ++$oc{$_} } @{$self->{outcome}};
-        foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
-            $octonum{$_}      = ++$outcomecounter;
-            $outcometonum{$_} = $outcomecounter;
-            push @outcomelist, $_;
-            push @ocl,         $_;
-        }
-    }
-    $logger->info('...converting outcomes to indices');
-    @{$self->{outcome}} = map { $octonum{$_} } @{$self->{outcome}};
-    foreach (@outcomelist) {
-        my $l;
-        $l = length;
-        $olen = $l if $l > $olen;
-    }
-    $self->{oformat} = "%-$olen.${olen}s";
+    $self->_set_outcomes();
     $logger->info('...done');
 
 ## test file
@@ -160,7 +123,7 @@ sub new {
     my %contextsize;
     my %pointers;
     my %gang;
-    my @sum = (0.0) x @outcomelist;
+    my @sum = (0.0) x @{$self->{outcomelist}};
 
     my $amsub;
     $amsub = sub {
@@ -171,10 +134,9 @@ sub new {
         my @fake;
         @fake = \( $amsub );
         @fake = \(
-            @itemcontextchain, @datatocontext
+            @itemcontextchain,  @datatocontext
         );
-        @fake = \( @outcomelist, @ocl,     %octonum, %outcometonum);
-        @fake = \( @testItems, @activeVar );
+        @fake = \( @testItems,  @activeVar );
         @fake = \(
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
             %gang, @sum
@@ -256,8 +218,6 @@ sub new {
         my $grandtotal;
 
         #beginning vars
-        $data->{outcomelist} = \@outcomelist;
-        $data->{outcometonum} = \%outcometonum;
         $data->{datacap} = @{$self->{data}};
 
         #item vars
@@ -313,6 +273,58 @@ sub _read_data_set {
     $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
     #length of integer hold number of data items
     $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
+}
+
+sub _set_outcomes {
+    my ($self) = @_;
+    $self->{outcomelist} = [''];
+    $self->{ocl} = [''];
+    $self->{olen} = 0;
+    $self->{outcomecounter} = 0;
+    my $outcome_path = path($self->{project}, 'outcome');
+    if ( $outcome_path->exists ) {
+        my @data_set = $outcome_path->lines;
+        @data_set = map {s/[\n\r]+$//; $_} @data_set;#cross-platform chomp
+        $self->_read_outcome_set(\@data_set);
+    }
+    else {
+        $logger->info('...will use data file');
+        $self->_read_outcomes_from_data();
+    }
+    $logger->info('...converting outcomes to indices');
+    @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
+    foreach (@{$self->{outcomelist}}) {
+        my $l;
+        $l = length;
+        $self->{olen} = $l if $l > $self->{olen};
+    }
+    $self->{oformat} = "%-$self->{olen}.$self->{olen}s";
+}
+
+sub _read_outcome_set {
+    my ($self, $data_set) = @_;
+
+    for my $datum (@$data_set) {
+        my ( $oc, $outcome ) = split /\s+/, $datum, 2;
+        $self->{octonum}{$oc}           = ++$self->{outcomecounter};
+        $self->{outcometonum}{$outcome} = $self->{outcomecounter};
+        push @{$self->{outcomelist}}, $outcome;
+        push @{$self->{ocl}}, $oc;
+    }
+    return;
+}
+
+sub _read_outcomes_from_data {
+    my ($self) = @_;
+    my %oc = ();
+    map { ++$oc{$_} } @{$self->{outcome}};
+    foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
+        $self->{octonum}{$_}      = ++$self->{outcomecounter};
+        $self->{outcometonum}{$_} = $self->{outcomecounter};
+        push @{$self->{outcomelist}}, $_;
+        push @{$self->{ocl}},         $_;
+    }
+    return;
 }
 
 #check that the project has a data file,
@@ -464,7 +476,7 @@ foreach my $t (@testItems) {
 
     my $curTestItem;
     ( $curTestOutcome, $curTestItem, $data->{curTestSpec} ) = split /$self->{bigsep}/, $t, 3;
-    $curTestOutcome = $octonum{$curTestOutcome};
+    $curTestOutcome = $self->{octonum}{$curTestOutcome};
     $data->{curTestSpec} ||= "";
 
 ## begin exclude nulls
@@ -580,7 +592,7 @@ foreach my $t (@testItems) {
 
         #TODO: put this in a return value or something!
         $logger->info('Statistical Summary');
-        for ( my $i = 1 ; $i < @outcomelist ; ++$i ) {
+        for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
             next unless $n = $sum[$i];
             $data->{pointermax} = $n
@@ -590,14 +602,14 @@ foreach my $t (@testItems) {
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{gformat}  %7.3f%%",
-                    $outcomelist[$i], $n, 100 * $n / $grandtotal
+                    $self->{outcomelist}->[$i], $n, 100 * $n / $grandtotal
                 )
             );
         }
         $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", '-' x $longest ) );
         $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
-            $logger->info("Expected outcome: $outcomelist[$curTestOutcome]");
+            $logger->info("Expected outcome: $self->{outcomelist}->[$curTestOutcome]");
             if ( $sum[$curTestOutcome] eq $data->{pointermax} ) {
                 $logger->info('Correct outcome predicted.');
             }
@@ -627,7 +639,7 @@ foreach my $t (@testItems) {
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
-                    $outcomelist[ $self->{outcome}->[$i] ], $self->{spec}->[$i],
+                    $self->{outcomelist}->[ $self->{outcome}->[$i] ], $self->{spec}->[$i],
                     $p,                           100 * $p / $grandtotal
                 )
             );
@@ -687,7 +699,7 @@ foreach my $t (@testItems) {
                         100 * $gang{$k} / $grandtotal,
                         $p,
                         $contextsize{$k},
-                        $outcomelist[ $subtooutcome{$k} ]
+                        $self->{outcomelist}->[ $subtooutcome{$k} ]
                     )
                 );
 ## begin skip gang list
@@ -704,7 +716,7 @@ foreach my $t (@testItems) {
 ## end skip gang list
             }
             else {
-                my @gangsort = (0) x @outcomelist;
+                my @gangsort = (0) x @{$self->{outcomelist}};
 ## begin skip gang list
                 my @ganglist = ();
 ## end skip gang list
@@ -736,13 +748,13 @@ foreach my $t (@testItems) {
                         )
                     );
                 }
-                for ( $i = 1 ; $i < @outcomelist ; ++$i ) {
+                for ( $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
                             "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
                             100 * $gangsort[$i] * $p / $grandtotal,
-                            $p, $gangsort[$i], $outcomelist[$i]
+                            $p, $gangsort[$i], $self->{outcomelist}->[$i]
                         )
                     );
 ## begin skip gang list

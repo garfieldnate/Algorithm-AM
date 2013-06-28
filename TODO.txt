@@ -1,4 +1,4 @@
-Next: Move @outcomelist, @ocl, %octonum, %outcometonum, $olen, and $outcomecounter into $self and move outcome file slurping into separate method
+Next: Move @testitems into $self and put test file reading in a separate method.
 
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
@@ -16,6 +16,8 @@ that should be issued
 
 ## Other TODOs:
 
+-rename 'outcome' to something else. Comparison, golden, expected...
+
 -Figure out 'cannot remove directory' errors from dzil release
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
@@ -24,8 +26,10 @@ that should be issued
 	so far, $self has options and $data has info about the input data
 		Not so! Now $self has @data, @outcome, and @spec
 	It'd be better if $data had classification information (a result object), another variable had per-iteration information, and $self had everything else
+	Create accessors for $self
 
 -Eliminate outcometonum
+	- using an accessor of some kind
 
 -get rid of difficult (but extremely cool) __DATA__ hack
 	At first, put __DATA__ in a separate file for easier browsing

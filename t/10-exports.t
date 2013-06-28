@@ -81,11 +81,11 @@ sub endhook {
 sub test_beginning_vars {
 	my ($hook_name, $am, $data) = @_;
 	#TODO: export something better than this; why should we have to skip 0?
-	is_deeply($data->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
-		or note explain $data->{outcomelist};
+	is_deeply($am->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
+		or note explain $am->{outcomelist};
 	#why should we need this?
-	is_deeply($data->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
-		or note explain $data->{outcometonum};
+	is_deeply($am->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
+		or note explain $am->{outcometonum};
 	#why not [e,r,r,r,r]?
 	is_deeply($am->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
 		or note explain $am->{outcome};
