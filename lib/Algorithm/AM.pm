@@ -87,43 +87,14 @@ sub new {
 ## test file
 
     $logger->info('Test file...');
-    my $test_fh;
-    open $test_fh, '<', "$self->{project}/test"
-      or carp "Couldn't open $self->{project}/test"
-      and $logger->warn('Will run data file against itself')
-      and open $test_fh, '<', "$self->{project}/data";
-    my (@testItems) = <$test_fh>;
-    close $test_fh;
-    #cross-platform chomp
-    map {           ##no critic (ProhibitMutatingListFunctions)
-        s/[\n\r]+$//
-    } @testItems;
-    my $item;
-    ( undef, $item ) = split /$self->{bigsep}/, $testItems[0];
+    $self->_read_test_set();
+    $self->_compute_vars();
 
-    #$maxvar is the number of features in the item
-    my $maxvar = scalar split /$self->{smallsep}/, $item;
-    $logger->info('...done');
-
-    splice @{$self->{vlen}}, $maxvar;
-    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
-
-    my @activeVar;
-    {
-        use integer;
-        my $half = $maxvar / 2;
-        $activeVar[0] = $half / 2;
-        $activeVar[1] = $half - $activeVar[0];
-        $half         = $maxvar - $half;
-        $activeVar[2] = $half / 2;
-        $activeVar[3] = $half - $activeVar[2];
-    }
     my %itemcontextchainhead;
     my %subtooutcome;
     my %contextsize;
     my %pointers;
     my %gang;
-    my @sum = (0.0) x @{$self->{outcomelist}};
 
     my $amsub;
     $amsub = sub {
@@ -132,14 +103,12 @@ sub new {
         ## variables are all referred to somewhere, so that the closure
         ## works properly
         my @fake;
-        @fake = \( $amsub );
         @fake = \(
             @itemcontextchain,  @datatocontext
         );
-        @fake = \( @testItems,  @activeVar );
         @fake = \(
             %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
-            %gang, @sum
+            %gang
         );
 
         #check all input parameters and then save them in $self
@@ -228,7 +197,6 @@ sub new {
         $data->{pass} = \$pass;
 
         #end vars
-        $data->{sum} = \@sum;
         $data->{pointertotal} = \$grandtotal;
 
         eval $_; ## no critic (ProhibitStringyEval)
@@ -239,9 +207,9 @@ sub new {
     *classify = $amsub
         or die "didn't work out";
     $self->_initialize(
-        \@activeVar,            $self->{outcome},      \@itemcontextchain,
+        $self->{activeVars}, $self->{outcome},   \@itemcontextchain,
         \%itemcontextchainhead, \%subtooutcome, \%contextsize,
-        \%pointers,             \%gang,         \@sum
+        \%pointers,             \%gang,         $self->{sum}
     );
     return $self;
 }
@@ -325,6 +293,47 @@ sub _read_outcomes_from_data {
         push @{$self->{ocl}},         $_;
     }
     return;
+}
+
+sub _read_test_set {
+    my ($self) = @_;
+    my $test_file = path($self->{project}, 'test');
+    if(!$test_file->exists){
+        carp "Couldn't open $self->{project}/test";
+        $logger->warn('Will run data file against itself');
+        $test_file = path($self->{project}, 'data');
+    }
+    @{$self->{testItems}} = $test_file->lines;
+    #cross-platform chomp
+    map {           ##no critic (ProhibitMutatingListFunctions)
+        s/[\n\r]+$//
+    } @{$self->{testItems}};
+    return;
+}
+
+#not really sure what all of these calculations are for, but I wanted to group them
+sub _compute_vars {
+    my ($self) = @_;
+    my $item;
+    ( undef, $item ) = split /$self->{bigsep}/, $self->{testItems}->[0];
+
+    #$maxvar is the number of features in the item
+    my $maxvar = scalar split /$self->{smallsep}/, $item;
+    $logger->info('...done');
+
+    splice @{$self->{vlen}}, $maxvar;
+    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
+
+    {
+        use integer;
+        my $half = $maxvar / 2;
+        $self->{activeVars}->[0] = $half / 2;
+        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
+        $half         = $maxvar - $half;
+        $self->{activeVars}->[2] = $half / 2;
+        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
+    }
+    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
 }
 
 #check that the project has a data file,
@@ -467,8 +476,8 @@ my ( $sec, $min, $hour );
 
 $self->{beginhook}->($self, $data);
 
-my $left = scalar @testItems;
-foreach my $t (@testItems) {
+my $left = scalar @{$self->{testItems}};
+foreach my $t (@{$self->{testItems}}) {
     $logger->debug("Test items left: $left");
     --$left;
 
@@ -495,11 +504,11 @@ foreach my $t (@testItems) {
     {
         use integer;
         my $half = $self->{activeVar} / 2;
-        $activeVar[0] = $half / 2;
-        $activeVar[1] = $half - $activeVar[0];
+        $self->{activeVars}->[0] = $half / 2;
+        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
         $half         = $self->{activeVar} - $half;
-        $activeVar[2] = $half / 2;
-        $activeVar[3] = $half - $activeVar[2];
+        $self->{activeVars}->[2] = $half / 2;
+        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
 ##  $activeContexts = 1 << $activeVar;
 
@@ -524,7 +533,7 @@ foreach my $t (@testItems) {
         %subtooutcome         = ();
         %pointers             = ();
         %gang                 = ();
-        foreach (@sum) {
+        foreach (@{$self->{sum}}) {
             $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
         }
 
@@ -536,7 +545,7 @@ foreach my $t (@testItems) {
                 if rand() > $self->{probability};
 ## end probability
             my @dataItem = @{ $self->{data}->[$i] };
-            my @alist    = @activeVar;
+            my @alist    = @{$self->{activeVars}};
             my $j        = 0;
             my @clist    = ();
             while (@alist) {
@@ -594,7 +603,7 @@ foreach my $t (@testItems) {
         $logger->info('Statistical Summary');
         for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
-            next unless $n = $sum[$i];
+            next unless $n = $self->{sum}->[$i];
             $data->{pointermax} = $n
               if length($n) > length($data->{pointermax})
               or length($n) == length($data->{pointermax})
@@ -610,7 +619,7 @@ foreach my $t (@testItems) {
         $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $self->{outcomelist}->[$curTestOutcome]");
-            if ( $sum[$curTestOutcome] eq $data->{pointermax} ) {
+            if ( $self->{sum}->[$curTestOutcome] eq $data->{pointermax} ) {
                 $logger->info('Correct outcome predicted.');
             }
             else {
@@ -660,7 +669,7 @@ foreach my $t (@testItems) {
           )
         {
             my @clist   = unpack "S!4", $k;
-            my @alist   = @activeVar;
+            my @alist   = @{$self->{activeVars}};
             my (@vtemp) = @{ $data->{curTestItem} };
             my $j       = 1;
             while (@alist) {

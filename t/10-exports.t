@@ -146,7 +146,7 @@ sub test_iter_vars {
 #test setting of vars for classification results
 sub test_end_vars {
 	my ($hook_name, $am, $data) = @_;
-	my $subtotals = [@{$data->{sum}}[1,2]];
+	my $subtotals = [@{$am->{sum}}[1,2]];
 	if(${$data->{curTestOutcome}} == 2){
 		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');
 		is(${$data->{pointertotal}}, '8', $hook_name . ': $pointertotal');

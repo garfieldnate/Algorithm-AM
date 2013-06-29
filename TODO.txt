@@ -1,4 +1,4 @@
-Next: Move @testitems into $self and put test file reading in a separate method.
+Algorithm::AM
 
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
@@ -7,6 +7,8 @@ that should be issued
 -allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
+
+-allow user to pass in actual data instead of using project file. P.S. What's the diff between outcome, data, and test?
 
 ##Printing TODOs:
 -Split print_summary into two methods: print_config and print_data_stats

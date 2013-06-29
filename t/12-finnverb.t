@@ -20,7 +20,7 @@ my $count    = 0;
 my @confusion;
 my $countsub = sub {
     my ($am, $data) = @_;
-    my $sum = $data->{sum};
+    my $sum = $am->{sum};
     my $pointermax = $data->{pointermax};
     my $curTestOutcome = ${$data->{curTestOutcome}};
 
@@ -32,7 +32,7 @@ my $begin = sub {
 };
 my $endrepeat = sub {
     my ($am, $data) = @_;
-    my $sum = $data->{sum};
+    my $sum = $am->{sum};
     my $curTestOutcome = ${$data->{curTestOutcome}};
     my $pointermax = $data->{pointermax};
     my $outcomelist = $data->{outcomelist};
