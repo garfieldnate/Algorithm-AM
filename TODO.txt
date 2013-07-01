@@ -1,14 +1,17 @@
 Algorithm::AM
 
+Next: Check and increase test coverage.
+
 -Create tests to check for errors that should be thrown, or warnings
 that should be issued
 -Create tests for print formatting variables
+-Create tests for outcome file
 
 -allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
 
--allow user to pass in actual data instead of using project file. P.S. What's the diff between outcome, data, and test?
+-allow user to pass in actual data instead of using project file.
 
 ##Printing TODOs:
 -Split print_summary into two methods: print_config and print_data_stats

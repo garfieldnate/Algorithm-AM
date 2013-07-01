@@ -75,8 +75,8 @@ sub new {
 
     $self->_read_data_set(\@data_set);
 
-    my (@itemcontextchain) = (0) x @{$self->{data}};    ## preemptive allocation of memory
-    my (@datatocontext) = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
+    @{$self->{itemcontextchain}} = (0) x @{$self->{data}};    ## preemptive allocation of memory
+    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
 
     ## read outcome file
 
@@ -90,126 +90,28 @@ sub new {
     $self->_read_test_set();
     $self->_compute_vars();
 
-    my %itemcontextchainhead;
-    my %subtooutcome;
-    my %contextsize;
-    my %pointers;
-    my %gang;
+    $self->{$_} = {} for(
+        qw(
+            itemcontextchainhead
+            subtooutcome
+            contextsize
+            pointers
+            gang
+        )
+    );
 
-    my $amsub;
-    $amsub = sub {
-        my $self = shift;
-        ## The following lines are here just to make sure that these
-        ## variables are all referred to somewhere, so that the closure
-        ## works properly
-        my @fake;
-        @fake = \(
-            @itemcontextchain,  @datatocontext
-        );
-        @fake = \(
-            %itemcontextchainhead, %subtooutcome, %contextsize, %pointers,
-            %gang
-        );
-
-        #check all input parameters and then save them in $self
-        my $opts = _check_classify_opts(@_);
-        for my $opt_name(keys $opts){
-            $self->{$opt_name} = $opts->{$opt_name};
-        }
-
-        # TODO: neat/ugly hack starts here...
-        local $_ = $subsource;
-
-        if ( $self->{exclude_nulls} ) {
-            s/## begin include nulls.*?## end include nulls//sg;
-        }
-        else {
-            s/## begin exclude nulls.*?## end exclude nulls//sg;
-        }
-
-        if ( $self->{exclude_given} ) {
-            s/## begin include given.*?## end include given//sg;
-        }
-        else {
-            s/## begin exclude given.*?## end exclude given//sg;
-        }
-
-        if ( $self->{linear} ) {
-            s/_fillandcount\(X\)/_fillandcount(0)/;
-        }
-        else {
-            s/_fillandcount\(X\)/_fillandcount(1)/;
-        }
-
-        if ( not defined $self->{probability} ) {
-            s/## begin probability.*?## end probability//sg;
-        }
-
-        if ( $self->{skipset} ) {
-            s/## begin analogical set.*?## end analogical set//sg;
-        }
-
-        if ( $self->{gangs} ne 'yes' ) {
-            if ( $self->{gangs} eq 'summary' ) {
-                s/## begin skip gang list.*?## end skip gang list//sg;
-            }
-            else {
-                s/## begin gang.*?## end gang//sg;
-            }
-        }
-
-        if (!exists $self->{beginhook} ) {
-            s/\$self->{beginhook}->.*//;
-        }
-        if (!exists $self->{begintesthook} ) {
-            s/\$self->{begintesthook}->.*//;
-        }
-        if (!exists $self->{beginrepeathook} ) {
-            s/\$self->{beginrepeathook}->.*//;
-        }
-        if (!exists $self->{datahook} ) {
-            s/next unless \$self->{datahook}->\([^)]+\)//;
-        }
-        if (!exists $self->{endrepeathook} ) {
-            s/\$self->{endrepeathook}->.*//;
-        }
-        if (!exists $self->{endtesthook} ) {
-            s/\$self->{endtesthook}->.*//;
-        }
-        if (!exists $self->{endhook} ) {
-            s/\$self->{endhook}->.*//;
-        }
-
-## stuff to be exported
-        my ( $curTestOutcome);
-        my $data;
-        my $pass;
-        my $grandtotal;
-
-        #beginning vars
-        $data->{datacap} = @{$self->{data}};
-
-        #item vars
-        #TODO: stop using sclar pointers here...
-        $data->{curTestOutcome} = \$curTestOutcome;
-
-        #iter vars
-        $data->{pass} = \$pass;
-
-        #end vars
-        $data->{pointertotal} = \$grandtotal;
-
-        eval $_; ## no critic (ProhibitStringyEval)
-        $logger->warn($@)
-          if $@;
-    };
-
-    *classify = $amsub
+    *classify = _create_classify_sub()
         or die "didn't work out";
     $self->_initialize(
-        $self->{activeVars}, $self->{outcome},   \@itemcontextchain,
-        \%itemcontextchainhead, \%subtooutcome, \%contextsize,
-        \%pointers,             \%gang,         $self->{sum}
+        $self->{activeVars},
+        $self->{outcome},
+        $self->{itemcontextchain},
+        $self->{itemcontextchainhead},
+        $self->{subtooutcome},
+        $self->{contextsize},
+        $self->{pointers},
+        $self->{gang},
+        $self->{sum}
     );
     return $self;
 }
@@ -429,6 +331,105 @@ sub _check_classify_opts {
     return \%opts;
 }
 
+#create the classification subroutine
+sub _create_classify_sub {
+    return sub {
+        my $self = shift;
+
+        #check all input parameters and then save them in $self
+        my $opts = _check_classify_opts(@_);
+        for my $opt_name(keys $opts){
+            $self->{$opt_name} = $opts->{$opt_name};
+        }
+
+        # TODO: neat/ugly hack starts here...
+        local $_ = $subsource;
+
+        if ( $self->{exclude_nulls} ) {
+            s/## begin include nulls.*?## end include nulls//sg;
+        }
+        else {
+            s/## begin exclude nulls.*?## end exclude nulls//sg;
+        }
+
+        if ( $self->{exclude_given} ) {
+            s/## begin include given.*?## end include given//sg;
+        }
+        else {
+            s/## begin exclude given.*?## end exclude given//sg;
+        }
+
+        if ( $self->{linear} ) {
+            s/_fillandcount\(X\)/_fillandcount(0)/;
+        }
+        else {
+            s/_fillandcount\(X\)/_fillandcount(1)/;
+        }
+
+        if ( not defined $self->{probability} ) {
+            s/## begin probability.*?## end probability//sg;
+        }
+
+        if ( $self->{skipset} ) {
+            s/## begin analogical set.*?## end analogical set//sg;
+        }
+
+        if ( $self->{gangs} ne 'yes' ) {
+            if ( $self->{gangs} eq 'summary' ) {
+                s/## begin skip gang list.*?## end skip gang list//sg;
+            }
+            else {
+                s/## begin gang.*?## end gang//sg;
+            }
+        }
+
+        if (!exists $self->{beginhook} ) {
+            s/\$self->{beginhook}->.*//;
+        }
+        if (!exists $self->{begintesthook} ) {
+            s/\$self->{begintesthook}->.*//;
+        }
+        if (!exists $self->{beginrepeathook} ) {
+            s/\$self->{beginrepeathook}->.*//;
+        }
+        if (!exists $self->{datahook} ) {
+            s/next unless \$self->{datahook}->\([^)]+\)//;
+        }
+        if (!exists $self->{endrepeathook} ) {
+            s/\$self->{endrepeathook}->.*//;
+        }
+        if (!exists $self->{endtesthook} ) {
+            s/\$self->{endtesthook}->.*//;
+        }
+        if (!exists $self->{endhook} ) {
+            s/\$self->{endhook}->.*//;
+        }
+
+## stuff to be exported
+        my ( $curTestOutcome);
+        my $data;
+        my $pass;
+        my $grandtotal;
+
+        #beginning vars
+        $data->{datacap} = @{$self->{data}};
+
+        #item vars
+        #TODO: stop using sclar pointers here...
+        $data->{curTestOutcome} = \$curTestOutcome;
+
+        #iter vars
+        $data->{pass} = \$pass;
+
+        #end vars
+        $data->{pointertotal} = \$grandtotal;
+
+        eval $_; ## no critic (ProhibitStringyEval)
+        $logger->warn($@)
+          if $@;
+    };
+}
+
 sub bigcmp {
     my($a,$b) = @_;
     return (length($a) <=> length($b)) || ($a cmp $b);
@@ -528,11 +529,11 @@ foreach my $t (@{$self->{testItems}}) {
         my $testindata   = 0;
         $self->{eg}      = 0;
 
-        %contextsize          = ();
-        %itemcontextchainhead = ();
-        %subtooutcome         = ();
-        %pointers             = ();
-        %gang                 = ();
+        %{$self->{contextsize}}             = ();
+        %{$self->{itemcontextchainhead}}    = ();
+        %{$self->{subtooutcome}}            = ();
+        %{$self->{pointers}}                = ();
+        %{$self->{gang}}                    = ();
         foreach (@{$self->{sum}}) {
             $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
         }
@@ -561,24 +562,24 @@ foreach my $t (@{$self->{testItems}}) {
                 push @clist, $c;
             }
             my $context = pack "S!4", @clist;
-            $datatocontext[$i]              = $context;
-            $itemcontextchain[$i]           = $itemcontextchainhead{$context};
-            $itemcontextchainhead{$context} = $i;
-            ++$contextsize{$context};
+            $self->{datatocontext}->[$i]              = $context;
+            $self->{itemcontextchain}->[$i]           = $self->{itemcontextchainhead}->{$context};
+            $self->{itemcontextchainhead}->{$context} = $i;
+            ++$self->{contextsize}->{$context};
             my $outcome = $self->{outcome}->[$i];
-            if ( defined $subtooutcome{$context} ) {
-                $subtooutcome{$context} = 0
-                  if $subtooutcome{$context} != $outcome;
+            if ( defined $self->{subtooutcome}->{$context} ) {
+                $self->{subtooutcome}->{$context} = 0
+                  if $self->{subtooutcome}->{$context} != $outcome;
             }
             else {
-                $subtooutcome{$context} = $outcome;
+                $self->{subtooutcome}->{$context} = $outcome;
             }
         }
-        if ( exists $subtooutcome{$nullcontext} ) {
+        if ( exists $self->{subtooutcome}->{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
             # TODO: this doesn't look right. Why does it check exclude_given?
-            delete $subtooutcome{$nullcontext}, ++$self->{eg} if $self->{exclude_given};
+            delete $self->{subtooutcome}->{$nullcontext}, ++$self->{eg} if $self->{exclude_given};
 ## end exclude given;
         }
 
@@ -588,7 +589,7 @@ foreach my $t (@{$self->{testItems}}) {
           if $testindata;
 
         $self->_fillandcount(X);
-        $grandtotal = $pointers{'grandtotal'};
+        $grandtotal = $self->{pointers}->{'grandtotal'};
         # print Dumper \%pointers;
         my $longest = length $grandtotal;
         $self->{gformat} = "%$longest.${longest}s";
@@ -629,12 +630,12 @@ foreach my $t (@{$self->{testItems}}) {
 
 ## begin analogical set
         my @datalist = ();
-        foreach my $k ( keys %pointers ) {
-            my $p = $pointers{$k};
+        foreach my $k ( keys %{$self->{pointers}} ) {
+            my $p = $self->{pointers}->{$k};
             for (
-                my $i = $itemcontextchainhead{$k} ;
+                my $i = $self->{itemcontextchainhead}->{$k} ;
                 defined $i ;
-                $i = $itemcontextchain[$i]
+                $i = $self->{itemcontextchain}->[$i]
               )
             {
                 push @datalist, $i;
@@ -644,7 +645,7 @@ foreach my $t (@{$self->{testItems}}) {
         $logger->info("Total Frequency = $grandtotal");
         @datalist = sort { $a <=> $b } @datalist;
         foreach my $i (@datalist) {
-            my $p = $pointers{ $datatocontext[$i] };
+            my $p = $self->{pointers}->{$self->{datatocontext}->[$i] };
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
@@ -663,9 +664,9 @@ foreach my $t (@{$self->{testItems}}) {
           0, '0', 0, "";
         foreach my $k (
             sort {
-                     ( length( $gang{$b} ) <=> length( $gang{$a} ) )
-                  || ( $gang{$b} cmp $gang{$a} )
-            } keys %gang
+                     ( length( $self->{gang}->{$b} ) <=> length( $self->{gang}->{$a} ) )
+                  || ( $self->{gang}->{$b} cmp $self->{gang}->{$a} )
+            } keys %{$self->{gang}}
           )
         {
             my @clist   = unpack "S!4", $k;
@@ -684,15 +685,15 @@ foreach my $t (@{$self->{testItems}}) {
                     ++$j;
                 }
             }
-            my $p = $pointers{$k};
-            if ( $subtooutcome{$k} ) {
+            my $p = $self->{pointers}->{$k};
+            if ( $self->{subtooutcome}->{$k} ) {
                 {
                     no warnings;
                     $logger->info(
                         sprintf(
                             "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
-                            100 * $gang{$k} / $grandtotal,
-                            $gang{$k}, "", "", @{ $data->{curTestItem} }
+                            100 * $self->{gang}->{$k} / $grandtotal,
+                            $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
@@ -705,18 +706,18 @@ foreach my $t (@{$self->{testItems}}) {
                 $logger->info(
                     sprintf(
                         "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
-                        100 * $gang{$k} / $grandtotal,
+                        100 * $self->{gang}->{$k} / $grandtotal,
                         $p,
-                        $contextsize{$k},
-                        $self->{outcomelist}->[ $subtooutcome{$k} ]
+                        $self->{contextsize}->{$k},
+                        $self->{outcomelist}->[ $self->{subtooutcome}->{$k} ]
                     )
                 );
 ## begin skip gang list
                 my $i;
                 for (
-                    $i = $itemcontextchainhead{$k} ;
+                    $i = $self->{itemcontextchainhead}->{$k} ;
                     defined $i ;
-                    $i = $itemcontextchain[$i]
+                    $i = $self->{itemcontextchain}->[$i]
                   )
                 {
                     $logger->info( sprintf "$pad  $self->{vformat}  $self->{spec}->[$i]",
@@ -731,9 +732,9 @@ foreach my $t (@{$self->{testItems}}) {
 ## end skip gang list
                 my $i;
                 for (
-                    $i = $itemcontextchainhead{$k} ;
+                    $i = $self->{itemcontextchainhead}->{$k} ;
                     defined $i ;
-                    $i = $itemcontextchain[$i]
+                    $i = $self->{itemcontextchain}->[$i]
                   )
                 {
                     ++$gangsort[ $self->{outcome}->[$i] ];
@@ -746,8 +747,8 @@ foreach my $t (@{$self->{testItems}}) {
                     $logger->info(
                         sprintf(
 "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
-                            100 * $gang{$k} / $grandtotal,
-                            $gang{$k}, "", "", @{ $data->{curTestItem} }
+                            100 * $self->{gang}->{$k} / $grandtotal,
+                            $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
