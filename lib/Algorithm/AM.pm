@@ -1,36 +1,28 @@
 package Algorithm::AM;
-
-# ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
 use strict;
 use warnings;
+# ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
+# VERSION;
 use feature 'state';
 use feature 'switch';
 use Path::Tiny;
 use Exporter::Easy (
     OK => ['bigcmp']
 );
-
-# VERSION;
-
-require XSLoader;
-XSLoader::load();
-
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
 
-use Data::Dumper;
+require XSLoader;
+XSLoader::load();
+
 use Log::Dispatch;
 use Log::Dispatch::File;
 my $logger = Log::Dispatch->new(
     outputs => [
         [ 'Screen', min_level => 'info', newline => 1 ],
     ],
-
 );
-
-use Carp;
-use Symbol;
 
 my $subsource;
 {
@@ -68,8 +60,6 @@ sub new {
 
     ## read data file
     my $data_path = path($self->{project}, 'data');
-    $data_path->exists or
-        croak "File $data_path does not exist!";
     my @data_set = $data_path->lines;
     map {s/[\n\r]+$//; $_} @data_set;#cross-platform chomp
 
@@ -100,7 +90,7 @@ sub new {
         )
     );
 
-    *classify = _create_classify_sub()
+    $self->{_classify_sub} = _create_classify_sub()
         or die "didn't work out";
     $self->_initialize(
         $self->{activeVars},
@@ -114,6 +104,11 @@ sub new {
         $self->{sum}
     );
     return $self;
+}
+
+sub classify {
+    my ($self, @args) = @_;
+    $self->{_classify_sub}->($self, @args);
 }
 
 #read data set, setting internal variables for processing and printing
@@ -250,7 +245,7 @@ sub _check_project_opts {
     croak 'Must specify project'
         unless $project;
     croak 'Project has no data file'
-        unless -e "$project/data";
+        unless path($project, 'data')->exists;
 
     croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
         unless exists $opts->{commas};
@@ -406,7 +401,7 @@ sub _create_classify_sub {
         }
 
 ## stuff to be exported
-        my ( $curTestOutcome);
+        my ($curTestOutcome);
         my $data;
         my $pass;
         my $grandtotal;
@@ -590,7 +585,6 @@ foreach my $t (@{$self->{testItems}}) {
 
         $self->_fillandcount(X);
         $grandtotal = $self->{pointers}->{'grandtotal'};
-        # print Dumper \%pointers;
         my $longest = length $grandtotal;
         $self->{gformat} = "%$longest.${longest}s";
         $data->{pointermax}    = "";
@@ -835,6 +829,12 @@ mathematical basis.
 Arguments: see "Initializing a Project" (TODO: reorganize POD properly)
 
 Creates and returns a subroutine to classify the data in a given project.
+
+=head2 C<classify>
+
+Using the analogical modeling algorithm, this method classifies the instances
+in the project and prints the results to STDOUT, as well as to
+C<amcpresults> in the project directory.
 
 =head2 HISTORY
 
@@ -1625,11 +1625,13 @@ The L<Wikipedia article|http://en.wikipedia.org/wiki/Analogical_modeling>
 has details and illustrations explaining the utility and inner-workings
 of analogical modeling.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Theron Stanford <shixilun@yahoo.com>
 
-=head1 COPYRIGHT AND LICENSE
+Nathan Glenn <garfieldnate@gmail.com>
+
+=head1 COPYRIGHT
 
 Copyright (C) 2004 by Royal Skousen
 
