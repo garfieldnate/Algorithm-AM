@@ -1,11 +1,10 @@
 Algorithm::AM
 
-Next: Check and increase test coverage.
+Next: test outcome file
 
--Create tests to check for errors that should be thrown, or warnings
-that should be issued
--Create tests for print formatting variables
--Create tests for outcome file
+To test:
+	-Print formatting variables
+	-Spec set to data if no spec
 
 -allow user to specify input format
 	specify bigsep, littlesep
@@ -18,11 +17,14 @@ that should be issued
 -Make printing clearer (label gangs, etc.)
 -output something about the number of features in the vectors contained in a data file (I think this is done. Just make it clearer?)
 -Refactor gangs param into two different boolean params
+- eventually get rid of logger, or do something else with it.
+	- all useful info should probably be printed, since we're not guaranteed that the user will look at the logs
+	- but a logger shouldn't just print to output. Use Log::Any if a logger of some kind is wanted
 
 ## Other TODOs:
 
 -rename 'outcome' to something else. Comparison, golden, expected...
-
+- create HISTORY pod section in AM.pm
 -Figure out 'cannot remove directory' errors from dzil release
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch

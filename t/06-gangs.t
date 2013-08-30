@@ -4,8 +4,9 @@ use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
 use Test::LongString;
-plan tests => 6;
+plan tests => 7;
 use Test::NoWarnings;
+use Test::Warn;
 
 use FindBin qw($Bin);
 use Path::Tiny;
@@ -53,3 +54,12 @@ like_string($results,qr/\s*23.077%\s+3\s+3 1 2/, q{'-gangs => summary' lists gan
 #clean up the amcpresults file
 unlink $results_path
 	if -e $results_path;
+
+warning_is {
+    Algorithm::AM->new(
+        $project_path,
+        commas => 'no',
+        gangs => 'whatever'
+    );
+    } {carped => q<Failed to specify option 'gangs' correctly>},
+    q<warning for bad 'gangs' parameter>;

@@ -146,6 +146,7 @@ sub _set_outcomes {
     $self->{ocl} = [''];
     $self->{olen} = 0;
     $self->{outcomecounter} = 0;
+    $logger->info('checking for outcome file');
     my $outcome_path = path($self->{project}, 'outcome');
     if ( $outcome_path->exists ) {
         my @data_set = $outcome_path->lines;

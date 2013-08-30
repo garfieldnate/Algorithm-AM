@@ -13,3 +13,4 @@ perl-module.sublime-workspace
 Algorithm-AM-*/
 amcpresults
 /*.tar.gz
+.build/
