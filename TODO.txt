@@ -1,10 +1,10 @@
 Algorithm::AM
 
-Next: test outcome file
+Next: work on types of input to AM dataset
+
 
 To test:
 	-Print formatting variables
-	-Spec set to data if no spec
 
 -allow user to specify input format
 	specify bigsep, littlesep

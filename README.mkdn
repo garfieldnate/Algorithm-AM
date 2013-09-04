@@ -45,6 +45,12 @@ Arguments: see "Initializing a Project" (TODO: reorganize POD properly)
 
 Creates and returns a subroutine to classify the data in a given project.
 
+## `classify`
+
+Using the analogical modeling algorithm, this method classifies the instances
+in the project and prints the results to STDOUT, as well as to
+`amcpresults` in the project directory.
+
 ## HISTORY
 
 Initially, Analogical Modeling was implemented as a Pascal program.
@@ -777,10 +783,12 @@ The [Wikipedia article](http://en.wikipedia.org/wiki/Analogical\_modeling)
 has details and illustrations explaining the utility and inner-workings
 of analogical modeling.
 
-# AUTHOR
+# AUTHORS
 
 Theron Stanford <shixilun@yahoo.com>
 
-# COPYRIGHT AND LICENSE
+Nathan Glenn <garfieldnate@gmail.com>
+
+# COPYRIGHT
 
 Copyright (C) 2004 by Royal Skousen

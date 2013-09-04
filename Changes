@@ -2,6 +2,10 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
+    Considerable refactoring of how arguments and variables are handled
+        - use object or data hash instead of automatic importing
+        - most of them renamed, and possible values have changed
+    - new tests for errors and warnings
 
 2.33      2013-06-03 22:22:10 America/Los_Angeles
     Changed chomp mechanism so Windows files can be used in testing on *nix
