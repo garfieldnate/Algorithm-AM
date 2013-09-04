@@ -841,7 +841,11 @@ Using the analogical modeling algorithm, this method classifies the instances
 in the project and prints the results to STDOUT, as well as to
 C<amcpresults> in the project directory.
 
-=head2 HISTORY
+=head2 C<print_summary>
+THIS METHOD IS UNDER CONSTRUCTION. Currently it is called by
+C<classify> to print a summary of the classifcation results.
+
+=head1 HISTORY
 
 Initially, Analogical Modeling was implemented as a Pascal program.
 Subsequently, it was ported to Perl, with substantial improvements
