@@ -61,7 +61,8 @@ sub new {
     ## read data file
     my $data_path = path($self->{project}, 'data');
     my @data_set = $data_path->lines;
-    map {s/[\n\r]+$//; $_} @data_set;#cross-platform chomp
+    #cross-platform chomp
+    s/[\n\r]+$// for @data_set;
 
     $self->_read_data_set(\@data_set);
 
@@ -80,7 +81,7 @@ sub new {
     $self->_read_test_set();
     $self->_compute_vars();
 
-    $self->{$_} = {} for(
+    $self->{$_} = {} for (
         qw(
             itemcontextchainhead
             subtooutcome
@@ -108,7 +109,7 @@ sub new {
 
 sub classify {
     my ($self, @args) = @_;
-    $self->{_classify_sub}->($self, @args);
+    return $self->{_classify_sub}->($self, @args);
 }
 
 #read data set, setting internal variables for processing and printing
@@ -138,6 +139,7 @@ sub _read_data_set {
     $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
     #length of integer hold number of data items
     $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
+    return;
 }
 
 sub _set_outcomes {
@@ -149,8 +151,10 @@ sub _set_outcomes {
     $logger->info('checking for outcome file');
     my $outcome_path = path($self->{project}, 'outcome');
     if ( $outcome_path->exists ) {
+        ## no
         my @data_set = $outcome_path->lines;
-        @data_set = map {s/[\n\r]+$//; $_} @data_set;#cross-platform chomp
+        #cross-platform chomp
+        s/[\n\r]+$// for @data_set;
         $self->_read_outcome_set(\@data_set);
     }
     else {
@@ -165,6 +169,7 @@ sub _set_outcomes {
         $self->{olen} = $l if $l > $self->{olen};
     }
     $self->{oformat} = "%-$self->{olen}.$self->{olen}s";
+    return;
 }
 
 sub _read_outcome_set {
@@ -203,9 +208,7 @@ sub _read_test_set {
     }
     @{$self->{testItems}} = $test_file->lines;
     #cross-platform chomp
-    map {           ##no critic (ProhibitMutatingListFunctions)
-        s/[\n\r]+$//
-    } @{$self->{testItems}};
+    s/[\n\r]+$// for @{ $self->{testItems} };
     return;
 }
 
@@ -232,6 +235,7 @@ sub _compute_vars {
         $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
+    return;
 }
 
 #check that the project has a data file,
