@@ -51,7 +51,11 @@ Using the analogical modeling algorithm, this method classifies the instances
 in the project and prints the results to STDOUT, as well as to
 `amcpresults` in the project directory.
 
-## HISTORY
+## `print_summary`
+THIS METHOD IS UNDER CONSTRUCTION. Currently it is called by
+`classify` to print a summary of the classifcation results.
+
+# HISTORY
 
 Initially, Analogical Modeling was implemented as a Pascal program.
 Subsequently, it was ported to Perl, with substantial improvements

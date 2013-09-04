@@ -2,6 +2,8 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
+
+2.34      2013-09-03 22:39:22 America/Los_Angeles
     Considerable refactoring of how arguments and variables are handled
         - use object or data hash instead of automatic importing
         - most of them renamed, and possible values have changed
