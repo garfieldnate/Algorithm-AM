@@ -4,7 +4,6 @@ use warnings;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
 # VERSION;
 use feature 'state';
-use feature 'switch';
 use Path::Tiny;
 use Exporter::Easy (
     OK => ['bigcmp']
@@ -256,19 +255,15 @@ sub _check_project_opts {
         unless exists $opts->{commas};
 
     my ($bigsep, $smallsep);
-    given($opts->{commas}){
-        when('yes'){
-            $bigsep   = qr{\s*,\s*};
-            $smallsep = qr{\s+};
-        }
-        when('no'){
-            $bigsep   = qr{\s+};
-            $smallsep = qr{};
-        }
-        default{
-            croak "Failed to specify comma formatting correctly;\n" .
-                q{(must specify commas => 'yes' or commas => 'no')};
-        }
+    if($opts->{commas} eq 'yes'){
+        $bigsep   = qr{\s*,\s*};
+        $smallsep = qr{\s+};
+    }elsif($opts->{commas} eq 'no'){
+        $bigsep   = qr{\s+};
+        $smallsep = qr{};
+    }else{
+        croak "Failed to specify comma formatting correctly;\n" .
+            q{(must specify commas => 'yes' or commas => 'no')};
     }
     delete $opts->{commas};
 
