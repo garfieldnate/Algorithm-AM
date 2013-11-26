@@ -22,7 +22,6 @@ unlink $results_path
 	if -e $results_path;
 
 my $am = Algorithm::AM->new(
-# my $am = AM::Parallel->new(
 	$project_path,
 	commas => 'no',
 );
@@ -43,7 +42,6 @@ like_string($results,qr/e\s+2\s+28.571%\v+r\s+5\s+71.429%/, 'Chapter 3 data, cou
     or diag $results;
 like_string($results,qr/Gang: linear/, 'Chapter 3 data, counting occurences')
     or diag $results;
-
 
 #clean up the amcpresults file
 unlink $results_path

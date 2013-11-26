@@ -172,37 +172,39 @@ sub _set_outcomes {
     return;
 }
 
-# outcome lines should be 'outcome spec' format
+# outcome file should have one outcome per line, with first a short
+# string and then a longer one, separated by a space
+#
 # sets several key values in $self:
-# octonum maps outcomes to their positions in
-# outcomelist, which lists all of the outcome specs
+# octonum maps short outcomes to their positions in
+# outcomelist, which lists all of the long outcome specs
 # outcometonum similarly maps specs
 # outcomecounter is the number of unique outcomes
-#
 sub _read_outcome_set {
     my ($self, $data_set) = @_;
 
-    # outcomecounter holds number items processed so far
-    # octonum maps outcomes to the index of the first item with that outcome
-    # outcometonum maps specs to the same
-    # outcomelist will hold list of all specs in file
+    # outcomecounter holds number of items processed so far
+    # octonum maps short outcomes to the index of their (first)
+    #   long version listed in in outcomelist
+    # outcometonum maps long outcomes to the same to their own
+    #   (first) position in outcomelist
+    # outcomelist will hold list of all long outcome strings in file
     for my $datum (@$data_set) {
-        my ( $outcome, $spec ) = split /\s+/, $datum, 2;
+        my ( $short, $long ) = split /\s+/, $datum, 2;
         $self->{outcomecounter}++;
-        $self->{octonum}{$outcome}   ||= $self->{outcomecounter};
-        $self->{outcometonum}{$spec} ||= $self->{outcomecounter};
-        push @{$self->{outcomelist}}, $spec;
+        $self->{octonum}{$short}   ||= $self->{outcomecounter};
+        $self->{outcometonum}{$long} ||= $self->{outcomecounter};
+        push @{$self->{outcomelist}}, $long;
     }
     return;
 }
 
 # sets several key values in $self:
-# octonum and outcometonum map outcomes to their positions in
-# outcomelist, which lists all of the unique outcomes, sorted
-# outcomecounter is the number of unique outcomes
 #
-# outcometonum is supposed to have spec --> outcome...
-# outcomelis is supposed to have unique specs
+# octonum and outcometonum both map outcome names (from the data file)
+# to their positions in outcomelist, which is a sorted list of all of
+#   the unique outcomes
+# outcomecounter is the number of unique outcomes
 sub _read_outcomes_from_data {
     my ($self) = @_;
 
@@ -260,6 +262,7 @@ sub _compute_vars {
         $self->{activeVars}->[2] = $half / 2;
         $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
+    # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
     return;
 }
@@ -626,10 +629,14 @@ foreach my $t (@{$self->{testItems}}) {
         for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
             next unless $n = $self->{sum}->[$i];
-            $data->{pointermax} = $n
-              if length($n) > length($data->{pointermax})
-              or length($n) == length($data->{pointermax})
-              and $n gt $data->{pointermax};#TODO: it having a semi-colon here right?
+
+            if(
+                length($n) > length($data->{pointermax})
+                or length($n) == length($data->{pointermax})
+                and $n gt $data->{pointermax}
+            ){
+                $data->{pointermax} = $n
+            }
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{gformat}  %7.3f%%",
