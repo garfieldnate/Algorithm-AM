@@ -11,6 +11,8 @@ use Exporter::Easy (
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
+use Data::Dumper;
+use Algorithm::AM::Project;
 
 require XSLoader;
 XSLoader::load();
@@ -52,32 +54,22 @@ sub new {
     my $opts = _check_project_opts($project, \%opts);
     my $self = bless $opts, $class;
 
-    #don't buffer error messages
+    # don't buffer error messages
     *STDOUT->autoflush();
 
     $logger->info("Initializing project $self->{project}");
 
-    ## read data file
-    my $data_path = path($self->{project}, 'data');
-    my @data_set = $data_path->lines;
-    #cross-platform chomp
-    s/[\n\r]+$// for @data_set;
+    # read project files
+    my $proj_obj = Algorithm::AM::Project->new(
+        $self->{project}, {%$opts});
+    for(keys %$proj_obj){
+        $self->{$_} = $proj_obj->{$_};
+    }
 
-    $self->_read_data_set(\@data_set);
-
-    @{$self->{itemcontextchain}} = (0) x @{$self->{data}};    ## preemptive allocation of memory
+    # preemptively allocate memory
+    @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
 
-    ## read outcome file
-
-    $logger->info('Outcome file...');
-    $self->_set_outcomes();
-    $logger->info('...done');
-
-## test file
-
-    $logger->info('Test file...');
-    $self->_read_test_set();
     $self->_compute_vars();
 
     $self->{$_} = {} for (
@@ -92,6 +84,7 @@ sub new {
 
     $self->{_classify_sub} = _create_classify_sub()
         or die "didn't work out";
+    # calls XS code
     $self->_initialize(
         $self->{activeVars},
         $self->{outcome},
@@ -109,106 +102,6 @@ sub new {
 sub classify {
     my ($self, @args) = @_;
     return $self->{_classify_sub}->($self, @args);
-}
-
-#read data set, setting internal variables for processing and printing
-sub _read_data_set {
-    my ($self, $data_set) = @_;
-    $self->{slen} = 0;
-    $self->{vlen} = [(0) x 60];
-    for (@$data_set) {
-        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
-        $spec ||= $data;
-        my $l;
-
-        push @{$self->{outcome}}, $outcome;
-        push @{$self->{spec}}, $spec;
-        $l = length $spec;
-        $self->{slen} = $l if $l > $self->{slen};
-        my @datavar = split /$self->{smallsep}/, $data;
-        push @{$self->{data}}, \@datavar;
-
-        for my $i (0 .. $#datavar ) {
-            $l = length $datavar[$i];
-            $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
-        }
-        $logger->debug( 'Data file: ' . scalar(@{$self->{data}}) );
-    }
-    #length of longest specifier
-    $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
-    #length of integer hold number of data items
-    $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
-    return;
-}
-
-sub _set_outcomes {
-    my ($self) = @_;
-    $self->{outcomelist} = [''];
-    $self->{ocl} = [''];
-    $self->{olen} = 0;
-    $self->{outcomecounter} = 0;
-    $logger->info('checking for outcome file');
-    my $outcome_path = path($self->{project}, 'outcome');
-    if ( $outcome_path->exists ) {
-        ## no
-        my @data_set = $outcome_path->lines;
-        #cross-platform chomp
-        s/[\n\r]+$// for @data_set;
-        $self->_read_outcome_set(\@data_set);
-    }
-    else {
-        $logger->info('...will use data file');
-        $self->_read_outcomes_from_data();
-    }
-    $logger->info('...converting outcomes to indices');
-    @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
-    foreach (@{$self->{outcomelist}}) {
-        my $l;
-        $l = length;
-        $self->{olen} = $l if $l > $self->{olen};
-    }
-    $self->{oformat} = "%-$self->{olen}.$self->{olen}s";
-    return;
-}
-
-sub _read_outcome_set {
-    my ($self, $data_set) = @_;
-
-    for my $datum (@$data_set) {
-        my ( $oc, $outcome ) = split /\s+/, $datum, 2;
-        $self->{octonum}{$oc}           = ++$self->{outcomecounter};
-        $self->{outcometonum}{$outcome} = $self->{outcomecounter};
-        push @{$self->{outcomelist}}, $outcome;
-        push @{$self->{ocl}}, $oc;
-    }
-    return;
-}
-
-sub _read_outcomes_from_data {
-    my ($self) = @_;
-    my %oc = ();
-    map { ++$oc{$_} } @{$self->{outcome}};
-    foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
-        $self->{octonum}{$_}      = ++$self->{outcomecounter};
-        $self->{outcometonum}{$_} = $self->{outcomecounter};
-        push @{$self->{outcomelist}}, $_;
-        push @{$self->{ocl}},         $_;
-    }
-    return;
-}
-
-sub _read_test_set {
-    my ($self) = @_;
-    my $test_file = path($self->{project}, 'test');
-    if(!$test_file->exists){
-        carp "Couldn't open $self->{project}/test";
-        $logger->warn('Will run data file against itself');
-        $test_file = path($self->{project}, 'data');
-    }
-    @{$self->{testItems}} = $test_file->lines;
-    #cross-platform chomp
-    s/[\n\r]+$// for @{ $self->{testItems} };
-    return;
 }
 
 #not really sure what all of these calculations are for, but I wanted to group them
@@ -233,6 +126,7 @@ sub _compute_vars {
         $self->{activeVars}->[2] = $half / 2;
         $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
+    # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
     return;
 }
@@ -599,10 +493,14 @@ foreach my $t (@{$self->{testItems}}) {
         for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
             next unless $n = $self->{sum}->[$i];
-            $data->{pointermax} = $n
-              if length($n) > length($data->{pointermax})
-              or length($n) == length($data->{pointermax})
-              and $n gt $data->{pointermax};#TODO: it having a semi-colon here right?
+
+            if(
+                length($n) > length($data->{pointermax})
+                or length($n) == length($data->{pointermax})
+                and $n gt $data->{pointermax}
+            ){
+                $data->{pointermax} = $n
+            }
             $logger->info(
                 sprintf(
                     "$self->{oformat}  $self->{gformat}  %7.3f%%",

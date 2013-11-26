@@ -1,7 +1,15 @@
 Algorithm::AM
 
-Next: work on types of input to AM dataset
+test outcome file with exports.t
 
+Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack.
+
+work on types of input to AM dataset
+
+move the autoflush call to the classify routine
+
+ask someone about expected outcome file format
+	- finnverb outcome file does not have unique long outcomes to match unique short ones
 
 To test:
 	-Print formatting variables

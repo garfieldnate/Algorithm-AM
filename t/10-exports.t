@@ -101,7 +101,14 @@ sub test_beginning_vars {
         $hook_name . ': @data'
     )
 		or note explain $am->{data};
-	is_deeply($am->{spec}, [('myCommentHere') x 5], $hook_name . ': @spec')
+	is_deeply($am->{spec},
+		[
+			'the e item',
+			'first r',
+			'second r',
+			'third r',
+			'fourth r'
+		], $hook_name . ': @spec')
 		or note explain $data->{spec};
 }
 
