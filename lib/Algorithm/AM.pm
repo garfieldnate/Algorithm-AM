@@ -11,6 +11,7 @@ use Exporter::Easy (
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
+use Data::Dumper;
 
 require XSLoader;
 XSLoader::load();
@@ -92,6 +93,7 @@ sub new {
 
     $self->{_classify_sub} = _create_classify_sub()
         or die "didn't work out";
+    # calls XS code
     $self->_initialize(
         $self->{activeVars},
         $self->{outcome},
@@ -143,14 +145,11 @@ sub _read_data_set {
 
 sub _set_outcomes {
     my ($self) = @_;
-    $self->{outcomelist} = [''];
-    $self->{ocl} = [''];
     $self->{olen} = 0;
     $self->{outcomecounter} = 0;
     $logger->info('checking for outcome file');
     my $outcome_path = path($self->{project}, 'outcome');
     if ( $outcome_path->exists ) {
-        ## no
         my @data_set = $outcome_path->lines;
         #cross-platform chomp
         s/[\n\r]+$// for @data_set;
@@ -160,40 +159,68 @@ sub _set_outcomes {
         $logger->info('...will use data file');
         $self->_read_outcomes_from_data();
     }
-    $logger->info('...converting outcomes to indices');
+    $logger->debug('...converting outcomes to indices');
     @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
     foreach (@{$self->{outcomelist}}) {
         my $l;
         $l = length;
         $self->{olen} = $l if $l > $self->{olen};
     }
+    # index 0 is reserved for the AM algorithm
+    unshift @{$self->{outcomelist}}, '';
     $self->{oformat} = "%-$self->{olen}.$self->{olen}s";
     return;
 }
 
+# outcome lines should be 'outcome spec' format
+# sets several key values in $self:
+# octonum maps outcomes to their positions in
+# outcomelist, which lists all of the outcome specs
+# outcometonum similarly maps specs
+# outcomecounter is the number of unique outcomes
+#
 sub _read_outcome_set {
     my ($self, $data_set) = @_;
 
+    # outcomecounter holds number items processed so far
+    # octonum maps outcomes to the index of the first item with that outcome
+    # outcometonum maps specs to the same
+    # outcomelist will hold list of all specs in file
     for my $datum (@$data_set) {
-        my ( $oc, $outcome ) = split /\s+/, $datum, 2;
-        $self->{octonum}{$oc}           = ++$self->{outcomecounter};
-        $self->{outcometonum}{$outcome} = $self->{outcomecounter};
-        push @{$self->{outcomelist}}, $outcome;
-        push @{$self->{ocl}}, $oc;
+        my ( $outcome, $spec ) = split /\s+/, $datum, 2;
+        $self->{outcomecounter}++;
+        $self->{octonum}{$outcome}   ||= $self->{outcomecounter};
+        $self->{outcometonum}{$spec} ||= $self->{outcomecounter};
+        push @{$self->{outcomelist}}, $spec;
     }
     return;
 }
 
+# sets several key values in $self:
+# octonum and outcometonum map outcomes to their positions in
+# outcomelist, which lists all of the unique outcomes, sorted
+# outcomecounter is the number of unique outcomes
+#
+# outcometonum is supposed to have spec --> outcome...
+# outcomelis is supposed to have unique specs
 sub _read_outcomes_from_data {
     my ($self) = @_;
-    my %oc = ();
-    map { ++$oc{$_} } @{$self->{outcome}};
-    foreach ( sort { lc($a) cmp lc($b) } keys %oc ) {
-        $self->{octonum}{$_}      = ++$self->{outcomecounter};
-        $self->{outcometonum}{$_} = $self->{outcomecounter};
+
+    # The keys of %oc are the unique outcomes
+    my %oc;
+    $_++ for @oc{ @{$self->{outcome}} };
+
+    my $counter;
+    # sort the keys to maintain the same ordering across multiple runs
+    for(sort {lc($a) cmp lc($b)} keys %oc){
+        $counter++;
+        $self->{octonum}{$_} = $counter;
+        $self->{outcometonum}{$_} = $counter;
         push @{$self->{outcomelist}}, $_;
-        push @{$self->{ocl}},         $_;
     }
+
+    $self->{outcomecounter} = $counter;
+
     return;
 }
 
