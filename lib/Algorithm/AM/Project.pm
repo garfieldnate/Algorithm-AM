@@ -23,6 +23,8 @@ sub new {
     $log->info('Reading test file...');
     $self->_read_test_set();
 
+    $self->_compute_vars();
+
     return $self;
 }
 
@@ -46,22 +48,12 @@ sub _read_data_set {
     $self->{vlen} = [(0) x 60];
     for (@data_set) {
         # cross-platform chomp
-        s/[\n\r]+$// for @data_set;
+        s/[\n\r]+$//;
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
-        $spec ||= $data;
-        my $l;
 
-        push @{$self->{outcome}}, $outcome;
-        push @{$self->{spec}}, $spec;
-        $l = length $spec;
-        $self->{slen} = $l if $l > $self->{slen};
         my @datavar = split /$self->{smallsep}/, $data;
-        push @{$self->{data}}, \@datavar;
+        $self->_add_data($outcome, \@datavar, $spec);
 
-        for my $i (0 .. $#datavar ) {
-            $l = length $datavar[$i];
-            $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
-        }
         $log->debug( 'Data file: ' . scalar(@{$self->{data}}) );
     }
     #length of longest specifier
@@ -69,6 +61,40 @@ sub _read_data_set {
     #length of integer holding number of data items
     $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
     return;
+}
+
+#$data should be an arrayref of features
+sub _add_data {
+    my ($self, $outcome, $data, $spec) = @_;
+
+    #first check that the number of features in @$data is correct
+    if($self->{vec_length}){
+        $self->{vec_length} == @$data or
+            croak "expected $self->{vec_length} features, but found " .
+                (scalar @$data) . " in @$data" . ($spec ? " ($spec)" : '');
+    }else{
+        $self->{vec_length} = @$data;
+    }
+
+    push @{$self->{data}}, $data;
+
+    $spec ||= $data;
+
+    push @{$self->{outcome}}, $outcome;
+    push @{$self->{spec}}, $spec;
+
+    #slen holds length of longest spec in data set
+    $self->{slen} = do {
+        my $l = length $spec;
+        $l > $self->{slen} ? $l : $self->{slen};
+    };
+
+    # vlen is an arrayref, each index holding the length of the longest feature
+    # in that column
+    for my $i (0 .. $#$data ) {
+        my $l = length $data->[$i];
+        $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
+    }
 }
 
 sub _set_outcomes {
@@ -158,13 +184,44 @@ sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->{project}, 'test');
     if(!$test_file->exists){
-        carp "Couldn't open $self->{project}/test";
-        $log->warn('Will run data file against itself');
+        carp "Couldn't open $test_file";
+        $log->warn(qq{Couldn't open $test_file; } .
+            q{will run data file against itself});
         $test_file = path($self->{project}, 'data');
     }
     @{$self->{testItems}} = $test_file->lines;
     #cross-platform chomp
     s/[\n\r]+$// for @{ $self->{testItems} };
+    return;
+}
+
+#not really sure what all of these calculations are for, but I wanted to group them
+sub _compute_vars {
+    my ($self) = @_;
+    my $item;
+    ( undef, $item ) = split /$self->{bigsep}/, $self->{testItems}->[0];
+
+    # $maxvar is the number of features in the item
+    # TODO: need error handling if another item has a different # of vars
+    my $maxvar = scalar split /$self->{smallsep}/, $item;
+    $log->info('...done');
+
+    splice @{$self->{vlen}}, $maxvar;
+    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
+
+    # find the indices where we split the lattice; we make four
+    # lattices so that calculation can be parallelized
+    {
+        use integer;
+        my $half = $maxvar / 2;
+        $self->{activeVars}->[0] = $half / 2;
+        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
+        $half         = $maxvar - $half;
+        $self->{activeVars}->[2] = $half / 2;
+        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
+    }
+    # sum is intitialized to a list of zeros the same length as outcomelist
+    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
     return;
 }
 
