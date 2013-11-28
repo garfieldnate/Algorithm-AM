@@ -71,7 +71,6 @@ sub new {
     @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
 
-    $self->_compute_vars();
 
     $self->{$_} = {} for (
         qw(
@@ -103,34 +102,6 @@ sub new {
 sub classify {
     my ($self, @args) = @_;
     return $self->{_classify_sub}->($self, @args);
-}
-
-#not really sure what all of these calculations are for, but I wanted to group them
-sub _compute_vars {
-    my ($self) = @_;
-    my $item;
-    ( undef, $item ) = split /$self->{bigsep}/, $self->{testItems}->[0];
-
-    # $maxvar is the number of features in the item
-    # TODO: need error handling if another item has a different # of vars
-    my $maxvar = scalar split /$self->{smallsep}/, $item;
-    $logger->info('...done');
-
-    splice @{$self->{vlen}}, $maxvar;
-    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
-
-    {
-        use integer;
-        my $half = $maxvar / 2;
-        $self->{activeVars}->[0] = $half / 2;
-        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
-        $half         = $maxvar - $half;
-        $self->{activeVars}->[2] = $half / 2;
-        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
-    }
-    # sum is intitialized to a list of zeros the same length as outcomelist
-    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
-    return;
 }
 
 #check that the project has a data file,
