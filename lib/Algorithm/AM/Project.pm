@@ -25,6 +25,9 @@ sub new {
 
     $self->_compute_vars();
 
+    splice @{$self->{vlen}}, $self->{vec_length};
+    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
+
     return $self;
 }
 
@@ -44,7 +47,9 @@ sub _read_data_set {
 
     my @data_set = $data_path->lines;
 
+    # the length of the longest spec
     $self->{slen} = 0;
+    # the length of the longest feature of the given column
     $self->{vlen} = [(0) x 60];
     for (@data_set) {
         # cross-platform chomp
@@ -73,6 +78,7 @@ sub _add_data {
             croak "expected $self->{vec_length} features, but found " .
                 (scalar @$data) . " in @$data" . ($spec ? " ($spec)" : '');
     }else{
+        #vec_length holds the length of a data vector in the project
         $self->{vec_length} = @$data;
     }
 
@@ -195,19 +201,12 @@ sub _read_test_set {
     return;
 }
 
-#not really sure what all of these calculations are for, but I wanted to group them
 sub _compute_vars {
     my ($self) = @_;
-    my $item;
-    ( undef, $item ) = split /$self->{bigsep}/, $self->{testItems}->[0];
 
     # $maxvar is the number of features in the item
-    # TODO: need error handling if another item has a different # of vars
-    my $maxvar = scalar split /$self->{smallsep}/, $item;
+    my $maxvar = $self->{vec_length};
     $log->info('...done');
-
-    splice @{$self->{vlen}}, $maxvar;
-    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
 
     # find the indices where we split the lattice; we make four
     # lattices so that calculation can be parallelized
@@ -220,8 +219,6 @@ sub _compute_vars {
         $self->{activeVars}->[2] = $half / 2;
         $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
-    # sum is intitialized to a list of zeros the same length as outcomelist
-    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
     return;
 }
 
