@@ -67,6 +67,9 @@ sub new {
     }
     $self->{project} = $proj_obj;
 
+    # sum is intitialized to a list of zeros the same length as outcomelist
+    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
+
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
