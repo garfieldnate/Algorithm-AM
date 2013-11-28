@@ -328,6 +328,7 @@ sub print_summary {
 __DATA__
 
 #print to amcpresults file instead of to the screen
+#TODO: move file choice to different module, and use Log::Any in this one.
 $logger->remove('Screen');
 $logger->add(
     Log::Dispatch::File->new(
@@ -347,26 +348,24 @@ foreach my $t (@{$self->{testItems}}) {
     $logger->debug("Test items left: $left");
     --$left;
 
-## parse test item
-
-    my $curTestItem;
-    ( $curTestOutcome, $curTestItem, $data->{curTestSpec} ) = split /$self->{bigsep}/, $t, 3;
+    ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
+    # set to index instead of actual outcome string
     $curTestOutcome = $self->{octonum}{$curTestOutcome};
-    $data->{curTestSpec} ||= "";
 
 ## begin exclude nulls
     my $eq = 0;
-    $data->{curTestItem} = [split /$self->{smallsep}/, $curTestItem];
     $eq += ( $_ eq '=' ) foreach @{ $data->{curTestItem} };
     $self->{activeVar} = @{ $data->{curTestItem} } - $eq;
 ## end exclude nulls
 ## begin include nulls
-    $data->{curTestItem}  = [split /$self->{smallsep}/, $curTestItem];
     $self->{activeVar} = @{ $data->{curTestItem} };
 ## end include nulls
 
     $self->{begintesthook}->($self, $data);
 
+    # find the indices where we split the lattice; we make four
+    # lattices so that calculation can be parallelized
+    # This is done because activeVar was just reset above
     {
         use integer;
         my $half = $self->{activeVar} / 2;

@@ -23,9 +23,9 @@ sub new {
     $log->info('Reading test file...');
     $self->_read_test_set();
 
-    $self->_compute_vars();
+    $self->_compute_lattice_boundaries();
 
-    splice @{$self->{vlen}}, $self->{vec_length};
+    splice @{$self->{vlen}}, $self->num_features;
     $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
 
     return $self;
@@ -39,6 +39,15 @@ sub basepath {
 sub results_path {
     my ($self) = @_;
     return '' . path($self->{project}, 'amcpresults');
+}
+
+#returns the number of features in a single data item
+sub num_features {
+    my ($self, $num) = @_;
+    if($num){
+        $self->{num_feats} = $num;
+    }
+    return $self->{num_feats};
 }
 
 #read data set, setting internal variables for processing and printing
@@ -72,22 +81,21 @@ sub _read_data_set {
 sub _add_data {
     my ($self, $outcome, $data, $spec) = @_;
 
-    #first check that the number of features in @$data is correct
-    if($self->{vec_length}){
-        $self->{vec_length} == @$data or
-            croak "expected $self->{vec_length} features, but found " .
-                (scalar @$data) . " in @$data" . ($spec ? " ($spec)" : '');
+    # first check that the number of features in @$data is correct
+    # if num_features is 0, it means it hasn't been set yet
+    if(my $num = $self->num_features){
+        $num == @$data or
+            croak "expected $num features, but found " . (scalar @$data) .
+                " in @$data" . ($spec ? " ($spec)" : '');
     }else{
-        #vec_length holds the length of a data vector in the project
-        $self->{vec_length} = @$data;
+        $self->num_features(scalar @$data);
     }
 
-    push @{$self->{data}}, $data;
-
+    # store the new data item
     $spec ||= $data;
-
-    push @{$self->{outcome}}, $outcome;
     push @{$self->{spec}}, $spec;
+    push @{$self->{data}}, $data;
+    push @{$self->{outcome}}, $outcome;
 
     #slen holds length of longest spec in data set
     $self->{slen} = do {
@@ -195,17 +203,27 @@ sub _read_test_set {
             q{will run data file against itself});
         $test_file = path($self->{project}, 'data');
     }
-    @{$self->{testItems}} = $test_file->lines;
-    #cross-platform chomp
-    s/[\n\r]+$// for @{ $self->{testItems} };
+    for my $t ($test_file->lines){
+        #cross-platform chomp
+        $t =~ s/[\n\r]+$//;
+        my ($outcome, $data, $spec ) = split /$self->{bigsep}/, $t, 3;
+        my @vector = split /$self->{smallsep}/, $data;
+        # warn join ',', @vector;
+        if($self->num_features != @vector){
+            croak 'expected ' . $self->num_features . ' features, but found ' .
+                (scalar @vector) . " in @vector" . ($spec ? " ($spec)" : '');
+        }
+
+        push @{$self->{testItems}}, [$outcome, \@vector, $spec || '']
+    }
     return;
 }
 
-sub _compute_vars {
+sub _compute_lattice_boundaries {
     my ($self) = @_;
 
     # $maxvar is the number of features in the item
-    my $maxvar = $self->{vec_length};
+    my $maxvar = $self->{num_feats};
     $log->info('...done');
 
     # find the indices where we split the lattice; we make four
