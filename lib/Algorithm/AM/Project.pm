@@ -12,6 +12,7 @@ sub new {
         unless $data_path->exists;
 
     my $self = bless $opts, $class;
+    $self->{project} = $path;
 
     $log->info('Reading data file...');
     $self->_read_data_set($data_path);
@@ -23,6 +24,16 @@ sub new {
     $self->_read_test_set();
 
     return $self;
+}
+
+sub basepath {
+    my ($self) = @_;
+    return $self->{project};
+}
+
+sub results_path {
+    my ($self) = @_;
+    return '' . path($self->{project}, 'amcpresults');
 }
 
 #read data set, setting internal variables for processing and printing

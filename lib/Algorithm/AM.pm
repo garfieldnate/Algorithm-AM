@@ -57,14 +57,15 @@ sub new {
     # don't buffer error messages
     *STDOUT->autoflush();
 
-    $logger->info("Initializing project $self->{project}");
+    $logger->info("Initializing project $project");
 
     # read project files
     my $proj_obj = Algorithm::AM::Project->new(
-        $self->{project}, {%$opts});
+        $project, {%$opts});
     for(keys %$proj_obj){
         $self->{$_} = $proj_obj->{$_};
     }
+    $self->{project} = $proj_obj;
 
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
@@ -110,7 +111,8 @@ sub _compute_vars {
     my $item;
     ( undef, $item ) = split /$self->{bigsep}/, $self->{testItems}->[0];
 
-    #$maxvar is the number of features in the item
+    # $maxvar is the number of features in the item
+    # TODO: need error handling if another item has a different # of vars
     my $maxvar = scalar split /$self->{smallsep}/, $item;
     $logger->info('...done');
 
@@ -357,7 +359,7 @@ $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
         min_level => 'debug',
-        filename  => "$self->{project}/amcpresults",
+        filename  => $self->{project}->results_path,
         newline => 1
     )
 );
