@@ -12,7 +12,7 @@ sub new {
         unless $data_path->exists;
 
     my $self = bless $opts, $class;
-    $self->{project} = $path;
+    $self->{project_path} = $path;
 
     $log->info('Reading data file...');
     $self->_read_data_set($data_path);
@@ -25,23 +25,20 @@ sub new {
 
     $log->info('...done');
 
-    splice @{$self->{vlen}}, $self->num_features;
-    $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
-
     return $self;
 }
 
 sub basepath {
     my ($self) = @_;
-    return $self->{project};
+    return $self->{project_path};
 }
 
 sub results_path {
     my ($self) = @_;
-    return '' . path($self->{project}, 'amcpresults');
+    return '' . path($self->{project_path}, 'amcpresults');
 }
 
-#returns the number of features in a single data item
+# returns the number of features in a single data item
 sub num_features {
     my ($self, $num) = @_;
     if($num){
@@ -50,30 +47,84 @@ sub num_features {
     return $self->{num_feats};
 }
 
+# returns (and/or sets) a format string for printing the variables of
+# a data item
+sub var_format {
+    my ($self, $var_format) = @_;
+    if($var_format){
+        $self->{var_format} = $var_format;
+    }
+    return $self->{var_format};
+}
+
+# returns (and/or sets) a format string for printing a spec string
+sub spec_format {
+    my ($self, $spec_format) = @_;
+    if($spec_format){
+        $self->{spec_format} = $spec_format;
+    }
+    return $self->{spec_format};
+}
+
+# returns (and/or sets) a format string for printing a "long" outcome
+sub outcome_format {
+    my ($self, $outcome_format) = @_;
+    if($outcome_format){
+        $self->{outcome_format} = $outcome_format;
+    }
+    return $self->{outcome_format};
+}
+
+# get/set format for printing the number of data items
+sub data_format {
+    my ($self, $data_format) = @_;
+    if($data_format){
+        $self->{data_format} = $data_format;
+    }
+    return $self->{data_format};
+}
+
 #read data set, setting internal variables for processing and printing
 sub _read_data_set {
     my ($self, $data_path) = @_;
 
     my @data_set = $data_path->lines;
+    $log->debug( 'Data file: ' . scalar(@data_set) );
 
     # the length of the longest spec
-    $self->{slen} = 0;
+    my $longest_spec = 0;
     # the length of the longest feature of the given column
-    $self->{vlen} = [(0) x 60];
+    my @feature_lengths = ((0) x 60);
     for (@data_set) {
         # cross-platform chomp
         s/[\n\r]+$//;
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
-
+        $spec ||= $data;
         my @datavar = split /$self->{smallsep}/, $data;
         $self->_add_data($outcome, \@datavar, $spec);
 
-        $log->debug( 'Data file: ' . scalar(@{$self->{data}}) );
+        # spec_length holds length of longest spec in data set
+        $longest_spec = do {
+            my $l = length $spec;
+            $l > $longest_spec ? $l : $longest_spec;
+        };
+
+        # feature_length is an arrayref, each index holding the length of the
+        # longest feature in that column
+        for my $i (0 .. $#datavar ) {
+            my $l = length $datavar[$i];
+            $feature_lengths[$i] = $l if $l > $feature_lengths[$i];
+        }
     }
-    #length of longest specifier
-    $self->{sformat} = "%-$self->{slen}.$self->{slen}s";
-    #length of integer holding number of data items
-    $self->{dformat} = "%" . ( scalar @{$self->{data}}) . ".0u";
+
+    #set format variables
+    $self->spec_format(
+        "%-$longest_spec.${longest_spec}s");
+    $self->data_format("%" . ( scalar @{$self->{data}}) . ".0u");
+
+    splice @feature_lengths, $self->num_features;
+    $self->var_format(
+        join " ", map { "%-$_.${_}s" } @feature_lengths);
     return;
 }
 
@@ -92,31 +143,16 @@ sub _add_data {
     }
 
     # store the new data item
-    $spec ||= $data;
     push @{$self->{spec}}, $spec;
     push @{$self->{data}}, $data;
     push @{$self->{outcome}}, $outcome;
-
-    #slen holds length of longest spec in data set
-    $self->{slen} = do {
-        my $l = length $spec;
-        $l > $self->{slen} ? $l : $self->{slen};
-    };
-
-    # vlen is an arrayref, each index holding the length of the longest feature
-    # in that column
-    for my $i (0 .. $#$data ) {
-        my $l = length $data->[$i];
-        $self->{vlen}->[$i] = $l if $l > $self->{vlen}->[$i];
-    }
 }
 
 sub _set_outcomes {
     my ($self) = @_;
-    $self->{olen} = 0;
     $self->{outcomecounter} = 0;
     $log->info('checking for outcome file');
-    my $outcome_path = path($self->{project}, 'outcome');
+    my $outcome_path = path($self->{project_path}, 'outcome');
     if ( $outcome_path->exists ) {
         my @data_set = $outcome_path->lines;
         #cross-platform chomp
@@ -128,15 +164,16 @@ sub _set_outcomes {
         $self->_read_outcomes_from_data();
     }
     $log->debug('...converting outcomes to indices');
+    my $max_length = 0;
     @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
     foreach (@{$self->{outcomelist}}) {
         my $l;
         $l = length;
-        $self->{olen} = $l if $l > $self->{olen};
+        $max_length = $l if $l > $max_length;
     }
     # index 0 is reserved for the AM algorithm
     unshift @{$self->{outcomelist}}, '';
-    $self->{oformat} = "%-$self->{olen}.$self->{olen}s";
+    $self->outcome_format("%-$max_length.${max_length}s");
     return;
 }
 
@@ -196,12 +233,12 @@ sub _read_outcomes_from_data {
 
 sub _read_test_set {
     my ($self) = @_;
-    my $test_file = path($self->{project}, 'test');
+    my $test_file = path($self->{project_path}, 'test');
     if(!$test_file->exists){
         carp "Couldn't open $test_file";
         $log->warn(qq{Couldn't open $test_file; } .
             q{will run data file against itself});
-        $test_file = path($self->{project}, 'data');
+        $test_file = path($self->{project_path}, 'data');
     }
     for my $t ($test_file->lines){
         #cross-platform chomp

@@ -470,16 +470,22 @@ foreach my $t (@{$self->{testItems}}) {
 
         $self->_fillandcount(X);
         $grandtotal = $self->{pointers}->{'grandtotal'};
-        my $longest = length $grandtotal;
-        $self->{gformat} = "%$longest.${longest}s";
-        $data->{pointermax}    = "";
-
         unless ($grandtotal) {
+            #TODO: is this tested yet?
             $logger->warn('No data items considered.  No prediction possible.');
             next;
         }
 
-        #TODO: put this in a return value or something!
+        # TODO: explain all of these formatting variables
+        my $longest = length $grandtotal;
+        my $gang_format =  "%$longest.${longest}s";
+        my $var_format = $self->{project}->var_format;
+        my $spec_format = $self->{project}->spec_format;
+        my $outcome_format = $self->{project}->outcome_format;
+        my $data_format = $self->{project}->data_format;
+
+        #TODO: put all of this information in a return value or something!
+        $data->{pointermax}    = "";
         $logger->info('Statistical Summary');
         for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
@@ -494,13 +500,13 @@ foreach my $t (@{$self->{testItems}}) {
             }
             $logger->info(
                 sprintf(
-                    "$self->{oformat}  $self->{gformat}  %7.3f%%",
+                    "$outcome_format  $gang_format  %7.3f%%",
                     $self->{outcomelist}->[$i], $n, 100 * $n / $grandtotal
                 )
             );
         }
-        $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", '-' x $longest ) );
-        $logger->info( sprintf( "$self->{oformat}  $self->{gformat}", "", $grandtotal ) );
+        $logger->info( sprintf( "$outcome_format  $gang_format", "", '-' x $longest ) );
+        $logger->info( sprintf( "$outcome_format  $gang_format", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
             $logger->info("Expected outcome: $self->{outcomelist}->[$curTestOutcome]");
             if ( $self->{sum}->[$curTestOutcome] eq $data->{pointermax} ) {
@@ -531,7 +537,7 @@ foreach my $t (@{$self->{testItems}}) {
             my $p = $self->{pointers}->{$self->{datatocontext}->[$i] };
             $logger->info(
                 sprintf(
-                    "$self->{oformat}  $self->{sformat}  $self->{gformat}  %7.3f%%",
+                    "$outcome_format  $spec_format  $gang_format  %7.3f%%",
                     $self->{outcomelist}->[ $self->{outcome}->[$i] ], $self->{spec}->[$i],
                     $p,                           100 * $p / $grandtotal
                 )
@@ -543,7 +549,7 @@ foreach my $t (@{$self->{testItems}}) {
         #TODO: explain the magic below
         $logger->info('Gang effects');
         my $dashes = '-' x ( $longest + 10 );
-        my $pad = " " x length sprintf "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
+        my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
           0, '0', 0, "";
         foreach my $k (
             sort {
@@ -574,21 +580,21 @@ foreach my $t (@{$self->{testItems}}) {
                     no warnings;
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
+                            "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
                             100 * $self->{gang}->{$k} / $grandtotal,
                             $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $self->{oformat}  $self->{vformat}",
+                            "$dashes   $data_format  $outcome_format  $var_format",
                             "", "", @vtemp
                         )
                     );
                 }
                 $logger->info(
                     sprintf(
-                        "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
+                        "%7.3f%%  $gang_format x $data_format  $outcome_format",
                         100 * $self->{gang}->{$k} / $grandtotal,
                         $p,
                         $self->{contextsize}->{$k},
@@ -603,7 +609,7 @@ foreach my $t (@{$self->{testItems}}) {
                     $i = $self->{itemcontextchain}->[$i]
                   )
                 {
-                    $logger->info( sprintf "$pad  $self->{vformat}  $self->{spec}->[$i]",
+                    $logger->info( sprintf "$pad  $var_format  $self->{spec}->[$i]",
                         @{ $self->{data}->[$i] } );
                 }
 ## end skip gang list
@@ -629,14 +635,14 @@ foreach my $t (@{$self->{testItems}}) {
                     no warnings;
                     $logger->info(
                         sprintf(
-"%7.3f%%  $self->{gformat}   $self->{dformat}  $self->{oformat}  $self->{vformat}",
+"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
                             100 * $self->{gang}->{$k} / $grandtotal,
                             $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
                         sprintf(
-                            "$dashes   $self->{dformat}  $self->{oformat}  $self->{vformat}",
+                            "$dashes   $data_format  $outcome_format  $var_format",
                             "", "", @vtemp
                         )
                     );
@@ -645,7 +651,7 @@ foreach my $t (@{$self->{testItems}}) {
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
-                            "%7.3f%%  $self->{gformat} x $self->{dformat}  $self->{oformat}",
+                            "%7.3f%%  $gang_format x $data_format  $outcome_format",
                             100 * $gangsort[$i] * $p / $grandtotal,
                             $p, $gangsort[$i], $self->{outcomelist}->[$i]
                         )
@@ -653,7 +659,7 @@ foreach my $t (@{$self->{testItems}}) {
 ## begin skip gang list
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
-                            sprintf( "$pad  $self->{vformat}  $self->{spec}->[$_]",
+                            sprintf( "$pad  $var_format  $self->{spec}->[$_]",
                                 @{ $self->{data}->[$_] } )
                         );
                     }

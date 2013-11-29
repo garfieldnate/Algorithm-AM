@@ -2,13 +2,15 @@ Algorithm::AM
 
 test outcome file with exports.t
 
-Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack.
+Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack. Then write tests for it. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
+
+Throw error in Project.pm if number of items in outcome file doesn't match number from test file
+
+write tests for new types of errors generated in Project.pm
 
 work on types of input to AM dataset
 
 move the autoflush call to the classify routine
-
-factor out the small include nulls eval section
 
 change activeVars to be accepted at classification time
 
