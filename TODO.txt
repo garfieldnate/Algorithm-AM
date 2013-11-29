@@ -3,7 +3,6 @@ Algorithm::AM
 test outcome file with exports.t
 
 Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack.
-Pre-parse test items and check their vector length
 
 work on types of input to AM dataset
 

@@ -23,7 +23,7 @@ sub new {
     $log->info('Reading test file...');
     $self->_read_test_set();
 
-    $self->_compute_lattice_boundaries();
+    $log->info('...done');
 
     splice @{$self->{vlen}}, $self->num_features;
     $self->{vformat} = join " ", map { "%-$_.${_}s" } @{$self->{vlen}};
@@ -215,27 +215,6 @@ sub _read_test_set {
         }
 
         push @{$self->{testItems}}, [$outcome, \@vector, $spec || '']
-    }
-    return;
-}
-
-sub _compute_lattice_boundaries {
-    my ($self) = @_;
-
-    # $maxvar is the number of features in the item
-    my $maxvar = $self->{num_feats};
-    $log->info('...done');
-
-    # find the indices where we split the lattice; we make four
-    # lattices so that calculation can be parallelized
-    {
-        use integer;
-        my $half = $maxvar / 2;
-        $self->{activeVars}->[0] = $half / 2;
-        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
-        $half         = $maxvar - $half;
-        $self->{activeVars}->[2] = $half / 2;
-        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
     }
     return;
 }

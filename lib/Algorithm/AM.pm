@@ -44,28 +44,32 @@ my %import;
 ## %gang
 
 sub new {
-    my ($proto, $project, %opts) = @_;
+    my ($proto, $project_path, %opts) = @_;
 
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
-    $project = ''
+    $project_path = ''
         if $proto =~ /^-/;
 
-    my $opts = _check_project_opts($project, \%opts);
+    my $opts = _check_project_opts($project_path, \%opts);
     my $self = bless $opts, $class;
 
     # don't buffer error messages
     *STDOUT->autoflush();
 
-    $logger->info("Initializing project $project");
+    $logger->info("Initializing project $project_path");
 
     # read project files
-    my $proj_obj = Algorithm::AM::Project->new(
-        $project, {%$opts});
-    for(keys %$proj_obj){
-        $self->{$_} = $proj_obj->{$_};
+    my $project = Algorithm::AM::Project->new(
+        $project_path, {%$opts});
+    #TODO: get rid of this hack!
+    for(keys %$project){
+        $self->{$_} = $project->{$_};
     }
-    $self->{project} = $proj_obj;
+    $self->{project} = $project;
+
+    #TODO: this is computed again later, so is it necessary here?
+    $self->{activeVars} = _compute_lattice_boundaries($project->num_features);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
@@ -112,14 +116,14 @@ sub classify {
 #return bigsep and smallsep, the values used to parse the
 #project data files
 sub _check_project_opts {
-    my ($project, $opts) = @_;
+    my ($project_path, $opts) = @_;
 
-    #first check $project and commas, which are allowed in the project
+    #first check $project_path and commas, which are allowed in the project
     #constructor but not in the classify() method
     croak 'Must specify project'
-        unless $project;
+        unless $project_path;
     croak 'Project has no data file'
-        unless path($project, 'data')->exists;
+        unless path($project_path, 'data')->exists;
 
     croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
         unless exists $opts->{commas};
@@ -148,7 +152,7 @@ sub _check_project_opts {
         gangs       => 'no',
         %$opts
     );
-    $opts->{project} = $project;
+    $opts->{project} = $project_path;
     $opts->{bigsep} = $bigsep;
     $opts->{smallsep} = $smallsep;
     return $opts;
@@ -194,6 +198,24 @@ sub _check_classify_opts {
     #todo: properly check types of parameters; hooks should be subs, etc.
 
     return \%opts;
+}
+
+# since we split the lattice in four, we have to decide which features
+# go where. Given the number of features being used, return an arrayref
+# of indices to split the vectors on when creating the four lattices
+sub _compute_lattice_boundaries {
+    my ($num_feats) = @_;
+
+    # find the indices where we split the lattice; we make four
+    # lattices so that calculation can be parallelized
+    use integer;
+    my $half = $num_feats / 2;
+    my @active_vars = $half / 2;
+    $active_vars[1] = $half - $active_vars[0];
+    $half         = $num_feats - $half;
+    $active_vars[2] = $half / 2;
+    $active_vars[3] = $half - $active_vars[2];
+    return \@active_vars;
 }
 
 #create the classification subroutine
