@@ -44,28 +44,33 @@ my %import;
 ## %gang
 
 sub new {
-    my ($proto, $project, %opts) = @_;
+    my ($proto, $project_path, %opts) = @_;
 
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
-    $project = ''
+    $project_path = ''
         if $proto =~ /^-/;
 
-    my $opts = _check_project_opts($project, \%opts);
+    my $opts = _check_project_opts($project_path, \%opts);
     my $self = bless $opts, $class;
 
     # don't buffer error messages
     *STDOUT->autoflush();
 
-    $logger->info("Initializing project $project");
+    $logger->info("Initializing project $project_path");
 
     # read project files
-    my $proj_obj = Algorithm::AM::Project->new(
-        $project, {%$opts});
-    for(keys %$proj_obj){
-        $self->{$_} = $proj_obj->{$_};
+    my $project = Algorithm::AM::Project->new(
+        $project_path, {%$opts});
+    # TODO: get rid of this hack!
+    for(keys %$project){
+        $self->{$_} = $project->{$_};
     }
-    $self->{project} = $proj_obj;
+    $self->{project} = $project;
+
+    # compute activeVars here so that lattice space can be allocated in the
+    # _initialize method
+    $self->{activeVars} = _compute_lattice_sizes($project->num_features);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
@@ -73,7 +78,6 @@ sub new {
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
-
 
     $self->{$_} = {} for (
         qw(
@@ -112,14 +116,14 @@ sub classify {
 #return bigsep and smallsep, the values used to parse the
 #project data files
 sub _check_project_opts {
-    my ($project, $opts) = @_;
+    my ($project_path, $opts) = @_;
 
-    #first check $project and commas, which are allowed in the project
+    #first check $project_path and commas, which are allowed in the project
     #constructor but not in the classify() method
     croak 'Must specify project'
-        unless $project;
+        unless $project_path;
     croak 'Project has no data file'
-        unless path($project, 'data')->exists;
+        unless path($project_path, 'data')->exists;
 
     croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
         unless exists $opts->{commas};
@@ -148,7 +152,7 @@ sub _check_project_opts {
         gangs       => 'no',
         %$opts
     );
-    $opts->{project} = $project;
+    $opts->{project} = $project_path;
     $opts->{bigsep} = $bigsep;
     $opts->{smallsep} = $smallsep;
     return $opts;
@@ -196,6 +200,24 @@ sub _check_classify_opts {
     return \%opts;
 }
 
+# since we split the lattice in four, we have to decide which features
+# go where. Given the number of features being used, return an arrayref
+# containing the number of features to be used in each of the the four
+# lattices.
+sub _compute_lattice_sizes {
+    my ($num_feats) = @_;
+
+    use integer;
+    my @active_vars;
+    my $half = $num_feats / 2;
+    $active_vars[0] = $half / 2;
+    $active_vars[1] = $half - $active_vars[0];
+    $half         = $num_feats - $half;
+    $active_vars[2] = $half / 2;
+    $active_vars[3] = $half - $active_vars[2];
+    return \@active_vars;
+}
+
 #create the classification subroutine
 sub _create_classify_sub {
     return sub {
@@ -209,11 +231,7 @@ sub _create_classify_sub {
 
         # TODO: neat/ugly hack starts here...
         local $_ = $subsource;
-
-        if ( $self->{exclude_nulls} ) {
-            s/## begin include nulls.*?## end include nulls//sg;
-        }
-        else {
+        if(!$self->{exclude_nulls}){
             s/## begin exclude nulls.*?## end exclude nulls//sg;
         }
 
@@ -351,29 +369,27 @@ foreach my $t (@{$self->{testItems}}) {
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
     # set to index instead of actual outcome string
     $curTestOutcome = $self->{octonum}{$curTestOutcome};
+    # activeVar is the number of active variables; if we exclude nulls,
+    # then we need to minus the number of '=' found in this test item;
+    # otherwise, it's just the number of columns in a single item vector
+    $self->{activeVar} = $self->{project}->num_features;
 
 ## begin exclude nulls
-    my $eq = 0;
-    $eq += ( $_ eq '=' ) foreach @{ $data->{curTestItem} };
-    $self->{activeVar} = @{ $data->{curTestItem} } - $eq;
+    $self->{activeVar} -= grep {$_ eq '='} @{ $data->{curTestItem} };
 ## end exclude nulls
-## begin include nulls
-    $self->{activeVar} = @{ $data->{curTestItem} };
-## end include nulls
 
     $self->{begintesthook}->($self, $data);
 
-    # find the indices where we split the lattice; we make four
-    # lattices so that calculation can be parallelized
-    # This is done because activeVar was just reset above
-    {
-        use integer;
-        my $half = $self->{activeVar} / 2;
-        $self->{activeVars}->[0] = $half / 2;
-        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
-        $half         = $self->{activeVar} - $half;
-        $self->{activeVars}->[2] = $half / 2;
-        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
+    # recalculate the lattice sizes with new number of active variables;
+    # must edit activeVars instead of assigning it a new arrayref because
+    # the XS code only has the existing arrayref and will not be given
+    # a new one. This must be done for every test item because activeVars
+    # is a global that could have been edited during classification of the
+    # last test item.
+    # TODO: pass activeVars into fill_and_count instead of doing this
+    my $lattice_sizes = _compute_lattice_sizes($self->{activeVar});
+    for(0 .. $#$lattice_sizes){
+        $self->{activeVars}->[$_] = $lattice_sizes->[$_];
     }
 ##  $activeContexts = 1 << $activeVar;
 

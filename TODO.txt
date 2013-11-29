@@ -3,11 +3,14 @@ Algorithm::AM
 test outcome file with exports.t
 
 Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack.
-Pre-parse test items and check their vector length
 
 work on types of input to AM dataset
 
 move the autoflush call to the classify routine
+
+factor out the small include nulls eval section
+
+change activeVars to be accepted at classification time
 
 ask someone about expected outcome file format
 	- finnverb outcome file does not have unique long outcomes to match unique short ones
