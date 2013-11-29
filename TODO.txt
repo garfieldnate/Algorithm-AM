@@ -8,6 +8,10 @@ work on types of input to AM dataset
 
 move the autoflush call to the classify routine
 
+factor out the small include nulls eval section
+
+change activeVars to be accepted at classification time
+
 ask someone about expected outcome file format
 	- finnverb outcome file does not have unique long outcomes to match unique short ones
 

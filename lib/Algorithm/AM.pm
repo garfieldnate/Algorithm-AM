@@ -62,14 +62,15 @@ sub new {
     # read project files
     my $project = Algorithm::AM::Project->new(
         $project_path, {%$opts});
-    #TODO: get rid of this hack!
+    # TODO: get rid of this hack!
     for(keys %$project){
         $self->{$_} = $project->{$_};
     }
     $self->{project} = $project;
 
-    #TODO: this is computed again later, so is it necessary here?
-    $self->{activeVars} = _compute_lattice_boundaries($project->num_features);
+    # compute activeVars here so that lattice space can be allocated in the
+    # _initialize method
+    $self->{activeVars} = _compute_lattice_sizes($project->num_features);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
@@ -77,7 +78,6 @@ sub new {
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
-
 
     $self->{$_} = {} for (
         qw(
@@ -202,15 +202,15 @@ sub _check_classify_opts {
 
 # since we split the lattice in four, we have to decide which features
 # go where. Given the number of features being used, return an arrayref
-# of indices to split the vectors on when creating the four lattices
-sub _compute_lattice_boundaries {
+# containing the number of features to be used in each of the the four
+# lattices.
+sub _compute_lattice_sizes {
     my ($num_feats) = @_;
 
-    # find the indices where we split the lattice; we make four
-    # lattices so that calculation can be parallelized
     use integer;
+    my @active_vars;
     my $half = $num_feats / 2;
-    my @active_vars = $half / 2;
+    $active_vars[0] = $half / 2;
     $active_vars[1] = $half - $active_vars[0];
     $half         = $num_feats - $half;
     $active_vars[2] = $half / 2;
@@ -231,11 +231,7 @@ sub _create_classify_sub {
 
         # TODO: neat/ugly hack starts here...
         local $_ = $subsource;
-
-        if ( $self->{exclude_nulls} ) {
-            s/## begin include nulls.*?## end include nulls//sg;
-        }
-        else {
+        if(!$self->{exclude_nulls}){
             s/## begin exclude nulls.*?## end exclude nulls//sg;
         }
 
@@ -373,29 +369,27 @@ foreach my $t (@{$self->{testItems}}) {
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
     # set to index instead of actual outcome string
     $curTestOutcome = $self->{octonum}{$curTestOutcome};
+    # activeVar is the number of active variables; if we exclude nulls,
+    # then we need to minus the number of '=' found in this test item;
+    # otherwise, it's just the number of columns in a single item vector
+    $self->{activeVar} = $self->{project}->num_features;
 
 ## begin exclude nulls
-    my $eq = 0;
-    $eq += ( $_ eq '=' ) foreach @{ $data->{curTestItem} };
-    $self->{activeVar} = @{ $data->{curTestItem} } - $eq;
+    $self->{activeVar} -= grep {$_ eq '='} @{ $data->{curTestItem} };
 ## end exclude nulls
-## begin include nulls
-    $self->{activeVar} = @{ $data->{curTestItem} };
-## end include nulls
 
     $self->{begintesthook}->($self, $data);
 
-    # find the indices where we split the lattice; we make four
-    # lattices so that calculation can be parallelized
-    # This is done because activeVar was just reset above
-    {
-        use integer;
-        my $half = $self->{activeVar} / 2;
-        $self->{activeVars}->[0] = $half / 2;
-        $self->{activeVars}->[1] = $half - $self->{activeVars}->[0];
-        $half         = $self->{activeVar} - $half;
-        $self->{activeVars}->[2] = $half / 2;
-        $self->{activeVars}->[3] = $half - $self->{activeVars}->[2];
+    # recalculate the lattice sizes with new number of active variables;
+    # must edit activeVars instead of assigning it a new arrayref because
+    # the XS code only has the existing arrayref and will not be given
+    # a new one. This must be done for every test item because activeVars
+    # is a global that could have been edited during classification of the
+    # last test item.
+    # TODO: pass activeVars into fill_and_count instead of doing this
+    my $lattice_sizes = _compute_lattice_sizes($self->{activeVar});
+    for(0 .. $#$lattice_sizes){
+        $self->{activeVars}->[$_] = $lattice_sizes->[$_];
     }
 ##  $activeContexts = 1 << $activeVar;
 
