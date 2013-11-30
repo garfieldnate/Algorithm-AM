@@ -426,7 +426,7 @@ foreach my $t (@{$self->{testItems}}) {
             ++$self->{excludedData}, next
                 if rand() > $self->{probability};
 ## end probability
-            my @dataItem = @{ $self->{project}->get_exemplar($i) };
+            my @dataItem = @{ $self->{project}->get_exemplar_data($i) };
             my @alist    = @{$self->{activeVars}};
             my $j        = 0;
             my @clist    = ();
@@ -447,7 +447,7 @@ foreach my $t (@{$self->{testItems}}) {
             $self->{itemcontextchain}->[$i]           = $self->{itemcontextchainhead}->{$context};
             $self->{itemcontextchainhead}->{$context} = $i;
             ++$self->{contextsize}->{$context};
-            my $outcome = $self->{outcome}->[$i];
+            my $outcome = $self->{project}->get_exemplar_outcome($i);
             if ( defined $self->{subtooutcome}->{$context} ) {
                 $self->{subtooutcome}->{$context} = 0
                   if $self->{subtooutcome}->{$context} != $outcome;
@@ -539,8 +539,10 @@ foreach my $t (@{$self->{testItems}}) {
             $logger->info(
                 sprintf(
                     "$outcome_format  $spec_format  $gang_format  %7.3f%%",
-                    $self->{outcomelist}->[ $self->{outcome}->[$i] ], $self->{spec}->[$i],
-                    $p,                           100 * $p / $grandtotal
+                    $self->{outcomelist}->[
+                        $self->{project}->get_exemplar_outcome($i) ],
+                    $self->{project}->get_exemplar_spec($i),
+                    $p, 100 * $p / $grandtotal
                 )
             );
         }
@@ -610,8 +612,9 @@ foreach my $t (@{$self->{testItems}}) {
                     $i = $self->{itemcontextchain}->[$i]
                   )
                 {
-                    $logger->info( sprintf "$pad  $var_format  $self->{spec}->[$i]",
-                        @{ $self->{project}->get_exemplar($i) } );
+                    $logger->info( sprintf "$pad  $var_format  " .
+                        $self->{project}->get_exemplar_spec($i),
+                        @{ $self->{project}->get_exemplar_data($i) } );
                 }
 ## end skip gang list
             }
@@ -627,9 +630,10 @@ foreach my $t (@{$self->{testItems}}) {
                     $i = $self->{itemcontextchain}->[$i]
                   )
                 {
-                    ++$gangsort[ $self->{outcome}->[$i] ];
+                    ++$gangsort[ $self->{project}->get_exemplar_outcome($i) ];
 ## begin skip gang list
-                    push @{ $ganglist[ $self->{outcome}->[$i] ] }, $i;
+                    push @{ $ganglist[
+                        $self->{project}->get_exemplar_outcome($i) ] }, $i;
 ## end skip gang list
                 }
                 {
@@ -660,8 +664,9 @@ foreach my $t (@{$self->{testItems}}) {
 ## begin skip gang list
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
-                            sprintf( "$pad  $var_format  $self->{spec}->[$_]",
-                                @{ $self->{project}->get_exemplar($_) } )
+                            sprintf( "$pad  $var_format  " .
+                                $self->{project}->get_exemplar_spec($_),
+                                @{ $self->{project}->get_exemplar_data($_) } )
                         );
                     }
 ## end skip gang list

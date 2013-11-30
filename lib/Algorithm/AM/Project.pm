@@ -53,12 +53,33 @@ sub num_exemplars {
     return scalar @{$self->{data}};
 }
 
-# returns the exemplar at index $index. TODO: For now, using an index might be
+# TODO: create an Exemplar class to hold all of this info
+
+# returns the exemplar data vector at index $index.
+# TODO: For now, using an index might be
 # a little arbitrary. Might want to officially treat the index as the item's
 # id
-sub get_exemplar {
+sub get_exemplar_data {
     my ($self, $index) = @_;
     return $self->{data}->[$index];
+}
+
+# returns the spec of the exemplar at index $index.
+# TODO: For now, using an index might be
+# a little arbitrary. Might want to officially treat the index as the item's
+# id
+sub get_exemplar_spec {
+    my ($self, $index) = @_;
+    return $self->{spec}->[$index];
+}
+
+# returns the outcome of the exemplar at index $index.
+# TODO: For now, using an index might be
+# a little arbitrary. Might want to officially treat the index as the item's
+# id
+sub get_exemplar_outcome {
+    my ($self, $index) = @_;
+    return $self->{outcome}->[$index];
 }
 
 # returns (and/or sets) a format string for printing the variables of
