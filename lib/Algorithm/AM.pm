@@ -79,7 +79,7 @@ sub new {
     $self->{activeVars} = _compute_lattice_sizes($project->num_features);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
-    @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
+    @{$self->{sum}} = (0.0) x $project->num_outcomes;
 
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x $project->num_exemplars;
@@ -516,14 +516,15 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $logger->info(
                 sprintf(
                     "$outcome_format  $gang_format  %7.3f%%",
-                    $self->{outcomelist}->[$i], $n, 100 * $n / $grandtotal
+                    $project->get_outcome($i), $n, 100 * $n / $grandtotal
                 )
             );
         }
         $logger->info( sprintf( "$outcome_format  $gang_format", "", '-' x $longest ) );
         $logger->info( sprintf( "$outcome_format  $gang_format", "", $grandtotal ) );
         if ( defined $curTestOutcome ) {
-            $logger->info("Expected outcome: $self->{outcomelist}->[$curTestOutcome]");
+            $logger->info('Expected outcome: ' .
+                $project->get_outcome($curTestOutcome));
             if ( $self->{sum}->[$curTestOutcome] eq $data->{pointermax} ) {
                 $logger->info('Correct outcome predicted.');
             }
@@ -553,8 +554,8 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $logger->info(
                 sprintf(
                     "$outcome_format  $spec_format  $gang_format  %7.3f%%",
-                    $self->{outcomelist}->[
-                        $project->get_exemplar_outcome($i) ],
+                    $project->get_outcome(
+                        $project->get_exemplar_outcome($i) ),
                     $project->get_exemplar_spec($i),
                     $p, 100 * $p / $grandtotal
                 )
@@ -615,7 +616,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                         100 * $self->{gang}->{$k} / $grandtotal,
                         $p,
                         $self->{contextsize}->{$k},
-                        $self->{outcomelist}->[ $self->{subtooutcome}->{$k} ]
+                        $project->get_outcome($self->{subtooutcome}->{$k} )
                     )
                 );
 ## begin skip gang list
@@ -633,7 +634,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## end skip gang list
             }
             else {
-                my @gangsort = (0) x @{$self->{outcomelist}};
+                my @gangsort = (0) x $project->num_outcomes;
 ## begin skip gang list
                 my @ganglist = ();
 ## end skip gang list
@@ -666,13 +667,13 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                         )
                     );
                 }
-                for ( $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
+                for ( $i = 1 ; $i < $project->num_outcomes ; ++$i ) {
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
                             "%7.3f%%  $gang_format x $data_format  $outcome_format",
                             100 * $gangsort[$i] * $p / $grandtotal,
-                            $p, $gangsort[$i], $self->{outcomelist}->[$i]
+                            $p, $gangsort[$i], $project->get_outcome($i)
                         )
                     );
 ## begin skip gang list

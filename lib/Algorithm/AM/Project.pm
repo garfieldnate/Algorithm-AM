@@ -95,6 +95,18 @@ sub get_test_item {
     return $self->{testItems}->[$index];
 }
 
+#Return the number of different outcomes contained in the data
+sub num_outcomes {
+    my ($self) = @_;
+    return scalar @{$self->{outcomelist}};
+}
+
+#Return the "long" outcome string contained at a given index
+sub get_outcome {
+    my ($self, $index) = @_;
+    return $self->{outcomelist}->[$index];
+}
+
 # returns (and/or sets) a format string for printing the variables of
 # a data item
 sub var_format {
