@@ -76,8 +76,8 @@ sub new {
     @{$self->{sum}} = (0.0) x @{$self->{outcomelist}};
 
     # preemptively allocate memory
-    @{$self->{itemcontextchain}} = (0) x @{$self->{data}};
-    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x @{$self->{data}};
+    @{$self->{itemcontextchain}} = (0) x $project->num_exemplars;
+    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x $project->num_exemplars;
 
     $self->{$_} = {} for (
         qw(

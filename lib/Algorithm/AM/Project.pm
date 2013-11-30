@@ -47,6 +47,12 @@ sub num_features {
     return $self->{num_feats};
 }
 
+# return the number of items in the data (training) set
+sub num_exemplars {
+    my ($self) = @_;
+    return scalar @{$self->{data}};
+}
+
 # returns (and/or sets) a format string for printing the variables of
 # a data item
 sub var_format {
@@ -120,7 +126,7 @@ sub _read_data_set {
     #set format variables
     $self->spec_format(
         "%-$longest_spec.${longest_spec}s");
-    $self->data_format("%" . ( scalar @{$self->{data}}) . ".0u");
+    $self->data_format("%" . $self->num_exemplars . ".0u");
 
     splice @feature_lengths, $self->num_features;
     $self->var_format(
@@ -214,6 +220,7 @@ sub _read_outcomes_from_data {
     my ($self) = @_;
 
     # The keys of %oc are the unique outcomes
+    # The values are a unique integer
     my %oc;
     $_++ for @oc{ @{$self->{outcome}} };
 
