@@ -295,7 +295,7 @@ sub _create_classify_sub {
         my $grandtotal;
 
         #beginning vars
-        $data->{datacap} = @{$self->{data}};
+        $data->{datacap} = $self->{project}->num_exemplars;
 
         #item vars
         #TODO: stop using sclar pointers here...
@@ -368,7 +368,7 @@ foreach my $t (@{$self->{testItems}}) {
 
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
     # set to index instead of actual outcome string
-    $curTestOutcome = $self->{octonum}{$curTestOutcome};
+    $curTestOutcome = $self->{project}->short_outcome_index($curTestOutcome);
     # activeVar is the number of active variables; if we exclude nulls,
     # then we need to minus the number of '=' found in this test item;
     # otherwise, it's just the number of columns in a single item vector
@@ -422,10 +422,11 @@ foreach my $t (@{$self->{testItems}}) {
             --$i;
             ++$self->{excludedData}, next unless $self->{datahook}->($self, $data, $i);
 ## begin probability
+            # skip this data item is probability $self->{probability}
             ++$self->{excludedData}, next
                 if rand() > $self->{probability};
 ## end probability
-            my @dataItem = @{ $self->{data}->[$i] };
+            my @dataItem = @{ $self->{project}->get_exemplar($i) };
             my @alist    = @{$self->{activeVars}};
             my $j        = 0;
             my @clist    = ();
@@ -610,7 +611,7 @@ foreach my $t (@{$self->{testItems}}) {
                   )
                 {
                     $logger->info( sprintf "$pad  $var_format  $self->{spec}->[$i]",
-                        @{ $self->{data}->[$i] } );
+                        @{ $self->{project}->get_exemplar($i) } );
                 }
 ## end skip gang list
             }
@@ -660,7 +661,7 @@ foreach my $t (@{$self->{testItems}}) {
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
                             sprintf( "$pad  $var_format  $self->{spec}->[$_]",
-                                @{ $self->{data}->[$_] } )
+                                @{ $self->{project}->get_exemplar($_) } )
                         );
                     }
 ## end skip gang list

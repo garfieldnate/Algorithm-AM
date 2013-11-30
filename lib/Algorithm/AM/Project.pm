@@ -53,6 +53,14 @@ sub num_exemplars {
     return scalar @{$self->{data}};
 }
 
+# returns the exemplar at index $index. TODO: For now, using an index might be
+# a little arbitrary. Might want to officially treat the index as the item's
+# id
+sub get_exemplar {
+    my ($self, $index) = @_;
+    return $self->{data}->[$index];
+}
+
 # returns (and/or sets) a format string for printing the variables of
 # a data item
 sub var_format {
@@ -88,6 +96,12 @@ sub data_format {
         $self->{data_format} = $data_format;
     }
     return $self->{data_format};
+}
+
+#returns the index of the given "short" outcome in outcomelist
+sub short_outcome_index {
+    my ($self, $outcome) = @_;
+    return $self->{octonum}{$outcome};
 }
 
 #read data set, setting internal variables for processing and printing
@@ -157,6 +171,8 @@ sub _add_data {
 
 sub _set_outcomes {
     my ($self) = @_;
+
+    #grab outcomes from either outcome file or existing data
     $log->info('checking for outcome file');
     my $outcome_path = path($self->{project_path}, 'outcome');
     if ( $outcome_path->exists ) {
@@ -170,6 +186,7 @@ sub _set_outcomes {
         $log->info('...will use data file');
         $self->_read_outcomes_from_data();
     }
+
     $log->debug('...converting outcomes to indices');
     my $max_length = 0;
     @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
@@ -240,6 +257,7 @@ sub _read_outcomes_from_data {
     return;
 }
 
+#test file should have "short" outcome, data vector, and a spec
 sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->{project_path}, 'test');
