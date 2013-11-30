@@ -58,7 +58,7 @@ sub new {
 
     # read project files
     my $project = Algorithm::AM::Project->new(
-        $project_path, {%$opts});
+        $project_path, %$opts);
     # TODO: these lines are necessary for now because each of these variables
     # is assumed to be provided to the hook methods through $self. Once we
     # have data objects, and we can provide proper accessors (and remove
@@ -73,7 +73,7 @@ sub new {
 
     # compute activeVars here so that lattice space can be allocated in the
     # _initialize method
-    $self->{activeVars} = _compute_lattice_sizes($project->num_features);
+    $self->{activeVars} = _compute_lattice_sizes($project->num_variables);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x $project->num_outcomes;
@@ -203,9 +203,9 @@ sub _check_classify_opts {
     return \%opts;
 }
 
-# since we split the lattice in four, we have to decide which features
-# go where. Given the number of features being used, return an arrayref
-# containing the number of features to be used in each of the the four
+# since we split the lattice in four, we have to decide which variables
+# go where. Given the number of variables being used, return an arrayref
+# containing the number of variables to be used in each of the the four
 # lattices.
 sub _compute_lattice_sizes {
     my ($num_feats) = @_;
@@ -385,7 +385,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     # activeVar is the number of active variables; if we exclude nulls,
     # then we need to minus the number of '=' found in this test item;
     # otherwise, it's just the number of columns in a single item vector
-    $self->{activeVar} = $project->num_features;
+    $self->{activeVar} = $project->num_variables;
 
 ## begin exclude nulls
     $self->{activeVar} -= grep {$_ eq '='} @{ $data->{curTestItem} };

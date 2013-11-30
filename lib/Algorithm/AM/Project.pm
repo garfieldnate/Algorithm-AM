@@ -6,12 +6,12 @@ use Carp;
 use Log::Any '$log';
 
 sub new {
-    my ($class, $path, $opts) = @_;
+    my ($class, $path, %opts) = @_;
     my $data_path = path($path, 'data');
     croak 'Project has no data file'
         unless $data_path->exists;
 
-    my $self = bless $opts, $class;
+    my $self = bless \%opts, $class;
     $self->{project_path} = $path;
 
     $log->info('Reading data file...');
@@ -38,8 +38,8 @@ sub results_path {
     return '' . path($self->{project_path}, 'amcpresults');
 }
 
-# returns the number of features in a single data item
-sub num_features {
+# returns the number of variables in a single data item
+sub num_variables {
     my ($self, $num) = @_;
     if($num){
         $self->{num_feats} = $num;
@@ -197,8 +197,8 @@ sub _read_data_set {
 
     # the length of the longest spec
     my $longest_spec = 0;
-    # the lengths of the longest features in each column
-    my @longest_features = ((0) x 60);
+    # the lengths of the longest variables in each column
+    my @longest_variables = ((0) x 60);
     for (@data_set) {
         # cross-platform chomp
         s/[\n\r]+$//;
@@ -213,11 +213,11 @@ sub _read_data_set {
             $l > $longest_spec ? $l : $longest_spec;
         };
 
-        # feature_length is an arrayref, each index holding the length of the
-        # longest feature in that column
+        # variable_length is an arrayref, each index holding the length of the
+        # longest variable in that column
         for my $i (0 .. $#datavar ) {
             my $l = length $datavar[$i];
-            $longest_features[$i] = $l if $l > $longest_features[$i];
+            $longest_variables[$i] = $l if $l > $longest_variables[$i];
         }
     }
 
@@ -226,25 +226,25 @@ sub _read_data_set {
         "%-$longest_spec.${longest_spec}s");
     $self->data_format("%" . $self->num_exemplars . ".0u");
 
-    splice @longest_features, $self->num_features;
+    splice @longest_variables, $self->num_variables;
     $self->var_format(
-        join " ", map { "%-$_.${_}s" } @longest_features);
+        join " ", map { "%-$_.${_}s" } @longest_variables);
     return;
 }
 
-# $data should be an arrayref of features
+# $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
 sub _add_data {
     my ($self, $outcome, $data, $spec) = @_;
 
-    # first check that the number of features in @$data is correct
-    # if num_features is 0, it means it hasn't been set yet
-    if(my $num = $self->num_features){
+    # first check that the number of variables in @$data is correct
+    # if num_variables is 0, it means it hasn't been set yet
+    if(my $num = $self->num_variables){
         $num == @$data or
-            croak "expected $num features, but found " . (scalar @$data) .
+            croak "expected $num variables, but found " . (scalar @$data) .
                 " in @$data" . ($spec ? " ($spec)" : '');
     }else{
-        $self->num_features(scalar @$data);
+        $self->num_variables(scalar @$data);
     }
 
     # store the new data item
@@ -363,8 +363,8 @@ sub _read_test_set {
         $t =~ s/[\n\r]+$//;
         my ($outcome, $data, $spec ) = split /$self->{bigsep}/, $t, 3;
         my @vector = split /$self->{smallsep}/, $data;
-        if($self->num_features != @vector){
-            croak 'expected ' . $self->num_features . ' features, but found ' .
+        if($self->num_variables != @vector){
+            croak 'expected ' . $self->num_variables . ' variables, but found ' .
                 (scalar @vector) . " in @vector" . ($spec ? " ($spec)" : '');
         }
 
