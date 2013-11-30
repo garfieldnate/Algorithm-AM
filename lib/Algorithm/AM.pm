@@ -62,14 +62,16 @@ sub new {
     # read project files
     my $project = Algorithm::AM::Project->new(
         $project_path, {%$opts});
-    # TODO: get rid of this hack!
-    for(keys %$project){
-        $self->{$_} = $project->{$_};
-    }
-    # TODO: this must be done because we provide outcometonum as a variable
-    # in the hooks. Once we have data objects, and we can provide proper
-    # accessors that make this mapping obsolete.
+    # TODO: these lines are necessary for now because each of these variables
+    # is assumed to be provided to the hook methods through $self. Once we
+    # have data objects, and we can provide proper accessors (and remove
+    # the need for outcometonum, outcomelist, and outcome).
     $self->{outcometonum} = $project->_outcome_to_num;
+    $self->{outcomelist} = $project->_outcome_list;
+    $self->{outcome} = $project->_outcomes;
+    $self->{spec} = $project->_specs;
+    $self->{data} = $project->_data;
+
     $self->{project} = $project;
 
     # compute activeVars here so that lattice space can be allocated in the
@@ -368,13 +370,14 @@ my ( $sec, $min, $hour );
 
 $self->{beginhook}->($self, $data);
 
-my $left = scalar @{$self->{testItems}};
-foreach my $t (@{$self->{testItems}}) {
+my $left = scalar $project->num_test_items;
+foreach my $item_number (0 .. $project->num_test_items - 1) {
     $logger->debug("Test items left: $left");
     --$left;
-
-    ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
-    # set to index instead of actual outcome string
+    my $t = $project->get_test_item($item_number);
+    ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
+        @$t;
+    # set to index outcomelist instead of actual outcome string
     $curTestOutcome = $project->short_outcome_index($curTestOutcome);
     # activeVar is the number of active variables; if we exclude nulls,
     # then we need to minus the number of '=' found in this test item;

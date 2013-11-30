@@ -82,6 +82,19 @@ sub get_exemplar_outcome {
     return $self->{outcome}->[$index];
 }
 
+# return the number of test items in the project test or data file
+sub num_test_items {
+    my ($self) = @_;
+    return scalar @{$self->{testItems}};
+}
+
+# return the test item at the given index;
+# A test item is [outcome, [data], spec]
+sub get_test_item {
+    my ($self, $index) = @_;
+    return $self->{testItems}->[$index];
+}
+
 # returns (and/or sets) a format string for printing the variables of
 # a data item
 sub var_format {
@@ -132,8 +145,31 @@ sub _outcomes {
     return $self->{outcome};
 }
 
+# Used by AM.pm to retrieve the arrayref containing all of the
+# specs for the data set (ordered the same as the data set).
+sub _specs {
+    my ($self) = @_;
+    return $self->{spec};
+}
+
+# Used by AM.pm to retrieve the arrayref containing all of the
+# data vectors for the data set (ordered the same as the data set).
+sub _data {
+    my ($self) = @_;
+    return $self->{data};
+}
+
+# Used by AM.pm to retrieve the 1-indexed list of all "long" outcomes
+# (or "short" if there was no data file)
+sub _outcome_list {
+    my ($self) = @_;
+    return $self->{outcomelist};
+}
+
 # Used by AM.pm to retrieve the hashref mapping "long" outcome names to
 # their index in outcomelist
+# Hopefully won't need someday (but for now it is required for hook
+# variables)
 sub _outcome_to_num {
     my ($self) = @_;
     return $self->{outcometonum};
@@ -297,7 +333,10 @@ sub _read_outcomes_from_data {
     return;
 }
 
-#test file should have "short" outcome, data vector, and a spec
+# Sets the testItems to an arrayref of [outcome, [data], spec] for each
+# item in the test file (or data file if there is none)
+# test file, like the data file, should have "short" outcome, data vector,
+# and a spec
 sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->{project_path}, 'test');
@@ -312,7 +351,6 @@ sub _read_test_set {
         $t =~ s/[\n\r]+$//;
         my ($outcome, $data, $spec ) = split /$self->{bigsep}/, $t, 3;
         my @vector = split /$self->{smallsep}/, $data;
-        # warn join ',', @vector;
         if($self->num_features != @vector){
             croak 'expected ' . $self->num_features . ' features, but found ' .
                 (scalar @vector) . " in @vector" . ($spec ? " ($spec)" : '');
