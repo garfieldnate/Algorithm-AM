@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Next: Write tests for Project.pm. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
+Next: Write tests for Project.pm, including API and errors. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
 
 Create Algorithm::AM::Datum object to pass to hooks. Add accessors that make the use of outcometonum, outcomelist, etc. obsolete. They are gross.
 
@@ -8,11 +8,7 @@ Make a single method for reading a data/test file, and move the creation of the 
 
 Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
-write tests for new types of errors generated in Project.pm
-
 work on types of input to AM dataset
-
-move the autoflush call to the classify routine
 
 change activeVars to be accepted at classification time
 

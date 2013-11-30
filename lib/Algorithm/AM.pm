@@ -54,9 +54,6 @@ sub new {
     my $opts = _check_project_opts($project_path, \%opts);
     my $self = bless $opts, $class;
 
-    # don't buffer error messages
-    *STDOUT->autoflush();
-
     $logger->info("Initializing project $project_path");
 
     # read project files
@@ -229,6 +226,9 @@ sub _create_classify_sub {
     return sub {
         my $self = shift;
 
+        # don't buffer messages; remember the caller's autoflush setting
+        my $autoflush = *STDOUT->autoflush(1);
+
         #check all input parameters and then save them in $self
         my $opts = _check_classify_opts(@_);
         for my $opt_name(keys $opts){
@@ -319,6 +319,9 @@ sub _create_classify_sub {
         eval $_; ## no critic (ProhibitStringyEval)
         $logger->warn($@)
           if $@;
+
+        # return autoflush setting to what the caller was using
+        *STDOUT->autoflush($autoflush);
     };
 }
 
