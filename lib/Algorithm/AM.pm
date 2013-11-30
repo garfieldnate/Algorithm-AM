@@ -66,6 +66,10 @@ sub new {
     for(keys %$project){
         $self->{$_} = $project->{$_};
     }
+    # TODO: this must be done because we provide outcometonum as a variable
+    # in the hooks. Once we have data objects, and we can provide proper
+    # accessors that make this mapping obsolete.
+    $self->{outcometonum} = $project->_outcome_to_num;
     $self->{project} = $project;
 
     # compute activeVars here so that lattice space can be allocated in the
@@ -300,7 +304,8 @@ sub _create_classify_sub {
         $data->{datacap} = $project->num_exemplars;
 
         #item vars
-        #TODO: stop using sclar pointers here...
+        #TODO: stop using scalar pointers here. Should
+        #have some sort of an CurrentIteration object instead.
         $data->{curTestOutcome} = \$curTestOutcome;
 
         #iter vars

@@ -132,7 +132,15 @@ sub _outcomes {
     return $self->{outcome};
 }
 
-#read data set, setting internal variables for processing and printing
+# Used by AM.pm to retrieve the hashref mapping "long" outcome names to
+# their index in outcomelist
+sub _outcome_to_num {
+    my ($self) = @_;
+    return $self->{outcometonum};
+}
+
+#read data set, calling _add_data for each item found in the data file.
+#Also set spec_format, data_format and var_format.
 sub _read_data_set {
     my ($self, $data_path) = @_;
 
@@ -141,8 +149,8 @@ sub _read_data_set {
 
     # the length of the longest spec
     my $longest_spec = 0;
-    # the length of the longest feature of the given column
-    my @feature_lengths = ((0) x 60);
+    # the lengths of the longest features in each column
+    my @longest_features = ((0) x 60);
     for (@data_set) {
         # cross-platform chomp
         s/[\n\r]+$//;
@@ -161,7 +169,7 @@ sub _read_data_set {
         # longest feature in that column
         for my $i (0 .. $#datavar ) {
             my $l = length $datavar[$i];
-            $feature_lengths[$i] = $l if $l > $feature_lengths[$i];
+            $longest_features[$i] = $l if $l > $longest_features[$i];
         }
     }
 
@@ -170,9 +178,9 @@ sub _read_data_set {
         "%-$longest_spec.${longest_spec}s");
     $self->data_format("%" . $self->num_exemplars . ".0u");
 
-    splice @feature_lengths, $self->num_features;
+    splice @longest_features, $self->num_features;
     $self->var_format(
-        join " ", map { "%-$_.${_}s" } @feature_lengths);
+        join " ", map { "%-$_.${_}s" } @longest_features);
     return;
 }
 
@@ -197,6 +205,7 @@ sub _add_data {
     push @{$self->{outcome}}, $outcome;
 }
 
+# figure out what all of the possible outcomes are
 sub _set_outcomes {
     my ($self) = @_;
 
@@ -231,12 +240,12 @@ sub _set_outcomes {
 
 # Returns the number of outcome items found in the outcome file and
 # sets several key values in $self:
-# octonum maps short outcomes to their positions in
-# outcomelist, which lists all of the long outcome specs
-# outcometonum similarly maps specs
+# octonum maps "short" outcomes to their positions in
+# outcomelist, which lists all of the "long" outcome specs
+# outcometonum similarly maps "long" outcomes
 #
 # outcome file should have one outcome per line, with first a short
-# string and then a longer one, separated by a space.
+# string and then a long one, separated by a space.
 # TODO: The first column is apparently redundant information, since
 # it must also be listed in the data file.
 sub _read_outcome_set {
@@ -262,12 +271,13 @@ sub _read_outcome_set {
     return $counter;
 }
 
-# sets several key values in $self:
+# uses the outcomes from the data file for both "short"
+# and "long" outcome names
 #
-# octonum and outcometonum both map outcome names (from the data file)
-# to their positions in outcomelist, which is a sorted list of all of
-#   the unique outcomes
-# outcomecounter is the number of unique outcomes
+# sets several key values in $self:
+# octonum and outcometonum both map "short" outcome names
+# (from the data file) to their positions in outcomelist,
+# which is a sorted list of all of the unique outcomes
 sub _read_outcomes_from_data {
     my ($self) = @_;
 
@@ -275,7 +285,7 @@ sub _read_outcomes_from_data {
     my %oc;
     $_++ for @oc{ @{$self->{outcome}} };
 
-    my $counter;
+    my $counter = 0;
     # sort the keys to maintain the same ordering across multiple runs
     for(sort {lc($a) cmp lc($b)} keys %oc){
         $counter++;

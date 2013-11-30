@@ -4,7 +4,9 @@ test outcome file with exports.t
 
 Next: Create accessors for Project.pm, and use them in AM.pm instead of the key-copying hack. Then write tests for it. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
 
-Throw error in Project.pm if number of items in outcome file doesn't match number from test file
+Create Algorithm::AM::Datum object to pass to hooks. Add accessors that make the use of outcometonum, outcomelist, etc. obsolete. They are gross.
+
+Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
 write tests for new types of errors generated in Project.pm
 
@@ -16,6 +18,7 @@ change activeVars to be accepted at classification time
 
 ask someone about expected outcome file format
 	- finnverb outcome file does not have unique long outcomes to match unique short ones
+	- short outcome column seems redundant with data file
 
 To test:
 	-Print formatting variables
