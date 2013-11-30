@@ -134,7 +134,8 @@ sub _read_data_set {
     return;
 }
 
-#$data should be an arrayref of features
+# $data should be an arrayref of features
+# adds data item to three internal arrays: outcome, data, and spec
 sub _add_data {
     my ($self, $outcome, $data, $spec) = @_;
 
@@ -156,14 +157,14 @@ sub _add_data {
 
 sub _set_outcomes {
     my ($self) = @_;
-    $self->{outcomecounter} = 0;
     $log->info('checking for outcome file');
     my $outcome_path = path($self->{project_path}, 'outcome');
     if ( $outcome_path->exists ) {
-        my @data_set = $outcome_path->lines;
-        #cross-platform chomp
-        s/[\n\r]+$// for @data_set;
-        $self->_read_outcome_set(\@data_set);
+        my $num_outcomes = $self->_read_outcome_set($outcome_path);
+        if($num_outcomes != $self->num_exemplars){
+            croak 'Found ' . $self->num_exemplars . ' items in data file, ' .
+                "but $num_outcomes items in outcome file.";
+        }
     }
     else {
         $log->info('...will use data file');
@@ -183,31 +184,35 @@ sub _set_outcomes {
     return;
 }
 
-# outcome file should have one outcome per line, with first a short
-# string and then a longer one, separated by a space
-#
+# Returns the number of outcome items found in the outcome file and
 # sets several key values in $self:
 # octonum maps short outcomes to their positions in
 # outcomelist, which lists all of the long outcome specs
 # outcometonum similarly maps specs
-# outcomecounter is the number of unique outcomes
+#
+# outcome file should have one outcome per line, with first a short
+# string and then a longer one, separated by a space
 sub _read_outcome_set {
-    my ($self, $data_set) = @_;
+    my ($self, $outcome_path) = @_;
 
-    # outcomecounter holds number of items processed so far
+    my @outcome_set = $outcome_path->lines;
+
     # octonum maps short outcomes to the index of their (first)
     #   long version listed in in outcomelist
     # outcometonum maps long outcomes to the same to their own
     #   (first) position in outcomelist
     # outcomelist will hold list of all long outcome strings in file
-    for my $datum (@$data_set) {
-        my ( $short, $long ) = split /\s+/, $datum, 2;
-        $self->{outcomecounter}++;
-        $self->{octonum}{$short}   ||= $self->{outcomecounter};
-        $self->{outcometonum}{$long} ||= $self->{outcomecounter};
+    my $counter = 0;
+    for my $outcome (@outcome_set) {
+        #cross-platform chomp
+        $outcome =~ s/[\n\r]+$//;
+        my ( $short, $long ) = split /\s+/, $outcome, 2;
+        $counter++;
+        $self->{octonum}{$short}   ||= $counter;
+        $self->{outcometonum}{$long} ||= $counter;
         push @{$self->{outcomelist}}, $long;
     }
-    return;
+    return $counter;
 }
 
 # sets several key values in $self:
@@ -219,8 +224,7 @@ sub _read_outcome_set {
 sub _read_outcomes_from_data {
     my ($self) = @_;
 
-    # The keys of %oc are the unique outcomes
-    # The values are a unique integer
+    # Use a hash (%oc) to obtain a list of unique outcomes
     my %oc;
     $_++ for @oc{ @{$self->{outcome}} };
 
@@ -232,8 +236,6 @@ sub _read_outcomes_from_data {
         $self->{outcometonum}{$_} = $counter;
         push @{$self->{outcomelist}}, $_;
     }
-
-    $self->{outcomecounter} = $counter;
 
     return;
 }
