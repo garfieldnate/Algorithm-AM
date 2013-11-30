@@ -125,6 +125,13 @@ sub short_outcome_index {
     return $self->{octonum}{$outcome};
 }
 
+# Used by AM.pm to retrieve the arrayref containing all of the "short"
+# outcomes for the data set (ordered the same as the data set).
+sub _outcomes {
+    my ($self) = @_;
+    return $self->{outcome};
+}
+
 #read data set, setting internal variables for processing and printing
 sub _read_data_set {
     my ($self, $data_path) = @_;
@@ -229,7 +236,9 @@ sub _set_outcomes {
 # outcometonum similarly maps specs
 #
 # outcome file should have one outcome per line, with first a short
-# string and then a longer one, separated by a space
+# string and then a longer one, separated by a space.
+# TODO: The first column is apparently redundant information, since
+# it must also be listed in the data file.
 sub _read_outcome_set {
     my ($self, $outcome_path) = @_;
 

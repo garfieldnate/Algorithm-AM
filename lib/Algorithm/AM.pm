@@ -94,7 +94,7 @@ sub new {
     # calls XS code
     $self->_initialize(
         $self->{activeVars},
-        $self->{outcome},
+        $project->_outcomes,
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
         $self->{subtooutcome},
@@ -229,6 +229,8 @@ sub _create_classify_sub {
             $self->{$opt_name} = $opts->{$opt_name};
         }
 
+        my $project = $self->{project};
+
         # TODO: neat/ugly hack starts here...
         local $_ = $subsource;
         if(!$self->{exclude_nulls}){
@@ -295,7 +297,7 @@ sub _create_classify_sub {
         my $grandtotal;
 
         #beginning vars
-        $data->{datacap} = $self->{project}->num_exemplars;
+        $data->{datacap} = $project->num_exemplars;
 
         #item vars
         #TODO: stop using sclar pointers here...
@@ -352,7 +354,7 @@ $logger->add(
     Log::Dispatch::File->new(
         name      => 'amcpresults',
         min_level => 'debug',
-        filename  => $self->{project}->results_path,
+        filename  => $project->results_path,
         newline => 1
     )
 );
@@ -368,11 +370,11 @@ foreach my $t (@{$self->{testItems}}) {
 
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) = @$t;
     # set to index instead of actual outcome string
-    $curTestOutcome = $self->{project}->short_outcome_index($curTestOutcome);
+    $curTestOutcome = $project->short_outcome_index($curTestOutcome);
     # activeVar is the number of active variables; if we exclude nulls,
     # then we need to minus the number of '=' found in this test item;
     # otherwise, it's just the number of columns in a single item vector
-    $self->{activeVar} = $self->{project}->num_features;
+    $self->{activeVar} = $project->num_features;
 
 ## begin exclude nulls
     $self->{activeVar} -= grep {$_ eq '='} @{ $data->{curTestItem} };
@@ -420,13 +422,17 @@ foreach my $t (@{$self->{testItems}}) {
 
         for ( my $i = $data->{datacap} ; $i ; ) {
             --$i;
+            # skip this data item if the datahook returns false
+            # TODO: this and the next one below would be better in an if
+            # block, but this code text is searched and replaced in
+            # _create_classify_sub
             ++$self->{excludedData}, next unless $self->{datahook}->($self, $data, $i);
 ## begin probability
-            # skip this data item is probability $self->{probability}
+            # skip this data item with probability $self->{probability}
             ++$self->{excludedData}, next
                 if rand() > $self->{probability};
 ## end probability
-            my @dataItem = @{ $self->{project}->get_exemplar_data($i) };
+            my @dataItem = @{ $project->get_exemplar_data($i) };
             my @alist    = @{$self->{activeVars}};
             my $j        = 0;
             my @clist    = ();
@@ -447,7 +453,7 @@ foreach my $t (@{$self->{testItems}}) {
             $self->{itemcontextchain}->[$i]           = $self->{itemcontextchainhead}->{$context};
             $self->{itemcontextchainhead}->{$context} = $i;
             ++$self->{contextsize}->{$context};
-            my $outcome = $self->{project}->get_exemplar_outcome($i);
+            my $outcome = $project->get_exemplar_outcome($i);
             if ( defined $self->{subtooutcome}->{$context} ) {
                 $self->{subtooutcome}->{$context} = 0
                   if $self->{subtooutcome}->{$context} != $outcome;
@@ -480,10 +486,10 @@ foreach my $t (@{$self->{testItems}}) {
         # TODO: explain all of these formatting variables
         my $longest = length $grandtotal;
         my $gang_format =  "%$longest.${longest}s";
-        my $var_format = $self->{project}->var_format;
-        my $spec_format = $self->{project}->spec_format;
-        my $outcome_format = $self->{project}->outcome_format;
-        my $data_format = $self->{project}->data_format;
+        my $var_format = $project->var_format;
+        my $spec_format = $project->spec_format;
+        my $outcome_format = $project->outcome_format;
+        my $data_format = $project->data_format;
 
         #TODO: put all of this information in a return value or something!
         $data->{pointermax}    = "";
@@ -540,8 +546,8 @@ foreach my $t (@{$self->{testItems}}) {
                 sprintf(
                     "$outcome_format  $spec_format  $gang_format  %7.3f%%",
                     $self->{outcomelist}->[
-                        $self->{project}->get_exemplar_outcome($i) ],
-                    $self->{project}->get_exemplar_spec($i),
+                        $project->get_exemplar_outcome($i) ],
+                    $project->get_exemplar_spec($i),
                     $p, 100 * $p / $grandtotal
                 )
             );
@@ -613,8 +619,8 @@ foreach my $t (@{$self->{testItems}}) {
                   )
                 {
                     $logger->info( sprintf "$pad  $var_format  " .
-                        $self->{project}->get_exemplar_spec($i),
-                        @{ $self->{project}->get_exemplar_data($i) } );
+                        $project->get_exemplar_spec($i),
+                        @{ $project->get_exemplar_data($i) } );
                 }
 ## end skip gang list
             }
@@ -630,10 +636,10 @@ foreach my $t (@{$self->{testItems}}) {
                     $i = $self->{itemcontextchain}->[$i]
                   )
                 {
-                    ++$gangsort[ $self->{project}->get_exemplar_outcome($i) ];
+                    ++$gangsort[ $project->get_exemplar_outcome($i) ];
 ## begin skip gang list
                     push @{ $ganglist[
-                        $self->{project}->get_exemplar_outcome($i) ] }, $i;
+                        $project->get_exemplar_outcome($i) ] }, $i;
 ## end skip gang list
                 }
                 {
@@ -665,8 +671,8 @@ foreach my $t (@{$self->{testItems}}) {
                     foreach ( @{ $ganglist[$i] } ) {
                         $logger->info(
                             sprintf( "$pad  $var_format  " .
-                                $self->{project}->get_exemplar_spec($_),
-                                @{ $self->{project}->get_exemplar_data($_) } )
+                                $project->get_exemplar_spec($_),
+                                @{ $project->get_exemplar_data($_) } )
                         );
                     }
 ## end skip gang list
