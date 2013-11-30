@@ -7,8 +7,9 @@ use Test::More 0.88;
 #test_item_vars contains three tests and is run for most handlers (32 times)
 #test_iter_vars contains three tests and is run for most handlers (28 times)
 #test_end_vars contains three tests and is run by two handlers (total 6 times)
+#beginhook_outcome has two more
 #1 more for Test::NoWarnings
-plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 1;
+plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 2 + 1;
 use Test::NoWarnings;
 use Algorithm::AM;
 use FindBin qw($Bin);
@@ -17,6 +18,7 @@ use Path::Tiny;
 my $project_path = path($Bin, 'data', 'chapter3_multi_test');
 my $results_path = path($project_path, 'amcpresults');
 
+# first test without an outcome file
 my $am = Algorithm::AM->new(
 	$project_path,
 	commas => 'no',
@@ -34,11 +36,44 @@ $am->classify(
 );
 
 #cleanup amcpresults file
-unlink $results_path
-	if -e $results_path;
+$results_path->remove
+	if $results_path->exists;
+
+# then test just @outcomelist and %outcometonum with a separate
+# outcome file, since these will contain the "long" outcome names
+# present only in an outcome file
+
+$project_path = path($Bin, 'data', 'chapter3_outcomes');
+$results_path = path($project_path, 'amcpresults');
+
+$am = Algorithm::AM->new(
+	$project_path,
+	commas => 'no',
+	probability => 1,
+);
+
+$am->classify(
+	beginhook => \&beginhook_outcome,
+);
+
+#cleanup amcpresults file
+$results_path->remove
+	if $results_path->exists;
 
 sub beginhook {
 	test_beginning_vars('beginhook', @_);
+}
+
+sub beginhook_outcome {
+	my ($self, $data) = @_;
+	#TODO: should this just be ['', 'ee', 'are']?
+	is_deeply($am->{outcomelist}, ['','ee','are', 'are', 'are', 'are'],
+		'beginhook: @outcomelist (with outcome file)')
+		or note explain $am->{outcomelist};
+	#why should we need this?
+	is_deeply($am->{outcometonum}, {'ee' => 1, 'are' => 2},
+		'beginhook: %outcometonum (with outcome file)')
+		or note explain $am->{outcometonum};
 }
 
 sub begintesthook {
@@ -86,7 +121,7 @@ sub test_beginning_vars {
 	#why should we need this?
 	is_deeply($am->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
 		or note explain $am->{outcometonum};
-	#why not [e,r,r,r,r]?
+	#TODO: why not [e,r,r,r,r]?
 	is_deeply($am->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
 		or note explain $am->{outcome};
 	is_deeply(
