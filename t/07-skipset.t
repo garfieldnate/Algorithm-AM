@@ -25,10 +25,10 @@ my $am = Algorithm::AM->new(
 );
 $am->classify();
 my $results = read_file($results_path);
-my $set = qr/e\s+myCommentHere\s+4\s+30.769%\v+
-r\s+myCommentHere\s+2\s+15.385%\v+
-r\s+myCommentHere\s+3\s+23.077%\v+
-r\s+myCommentHere\s+4\s+30.769%/x;
+my $set = qr/e\s+myFirstCommentHere\s+4\s+30.769%\v+
+r\s+myThirdCommentHere\s+2\s+15.385%\v+
+r\s+myFourthCommentHere\s+3\s+23.077%\v+
+r\s+myFifthCommentHere\s+4\s+30.769%/x;
 like_string($results, $set, q{'skipset => 0' prints the analogical set})
 	or diag $results;
 

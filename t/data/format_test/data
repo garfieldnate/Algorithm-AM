@@ -1,0 +1,7 @@
+exception   ,   aaaaa bbb bbb   ,   myCommentHere
+regular   ,   dd bbb bbb   ,   myCommentHere blah blah blah blah
+regular   ,   aaaaa cccc dd   ,   myCommentHere
+regular   ,   dd bbb dd   ,   myCommentHere
+regular   ,   aaaaa bbb bbb   ,   myCommentHere
+exception   ,   aaaaa bbb dd   ,   myCommentHere
+regular   ,   dd bbb bbb   ,   myCommentHere blah blah blah blah longest!

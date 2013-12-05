@@ -60,14 +60,16 @@ sub _check_opts {
     }
 
     delete $opts{commas};
-    # if(keys %opts){
-
-    # }
+    if(keys %opts){
+        # sort the keys in the error message to make testing possible
+        croak 'Unknown parameters in Project constructor: ' .
+            (join ', ', sort keys %opts);
+    }
 
     return \%proj_opts;
 }
 
-sub basepath {
+sub base_path {
     my ($self) = @_;
     return $self->{project_path};
 }
@@ -329,9 +331,7 @@ sub _set_outcomes {
 
 # Returns the number of outcome items found in the outcome file and
 # sets several key values in $self:
-# octonum maps "short" outcomes to their positions in
-# outcomelist, which lists all of the "long" outcome specs
-# outcometonum similarly maps "long" outcomes
+# octonum, outcomelist, and outcometonum
 #
 # outcome file should have one outcome per line, with first a short
 # string and then a long one, separated by a space.
@@ -364,9 +364,7 @@ sub _read_outcome_set {
 # and "long" outcome names
 #
 # sets several key values in $self:
-# octonum and outcometonum both map "short" outcome names
-# (from the data file) to their positions in outcomelist,
-# which is a sorted list of all of the unique outcomes
+# octonum, outcomelist, and outcometonum
 sub _read_outcomes_from_data {
     my ($self) = @_;
 

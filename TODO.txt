@@ -1,8 +1,11 @@
 Algorithm::AM
 
-Next: Write tests for Project.pm, including API and errors. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
+Next: fix num_outcomes to actually be the number of outcomes
 
 change commas to be either 1 or 0
+
+require user to create and pass in the Project object?
+	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
 
 factor out data line parsing into a single routine
 
@@ -20,9 +23,6 @@ ask someone about expected outcome file format
 	- finnverb outcome file does not have unique long outcomes to match unique short ones
 	- short outcome column seems redundant with data file
 
-To test:
-	-Print formatting variables
-
 -allow user to specify input format
 	specify bigsep, littlesep
 	specify comment character
@@ -34,15 +34,12 @@ To test:
 -Make printing clearer (label gangs, etc.)
 -output something about the number of features in the vectors contained in a data file (I think this is done. Just make it clearer?)
 -Refactor gangs param into two different boolean params
-- eventually get rid of logger, or do something else with it.
-	- all useful info should probably be printed, since we're not guaranteed that the user will look at the logs
-	- but a logger shouldn't just print to output. Use Log::Any if a logger of some kind is wanted
+- change logger to Log::Any
+- return classification result objects that have print methods, instead of just printing everything
 
 ## Other TODOs:
 
--rename 'outcome' to something else. Comparison, golden, expected...
-- create HISTORY pod section in AM.pm
--Figure out 'cannot remove directory' errors from dzil release
+- update HISTORY pod section in AM.pm
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
 

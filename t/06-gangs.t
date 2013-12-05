@@ -35,7 +35,8 @@ unlink $results_path
 
 $am->classify(gangs => 'summary');
 $results = read_file($results_path);
-unlike_string($results, qr/3 1 0\s+myCommentHere/, q{'-gangs => summary' doesn't list gang exemplars})
+unlike_string($results, qr/3 1 0\s+myFirstCommentHere/,
+    q{'-gangs => summary' doesn't list gang exemplars})
 	or diag $results;
 like_string($results, qr/ 61.538%\s+8\s+3 1 2/, q{'-gangs => summary' lists gang effects})
 	or diag $results;
@@ -46,7 +47,7 @@ unlink $results_path
 
 $am->classify(gangs => 'yes');
 $results = read_file($results_path);
-like_string($results,qr/3 1 1\s+myCommentHere/, q{'-gangs => summary' lists gang exemplars})
+like_string($results,qr/3 1 1\s+myFifthCommentHere/, q{'-gangs => summary' lists gang exemplars})
 	or diag $results;
 like_string($results,qr/\s*23.077%\s+3\s+3 1 2/, q{'-gangs => summary' lists gang effects})
 	or diag $results;
