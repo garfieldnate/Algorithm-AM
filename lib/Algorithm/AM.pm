@@ -51,14 +51,31 @@ sub new {
     $project_path = ''
         if $proto =~ /^-/;
 
-    my $opts = _check_project_opts($project_path, \%opts);
+    # all of the options except commas are for the Project object,
+    # but creating the Project first could use a lot of time, and
+    # incorrect classification options is a fatal error. So put this
+    # aside for the Project constructor.
+    my $commas = $opts{commas};
+    delete $opts{commas};
+
+    my $opts = _check_classify_opts(
+        #classification defaults
+        exclude_nulls     => 1,
+        exclude_given    => 1,
+        linear      => 0,
+        probability => undef,
+        repeat      => 1,
+        skipset     => 1,
+        gangs       => 'no',
+        %opts
+    );
     my $self = bless $opts, $class;
 
     $logger->info("Initializing project $project_path");
 
     # read project files
     my $project = Algorithm::AM::Project->new(
-        $project_path, %$opts);
+        $project_path, commas => $commas);
     # TODO: these lines are necessary for now because each of these variables
     # is assumed to be provided to the hook methods through $self. Once we
     # have data objects, and we can provide proper accessors (and remove
@@ -114,55 +131,8 @@ sub classify {
     return $self->{_classify_sub}->($self, @args);
 }
 
-#check that the project has a data file,
-#and that the options have a legal commas value;
-#return bigsep and smallsep, the values used to parse the
-#project data files
-sub _check_project_opts {
-    my ($project_path, $opts) = @_;
-
-    #first check $project_path and commas, which are allowed in the project
-    #constructor but not in the classify() method
-    croak 'Must specify project'
-        unless $project_path;
-    croak 'Project has no data file'
-        unless path($project_path, 'data')->exists;
-
-    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
-        unless exists $opts->{commas};
-
-    my ($bigsep, $smallsep);
-    if($opts->{commas} eq 'yes'){
-        $bigsep   = qr{\s*,\s*};
-        $smallsep = qr{\s+};
-    }elsif($opts->{commas} eq 'no'){
-        $bigsep   = qr{\s+};
-        $smallsep = qr{};
-    }else{
-        croak "Failed to specify comma formatting correctly;\n" .
-            q{(must specify commas => 'yes' or commas => 'no')};
-    }
-    delete $opts->{commas};
-
-    #add default classification options and then check all options
-    $opts = _check_classify_opts(
-        exclude_nulls     => 1,
-        exclude_given    => 1,
-        linear      => 0,
-        probability => undef,
-        repeat      => '1',
-        skipset     => 1,
-        gangs       => 'no',
-        %$opts
-    );
-    $opts->{project} = $project_path;
-    $opts->{bigsep} = $bigsep;
-    $opts->{smallsep} = $smallsep;
-    return $opts;
-}
-
 sub _check_classify_opts {
-    my %opts = @_;
+    my %opts = (@_);
 
     state $valid_args =
     [qw(

@@ -7,15 +7,13 @@ use Log::Any '$log';
 
 sub new {
     my ($class, $path, %opts) = @_;
-    my $data_path = path($path, 'data');
-    croak 'Project has no data file'
-        unless $data_path->exists;
 
-    my $self = bless \%opts, $class;
-    $self->{project_path} = $path;
+    my $new_opts = _check_opts($path, %opts);
+
+    my $self = bless $new_opts, $class;
 
     $log->info('Reading data file...');
-    $self->_read_data_set($data_path);
+    $self->_read_data_set();
 
     $log->info('Reading outcome file...');
     $self->_set_outcomes();
@@ -26,6 +24,47 @@ sub new {
     $log->info('...done');
 
     return $self;
+}
+
+# check the project path and the options for validity
+# currently "commas" is the only accepted option
+# Return an option hash to initialize $self with, containing the
+# project path object and bigsep and smallsep, which are used to
+# parse data lines
+sub _check_opts {
+    my ($path, %opts) = @_;
+
+    croak 'Must specify project'
+        unless $path;
+    $path = path($path);
+
+    croak "Could not find project $path"
+        unless $path->exists;
+
+    croak 'Project has no data file'
+        unless path($path, 'data')->exists;
+
+    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
+        unless exists $opts{commas};
+
+    my %proj_opts = (project_path => $path);
+    if($opts{commas} eq 'yes'){
+        $proj_opts{bigsep}   = qr{\s*,\s*};
+        $proj_opts{smallsep} = qr{\s+};
+    }elsif($opts{commas} eq 'no'){
+        $proj_opts{bigsep}   = qr{\s+};
+        $proj_opts{smallsep} = qr{};
+    }else{
+        croak "Failed to specify comma formatting correctly;\n" .
+            q{(must specify commas => 'yes' or commas => 'no')};
+    }
+
+    delete $opts{commas};
+    # if(keys %opts){
+
+    # }
+
+    return \%proj_opts;
 }
 
 sub basepath {
@@ -190,7 +229,9 @@ sub _outcome_to_num {
 #read data set, calling _add_data for each item found in the data file.
 #Also set spec_format, data_format and var_format.
 sub _read_data_set {
-    my ($self, $data_path) = @_;
+    my ($self) = @_;
+
+    my $data_path = path($self->{project_path}, 'data');
 
     my @data_set = $data_path->lines;
     $log->debug( 'Data file: ' . scalar(@data_set) );
@@ -241,7 +282,7 @@ sub _add_data {
     # if num_variables is 0, it means it hasn't been set yet
     if(my $num = $self->num_variables){
         $num == @$data or
-            croak "expected $num variables, but found " . (scalar @$data) .
+            croak "Expected $num variables, but found " . (scalar @$data) .
                 " in @$data" . ($spec ? " ($spec)" : '');
     }else{
         $self->num_variables(scalar @$data);

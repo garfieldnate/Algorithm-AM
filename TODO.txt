@@ -2,6 +2,10 @@ Algorithm::AM
 
 Next: Write tests for Project.pm, including API and errors. This should make portability an easier goal, as all tests dependent on line endings would be isolated in a single file.
 
+change commas to be either 1 or 0
+
+factor out data line parsing into a single routine
+
 Create Algorithm::AM::Datum object to pass to hooks. Add accessors that make the use of outcometonum, outcomelist, etc. obsolete. They are gross.
 
 Make a single method for reading a data/test file, and move the creation of the format variables to their own loop. Or decide not to.

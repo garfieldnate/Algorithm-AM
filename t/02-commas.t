@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 4;
+plan tests => 3;
 use Test::NoWarnings;
 use Test::LongString;
 use Test::Exception;
@@ -27,11 +27,6 @@ $am->classify();
 my $results = read_file($results_path);
 like_string($results,qr/e\s+4\s+30.769%\v+r\s+9\s+69.231%/, 'Chapter 3 data, counting pointers')
 	or diag $results;
-
-throws_ok {
-    Algorithm::AM->new($project_path);
-    } qr/Failed to provide 'commas' parameter/,
-    q<dies without 'commas' parameter>;
 
 throws_ok {
     Algorithm::AM->new(
