@@ -2,7 +2,11 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
-
+    created Algorithm::AM::Project to handle all data file processing
+        - also checks size of data vectors!
+        - has lots of accessors and new error checking, including problems with number of variables!
+    caller's autoflush setting is no longer clobbered
+    lots more refactoring
 2.34      2013-09-03 22:39:22 America/Los_Angeles
     Considerable refactoring of how arguments and variables are handled
         - use object or data hash instead of automatic importing
