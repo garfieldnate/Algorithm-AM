@@ -257,7 +257,7 @@ Returns the number of different outcomes contained in the data.
 =cut
 sub num_outcomes {
     my ($self) = @_;
-    return scalar @{$self->{outcomelist}};
+    return scalar @{$self->{outcomelist}} - 1;
 }
 
 

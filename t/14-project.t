@@ -127,7 +127,7 @@ sub test_data {
         #1 means the first index in $project->get_outcome
         is($project->get_exemplar_outcome(0), 1,
             "correct exmplar outcome returned ($name)");
-        is($project->num_outcomes, 3, "correct number of outcomes ($name)");
+        is($project->num_outcomes, 2, "correct number of outcomes ($name)");
         is($project->get_outcome(1), 'e',
             "correct outcome returned from list ($name)");
         is($project->short_outcome_index('e'), 1,

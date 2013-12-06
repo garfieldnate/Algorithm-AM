@@ -93,7 +93,7 @@ sub new {
     $self->{activeVars} = _compute_lattice_sizes($project->num_variables);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
-    @{$self->{sum}} = (0.0) x $project->num_outcomes;
+    @{$self->{sum}} = (0.0) x ($project->num_outcomes + 1);
 
     # preemptively allocate memory
     @{$self->{itemcontextchain}} = (0) x $project->num_exemplars;
@@ -607,7 +607,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## end skip gang list
             }
             else {
-                my @gangsort = (0) x $project->num_outcomes;
+                my @gangsort = (0) x ($project->num_outcomes + 1);
 ## begin skip gang list
                 my @ganglist = ();
 ## end skip gang list
@@ -640,7 +640,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                         )
                     );
                 }
-                for ( $i = 1 ; $i < $project->num_outcomes ; ++$i ) {
+                for $i ( 1 .. $project->num_outcomes ) {
                     next unless $gangsort[$i];
                     $logger->info(
                         sprintf(
