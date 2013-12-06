@@ -4,7 +4,80 @@ use warnings;
 use Path::Tiny;
 use Carp;
 use Log::Any '$log';
+# ABSTRACT: Manage data used by Algorithm::AM
+# VERSION;
 
+=head2 C<new>
+
+Creates a new Project object. Pass in the path to the project directory
+followed by any named arguments (currently only the required C<commas>
+parameter is accepted).
+
+A project directory should contain the data set, the test set, and the
+outcome file (named, not surprisingly, F<data>, F<test>, and F<outcome>).
+Each line of the data and test files should represent a single
+exemplar. The required format of each line depends on the value of the
+C<commas> parameter. C<< commas => 'yes' >> indicates the following
+style:
+
+    outcome   ,   v a r i a b l e s   ,   spec
+
+where commas are used to separate the outcome, exemplar variables
+and spec (or comment), and spaces are used to separate the exemplar
+variables. C<< commas => 'no' >> indicates the following style:
+
+    outcome variables spec
+
+where spaces separate the outcome, variables and spec, and the
+exemplar variables are each a single character (so the above
+variables would still be C<v>, C<a>, C<r>, etc.).
+
+Any other value for the C<commas> parameter will result in an
+exception.
+
+The outcome file should have the same number of lines as the data file,
+and each line should have the outcome of the item on the same line in
+the data file. The format of the outcome file is like this:
+
+    A V-i
+    B a-oi
+    C tV-si
+
+where each line contains an outcome in a "short" and then "long"
+form, separated by whitespace.
+
+If the test or outcome files are missing, the data file will be used.
+In the case of a missing test file, test items will be taken from the
+data file and each classified using all of the other items in the data
+set. If the outcome file is missing, the outcome strings located in the
+data file will be used for both long and short outcome values.
+
+When this constructor is called, all project files are read and checked
+for errors. Possible errors in your files include the following:
+
+=over
+
+=item *
+
+Your project path does not exist or does not contain a data file.
+
+=item *
+
+The number of variables in each of the items in your test and
+data files are not all the same.
+
+=item *
+
+The number of items in your outcome file does not match the number
+of items in your data file.
+
+=item *
+
+TODO: A line from your data, test or outcome file could not be parsed.
+
+=back
+
+=cut
 sub new {
     my ($class, $path, %opts) = @_;
 
@@ -69,17 +142,34 @@ sub _check_opts {
     return \%proj_opts;
 }
 
+=head2 C<base_path>
+
+Returns the path of the directory containing the project files.
+
+=cut
 sub base_path {
     my ($self) = @_;
     return $self->{project_path};
 }
 
+=head2 C<results_path>
+
+Returns the path of the file where classification results are to be
+printed. Currently this is C<amcpresults> inside of the project
+directory.
+
+=cut
 sub results_path {
     my ($self) = @_;
     return '' . path($self->{project_path}, 'amcpresults');
 }
 
-# returns the number of variables in a single data item
+=head2 C<num_variables>
+
+Returns the number of variables contained in a single exemplar
+in the project.
+
+=cut
 sub num_variables {
     my ($self, $num) = @_;
     if($num){
@@ -88,7 +178,12 @@ sub num_variables {
     return $self->{num_feats};
 }
 
-# return the number of items in the data (training) set
+
+=head2 C<num_exemplars>
+
+Returns the number of items in the data (training) set.
+
+=cut
 sub num_exemplars {
     my ($self) = @_;
     return scalar @{$self->{data}};
@@ -96,60 +191,93 @@ sub num_exemplars {
 
 # TODO: create an Exemplar class to hold all of this info
 
-# returns the exemplar data vector at index $index.
 # TODO: For now, using an index might be
 # a little arbitrary. Might want to officially treat the index as the item's
 # id
+
+=head2 C<get_exemplar_data>
+
+Returns the data variables for the exemplar at the given index. The
+return value is an arrayref containing the string value for each
+variable.
+
+=cut
 sub get_exemplar_data {
     my ($self, $index) = @_;
     return $self->{data}->[$index];
 }
 
-# returns the spec of the exemplar at index $index.
-# TODO: For now, using an index might be
-# a little arbitrary. Might want to officially treat the index as the item's
-# id
+=head2 C<get_exemplar_spec>
+
+Returns the spec of the exemplar at the given index.
+
+=cut
 sub get_exemplar_spec {
     my ($self, $index) = @_;
     return $self->{spec}->[$index];
 }
 
-# returns the outcome of the exemplar at index $index.
-# TODO: For now, using an index might be
-# a little arbitrary. Might want to officially treat the index as the item's
-# id
+=head2 C<get_exemplar_outcome>
+
+Returns the outcome of the exemplar at the given index.
+
+=cut
 sub get_exemplar_outcome {
     my ($self, $index) = @_;
     return $self->{outcome}->[$index];
 }
 
-# return the number of test items in the project test or data file
+=head2 C<num_test_items>
+
+Returns the number of test items in the project test or data file
+
+=cut
 sub num_test_items {
     my ($self) = @_;
     return scalar @{$self->{testItems}};
 }
 
-# return the test item at the given index;
-# A test item is [outcome, [data], spec]
+=head2 C<get_test_item>
+
+Return the test item at the given index. The structure
+of the return value is C<[outcome, [data], spec]>, where
+C<[data]> contains the varaiable values.
+
+=cut
 sub get_test_item {
     my ($self, $index) = @_;
     return $self->{testItems}->[$index];
 }
 
-#Return the number of different outcomes contained in the data
+
+=head2 C<num_outcomes>
+
+Returns the number of different outcomes contained in the data.
+
+=cut
 sub num_outcomes {
     my ($self) = @_;
     return scalar @{$self->{outcomelist}};
 }
 
-#Return the "long" outcome string contained at a given index
+
+=head2 C<get_outcome>
+
+Returns the "long" outcome string contained at a given index in
+outcomelist.
+
+=cut
 sub get_outcome {
     my ($self, $index) = @_;
     return $self->{outcomelist}->[$index];
 }
 
-# returns (and/or sets) a format string for printing the variables of
-# a data item
+=head2 C<var_format>
+
+Returns (and/or sets) a format string for printing the variables of
+a data item.
+
+=cut
 sub var_format {
     my ($self, $var_format) = @_;
     if($var_format){
@@ -158,7 +286,12 @@ sub var_format {
     return $self->{var_format};
 }
 
-# returns (and/or sets) a format string for printing a spec string
+=head2 C<spec_format>
+
+Returns (and/or sets) a format string for printing a spec string from
+the data set.
+
+=cut
 sub spec_format {
     my ($self, $spec_format) = @_;
     if($spec_format){
@@ -167,7 +300,11 @@ sub spec_format {
     return $self->{spec_format};
 }
 
-# returns (and/or sets) a format string for printing a "long" outcome
+=head2 C<outcome_format>
+
+Returns (and/or sets) a format string for printing a "long" outcome.
+
+=cut
 sub outcome_format {
     my ($self, $outcome_format) = @_;
     if($outcome_format){
@@ -176,7 +313,13 @@ sub outcome_format {
     return $self->{outcome_format};
 }
 
-# get/set format for printing the number of data items
+
+=head2 C<data_format>
+
+Returns (and/or sets) the format string for printing the number of
+data items
+
+=cut
 sub data_format {
     my ($self, $data_format) = @_;
     if($data_format){
@@ -185,7 +328,15 @@ sub data_format {
     return $self->{data_format};
 }
 
-#returns the index of the given "short" outcome in outcomelist
+=head2 C<short_outcome_index>
+
+Returns the index of the given "short" outcome in outcomelist.
+
+This is obviously not very transparent, as outcomelist is only
+accessible via a private method. In the future this will be
+done away with.
+
+=cut
 sub short_outcome_index {
     my ($self, $outcome) = @_;
     return $self->{octonum}{$outcome};
@@ -294,6 +445,7 @@ sub _add_data {
     push @{$self->{spec}}, $spec;
     push @{$self->{data}}, $data;
     push @{$self->{outcome}}, $outcome;
+    return;
 }
 
 # figure out what all of the possible outcomes are

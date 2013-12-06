@@ -132,7 +132,7 @@ sub classify {
 }
 
 sub _check_classify_opts {
-    my %opts = (@_);
+    my %opts = @_;
 
     state $valid_args =
     [qw(

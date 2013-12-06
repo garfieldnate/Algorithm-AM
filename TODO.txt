@@ -1,6 +1,10 @@
 Algorithm::AM
 
+Right now: spruce up Project.pm to pass release testing, then do a trial release
+
 Next: fix num_outcomes to actually be the number of outcomes
+
+check that data and test and outcome lines are formatted properly, don't just assume that they are.
 
 change commas to be either 1 or 0
 
