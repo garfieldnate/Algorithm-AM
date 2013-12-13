@@ -385,21 +385,19 @@ sub _read_data_set {
     my ($self) = @_;
 
     my $data_path = path($self->{project_path}, 'data');
+    my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
 
-    my @data_set = $data_path->lines;
-    $log->debug( 'Data file: ' . scalar(@data_set) );
+    # my @data_set = $data_path->lines;
 
+    # total lines in data file
+    my $num_lines = 0;
     # the length of the longest spec
     my $longest_spec = 0;
     # the lengths of the longest variables in each column
     my @longest_variables = ((0) x 60);
-    for (@data_set) {
-        # cross-platform chomp
-        s/[\n\r]+$//;
-        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $_, 3;
-        $spec ||= $data;
-        my @datavar = split /$self->{smallsep}/, $data;
-        $self->_add_data($outcome, \@datavar, $spec);
+    while (my ($outcome, $data, $spec) = $data_sub->()) {
+        $num_lines++;
+        $self->_add_data($outcome, $data, $spec);
 
         # spec_length holds length of longest spec in data set
         $longest_spec = do {
@@ -409,11 +407,12 @@ sub _read_data_set {
 
         # variable_length is an arrayref, each index holding the length of the
         # longest variable in that column
-        for my $i (0 .. $#datavar ) {
-            my $l = length $datavar[$i];
+        for my $i (0 .. $#$data ) {
+            my $l = length $data->[$i];
             $longest_variables[$i] = $l if $l > $longest_variables[$i];
         }
     }
+    $log->debug( 'Data file: ' . $num_lines );
 
     #set format variables
     $self->spec_format(
@@ -424,6 +423,49 @@ sub _read_data_set {
     $self->var_format(
         join " ", map { "%-$_.${_}s" } @longest_variables);
     return;
+}
+
+# return a sub that returns one data vector per call from the given FH,
+# and returns undef once the data file is done being read. Throws errors
+# on bad file contents. Long outcomes will be identical to short ones.
+sub _read_data_sub {
+    my ($self, $data_fh) = @_;
+    return sub {
+        my $line = <$data_fh>;
+        return unless $line;
+        # cross-platform chomp
+        $line =~ s/[\n\r]+$//;
+        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
+        $spec ||= $data;
+        my @data_vars = split /$self->{smallsep}/, $data;
+        return ($outcome, \@data_vars, $spec);
+    };
+}
+
+# return a sub that reads one line of the input outcome file FH
+# per call. Dies on bad file contents.
+sub _read_outcome_sub {
+    my ($self, $outcome_fh) = @_;
+    return sub {
+        my $line = <$outcome_fh>;
+        return unless $line;
+        #cross-platform chomp
+        $line =~ s/[\n\r]+$//;
+        my ( $short, $long ) = split /\s+/, $line, 2;
+        return ($short, $long);
+    };
+}
+
+# return a sub that returns one data vector at a time, and returns
+# undef once the data and outcome file are done being read. Throws
+# errors on bad file contents or different file sizes.
+sub _read_data_outcome_sub {
+    my ($self, $data_fh, $outcome_fh) = @_;
+    my $data_sub = $self->_read_data_sub;
+    my $outcome_sub = $self->_read_outcome_sub;
+    return sub {
+
+    };
 }
 
 # $data should be an arrayref of variables
@@ -492,18 +534,15 @@ sub _set_outcomes {
 sub _read_outcome_set {
     my ($self, $outcome_path) = @_;
 
-    my @outcome_set = $outcome_path->lines;
-
+    # my @outcome_set = $outcome_path->lines;
+    my $outcome_sub = $self->_read_outcome_sub($outcome_path->openr_utf8);
     # octonum maps short outcomes to the index of their (first)
     #   long version listed in in outcomelist
     # outcometonum maps long outcomes to the same to their own
     #   (first) position in outcomelist
     # outcomelist will hold list of all long outcome strings in file
     my $counter = 0;
-    for my $outcome (@outcome_set) {
-        #cross-platform chomp
-        $outcome =~ s/[\n\r]+$//;
-        my ( $short, $long ) = split /\s+/, $outcome, 2;
+    while (my ($short, $long) = $outcome_sub->()) {
         $counter++;
         $self->{octonum}{$short}   ||= $counter;
         $self->{outcometonum}{$long} ||= $counter;
