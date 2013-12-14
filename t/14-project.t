@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 48;
+plan tests => 49;
 use Test::Exception;
 use Algorithm::AM::Project;
 use FindBin '$Bin';
@@ -137,6 +137,8 @@ sub test_data {
     #also test with project containing outcomes file
     my $outcome_project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_outcomes'), commas => 'no');
+    is($outcome_project->num_outcomes, 2,
+        'correct number of outcomes (with outcome file)');
     is($outcome_project->get_outcome(1), 'ee',
         'correct outcome returned from list (with outcome file)');
 
@@ -206,7 +208,7 @@ sub test_private_data {
     #also test with project containing outcomes file
     my $outcome_project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_outcomes'), commas => 'no');
-    is_deeply($outcome_project->_outcome_list, ['', 'ee', ('are') x 4 ],
+    is_deeply($outcome_project->_outcome_list, ['', 'ee', 'are' ],
         "correct project outcome list (with outcome file)");
     return;
 }

@@ -67,7 +67,7 @@ sub beginhook {
 sub beginhook_outcome {
 	my ($self, $data) = @_;
 	#TODO: should this just be ['', 'ee', 'are']?
-	is_deeply($am->{outcomelist}, ['','ee','are', 'are', 'are', 'are'],
+	is_deeply($am->{outcomelist}, ['','ee','are'],
 		'beginhook: @outcomelist (with outcome file)')
 		or note explain $am->{outcomelist};
 	#why should we need this?

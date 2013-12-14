@@ -542,11 +542,17 @@ sub _read_outcome_set {
     #   (first) position in outcomelist
     # outcomelist will hold list of all long outcome strings in file
     my $counter = 0;
+    my $outcome_num = 0;
+    my %outcomes;
     while (my ($short, $long) = $outcome_sub->()) {
         $counter++;
-        $self->{octonum}{$short}   ||= $counter;
-        $self->{outcometonum}{$long} ||= $counter;
-        push @{$self->{outcomelist}}, $long;
+        if(!$outcomes{$long}){
+            $outcome_num++;
+            $outcomes{$long} = $outcome_num;
+            $self->{outcometonum}{$long} ||= $outcome_num;
+            push @{$self->{outcomelist}}, $long;
+        }
+        $self->{octonum}{$short}   ||= $outcome_num;
     }
     return $counter;
 }
