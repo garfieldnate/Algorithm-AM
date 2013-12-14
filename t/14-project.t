@@ -157,8 +157,10 @@ sub test_data_errors {
         Algorithm::AM::Project->new(
             path($data_dir, 'chapter3_bad_outcomes'),
             commas => 'no');
-    } qr/Found 5 items in data file, but 4 items in outcome file/,
+    } qr/Found more items in data file than in outcome file/,
     'dies with mismatched number of outcomes';
+    # TODO: test opposite, with more items in outcome file than
+    # in data file
 
     return;
 }

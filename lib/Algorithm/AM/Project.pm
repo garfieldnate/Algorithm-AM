@@ -88,8 +88,8 @@ sub new {
     $log->info('Reading data file...');
     $self->_read_data_set();
 
-    $log->info('Reading outcome file...');
-    $self->_set_outcomes();
+    # $log->info('Reading outcome file...');
+    # $self->_set_outcomes();
 
     $log->info('Reading test file...');
     $self->_read_test_set();
@@ -385,19 +385,31 @@ sub _read_data_set {
     my ($self) = @_;
 
     my $data_path = path($self->{project_path}, 'data');
-    my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
+    $log->info('checking for outcome file');
+    my $outcome_path = path($self->{project_path}, 'outcome');
+    # $data_sub will read data file and maybe also an outcome file.
+    my $data_sub;
+    if ( $outcome_path->exists ) {
+        $data_sub = $self->_read_data_outcome_sub(
+            $data_path->openr_utf8, $outcome_path->openr_utf8);
+    }
+    else {
+        $log->info('...will use data file');
+        $data_sub = $self->_read_data_sub($data_path->openr_utf8);
+    }
 
-    # my @data_set = $data_path->lines;
+    # use to keep track of unique outcomes
+    my (%outcomes, $outcome_num);
 
     # total lines in data file
-    my $num_lines = 0;
+    my $line_num = 0;
     # the length of the longest spec
     my $longest_spec = 0;
     # the lengths of the longest variables in each column
     my @longest_variables = ((0) x 60);
-    while (my ($outcome, $data, $spec) = $data_sub->()) {
-        $num_lines++;
-        $self->_add_data($outcome, $data, $spec);
+    while (my ($short, $long, $data, $spec) = $data_sub->()) {
+        $line_num++;
+        $self->_add_data($short, $long, $data, $spec);
 
         # spec_length holds length of longest spec in data set
         $longest_spec = do {
@@ -411,8 +423,17 @@ sub _read_data_set {
             my $l = length $data->[$i];
             $longest_variables[$i] = $l if $l > $longest_variables[$i];
         }
+
+        # from outcome sub
+        if(!$outcomes{$long}){
+            $outcome_num++;
+            $outcomes{$long} = $outcome_num;
+            $self->{outcometonum}{$long} ||= $outcome_num;
+            push @{$self->{outcomelist}}, $long;
+        }
+        $self->{octonum}{$short}   ||= $outcome_num;
     }
-    $log->debug( 'Data file: ' . $num_lines );
+    $log->debug( 'Data file: ' . $line_num );
 
     #set format variables
     $self->spec_format(
@@ -422,6 +443,19 @@ sub _read_data_set {
     splice @longest_variables, $self->num_variables;
     $self->var_format(
         join " ", map { "%-$_.${_}s" } @longest_variables);
+
+    # from outcome sub
+    $log->debug('...converting outcomes to indices');
+    my $max_length = 0;
+    @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
+    foreach (@{$self->{outcomelist}}) {
+        my $l;
+        $l = length;
+        $max_length = $l if $l > $max_length;
+    }
+    # index 0 is reserved for the AM algorithm
+    unshift @{$self->{outcomelist}}, '';
+    $self->outcome_format("%-$max_length.${max_length}s");
     return;
 }
 
@@ -438,7 +472,7 @@ sub _read_data_sub {
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
-        return ($outcome, \@data_vars, $spec);
+        return ($outcome, $outcome, \@data_vars, $spec);
     };
 }
 
@@ -461,17 +495,29 @@ sub _read_outcome_sub {
 # errors on bad file contents or different file sizes.
 sub _read_data_outcome_sub {
     my ($self, $data_fh, $outcome_fh) = @_;
-    my $data_sub = $self->_read_data_sub;
-    my $outcome_sub = $self->_read_outcome_sub;
+    my $data_sub = $self->_read_data_sub($data_fh);
+    my $outcome_sub = $self->_read_outcome_sub($outcome_fh);
     return sub {
-
+        # becomes obvious here that data file and outcome file have
+        # redundant information
+        my ($short, $long) = $outcome_sub->();
+        my ($temp1, $temp2, $data, $spec) = $data_sub->();
+        if($short && !$data){
+            croak 'Found more items in outcome file than in data file';
+        }elsif(!$short && $data){
+            croak 'Found more items in data file than in outcome file';
+        }
+        if($short){
+            return ($short, $long, $data, $spec);
+        }
+        return;
     };
 }
 
 # $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
 sub _add_data {
-    my ($self, $outcome, $data, $spec) = @_;
+    my ($self, $short, $long, $data, $spec) = @_;
 
     # first check that the number of variables in @$data is correct
     # if num_variables is 0, it means it hasn't been set yet
@@ -486,7 +532,7 @@ sub _add_data {
     # store the new data item
     push @{$self->{spec}}, $spec;
     push @{$self->{data}}, $data;
-    push @{$self->{outcome}}, $outcome;
+    push @{$self->{outcome}}, $short;
     return;
 }
 

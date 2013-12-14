@@ -1,6 +1,8 @@
 Algorithm::AM
 
-Right now: make it possible to add data to a project via public method
+Right now: the reading of outcomes from data and from outcome file by also returning a "long" outcome from the _read_data_sub sub and processing short and long outcomes the same, whether they come from outcome file or data file.
+
+make it possible to add data to a project via public method
 	$project->add_data(short_outcome, data, spec, long_outcome)
 
 Next: Remove most of the corpus projects and just create them on the fly instead.
@@ -37,6 +39,8 @@ ask someone about expected outcome file format
 	specify comment character
 
 -allow user to pass in actual data instead of using project file.
+
+properly destroy project or AM object on error so that illegal state is not possible even if someone catches an error and tries to continue.
 
 ##Printing TODOs:
 -Split print_summary into two methods: print_config and print_data_stats
