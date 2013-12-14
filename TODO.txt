@@ -1,13 +1,15 @@
 Algorithm::AM
 
-Right now: the reading of outcomes from data and from outcome file by also returning a "long" outcome from the _read_data_sub sub and processing short and long outcomes the same, whether they come from outcome file or data file.
-
-make it possible to add data to a project via public method
-	$project->add_data(short_outcome, data, spec, long_outcome)
+Right now: make _add_data public and test it
+	- may require changing constructor, etc.
 
 Next: Remove most of the corpus projects and just create them on the fly instead.
 
 check that data and test and outcome lines are formatted properly, don't just assume that they are (above change will make it easier).
+
+change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
+
+It seems Theron expected no more than 60 data columns. Maybe warn somewhere if more than that are used.
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).

@@ -2,8 +2,9 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 49;
+plan tests => 50;
 use Test::Exception;
+use Test::NoWarnings;
 use Algorithm::AM::Project;
 use FindBin '$Bin';
 use Path::Tiny;

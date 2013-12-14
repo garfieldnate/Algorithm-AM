@@ -85,6 +85,16 @@ sub new {
 
     my $self = bless $new_opts, $class;
 
+    # length of the longest spec string
+    $self->{longest_spec} = 0;
+    # length of the longest outcome string
+    $self->{longest_outcome} = 0;
+    # used to keep track of unique outcomes
+    $self->{outcomes} = {};
+    $self->{outcome_num} = 0;
+    # index 0 of outcomelist is reserved for the AM algorithm
+    unshift @{$self->{outcomelist}}, '';
+
     $log->info('Reading data file...');
     $self->_read_data_set();
 
@@ -249,7 +259,6 @@ sub get_test_item {
     return $self->{testItems}->[$index];
 }
 
-
 =head2 C<num_outcomes>
 
 Returns the number of different outcomes contained in the data.
@@ -257,9 +266,8 @@ Returns the number of different outcomes contained in the data.
 =cut
 sub num_outcomes {
     my ($self) = @_;
-    return scalar @{$self->{outcomelist}} - 1;
+    return $self->{outcome_num};
 }
-
 
 =head2 C<get_outcome>
 
@@ -274,30 +282,27 @@ sub get_outcome {
 
 =head2 C<var_format>
 
-Returns (and/or sets) a format string for printing the variables of
+Returns a format string for printing the variables of
 a data item.
 
 =cut
 sub var_format {
-    my ($self, $var_format) = @_;
-    if($var_format){
-        $self->{var_format} = $var_format;
-    }
-    return $self->{var_format};
+    my ($self) = @_;
+
+    return join " ", map { "%-$_.${_}s" }
+        @{ $self->{longest_variables} };
 }
 
 =head2 C<spec_format>
 
-Returns (and/or sets) a format string for printing a spec string from
-the data set.
+Returns a format string for printing a spec string from the data set.
 
 =cut
 sub spec_format {
     my ($self, $spec_format) = @_;
-    if($spec_format){
-        $self->{spec_format} = $spec_format;
-    }
-    return $self->{spec_format};
+
+    my $length = $self->{longest_spec};
+    return "%-$length.${length}s";
 }
 
 =head2 C<outcome_format>
@@ -306,26 +311,20 @@ Returns (and/or sets) a format string for printing a "long" outcome.
 
 =cut
 sub outcome_format {
-    my ($self, $outcome_format) = @_;
-    if($outcome_format){
-        $self->{outcome_format} = $outcome_format;
-    }
-    return $self->{outcome_format};
+    my ($self) = @_;
+    my $length = $self->{longest_outcome};
+    return "%-$length.${length}s";
 }
 
 
 =head2 C<data_format>
 
-Returns (and/or sets) the format string for printing the number of
-data items
+Returns the format string for printing the number of data items.
 
 =cut
 sub data_format {
-    my ($self, $data_format) = @_;
-    if($data_format){
-        $self->{data_format} = $data_format;
-    }
-    return $self->{data_format};
+    my ($self) = @_;
+    return '%' . $self->num_exemplars . '.0u';
 }
 
 =head2 C<short_outcome_index>
@@ -381,13 +380,14 @@ sub _outcome_to_num {
 
 #read data set, calling _add_data for each item found in the data file.
 #Also set spec_format, data_format and var_format.
+# Sets octonum, outcomelist, and outcometonum
 sub _read_data_set {
     my ($self) = @_;
 
     my $data_path = path($self->{project_path}, 'data');
     $log->info('checking for outcome file');
     my $outcome_path = path($self->{project_path}, 'outcome');
-    # $data_sub will read data file and maybe also an outcome file.
+    # $data_sub will either read data file or data file and outcome file
     my $data_sub;
     if ( $outcome_path->exists ) {
         $data_sub = $self->_read_data_outcome_sub(
@@ -398,64 +398,13 @@ sub _read_data_set {
         $data_sub = $self->_read_data_sub($data_path->openr_utf8);
     }
 
-    # use to keep track of unique outcomes
-    my (%outcomes, $outcome_num);
-
     # total lines in data file
     my $line_num = 0;
-    # the length of the longest spec
-    my $longest_spec = 0;
-    # the lengths of the longest variables in each column
-    my @longest_variables = ((0) x 60);
     while (my ($short, $long, $data, $spec) = $data_sub->()) {
-        $line_num++;
         $self->_add_data($short, $long, $data, $spec);
-
-        # spec_length holds length of longest spec in data set
-        $longest_spec = do {
-            my $l = length $spec;
-            $l > $longest_spec ? $l : $longest_spec;
-        };
-
-        # variable_length is an arrayref, each index holding the length of the
-        # longest variable in that column
-        for my $i (0 .. $#$data ) {
-            my $l = length $data->[$i];
-            $longest_variables[$i] = $l if $l > $longest_variables[$i];
-        }
-
-        # from outcome sub
-        if(!$outcomes{$long}){
-            $outcome_num++;
-            $outcomes{$long} = $outcome_num;
-            $self->{outcometonum}{$long} ||= $outcome_num;
-            push @{$self->{outcomelist}}, $long;
-        }
-        $self->{octonum}{$short}   ||= $outcome_num;
     }
-    $log->debug( 'Data file: ' . $line_num );
+    $log->debug( 'Data file: ' . $self->num_exemplars );
 
-    #set format variables
-    $self->spec_format(
-        "%-$longest_spec.${longest_spec}s");
-    $self->data_format("%" . $self->num_exemplars . ".0u");
-
-    splice @longest_variables, $self->num_variables;
-    $self->var_format(
-        join " ", map { "%-$_.${_}s" } @longest_variables);
-
-    # from outcome sub
-    $log->debug('...converting outcomes to indices');
-    my $max_length = 0;
-    @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
-    foreach (@{$self->{outcomelist}}) {
-        my $l;
-        $l = length;
-        $max_length = $l if $l > $max_length;
-    }
-    # index 0 is reserved for the AM algorithm
-    unshift @{$self->{outcomelist}}, '';
-    $self->outcome_format("%-$max_length.${max_length}s");
     return;
 }
 
@@ -529,101 +478,46 @@ sub _add_data {
         $self->num_variables(scalar @$data);
     }
 
+    if((my $l = length $spec) > $self->{longest_spec}){
+        $self->{longest_spec} = $l;
+    }
+
+    # longest_variables is an arrayref, each index holding the
+    # length of the longest variable in that column.
+    # Initialize it on addition of first data item.
+    if(!$self->{longest_variables}[0]){
+        $self->{longest_variables} = [((0) x scalar @$data)]
+    }
+    for my $i (0 .. $#$data ) {
+        my $l = length $data->[$i];
+        $self->{longest_variables}[$i] = $l
+            if $l > $self->{longest_variables}[$i];
+    }
+
+    # keep track of outcomes.
+    # Variables:
+    #   outcomes is a hash of the outcomes used for tracking unique
+    #     values
+    #   outcome_num is the total number of outcomes so far
+    #   outcometonum is the index of a "long" outcome in outcomelist
+    #   octonum is the index of a "short" outcome in outcomelist
+    #   outcomelist is a list of the unique outcomes
+    if(!$self->{outcomes}->{$long}){
+        $self->{outcome_num}++;
+        $self->{outcomes}->{$long} = $self->{outcome_num};
+        $self->{outcometonum}{$long} ||= $self->{outcome_num};
+        push @{$self->{outcomelist}}, $long;
+    }
+    $self->{octonum}{$short}   ||= $self->{outcome_num};
+
+    if( (my $l = length $long) > $self->{longest_outcome}) {
+        $self->{longest_outcome} = $l;
+    }
+
     # store the new data item
     push @{$self->{spec}}, $spec;
     push @{$self->{data}}, $data;
-    push @{$self->{outcome}}, $short;
-    return;
-}
-
-# figure out what all of the possible outcomes are
-sub _set_outcomes {
-    my ($self) = @_;
-
-    #grab outcomes from either outcome file or existing data
-    $log->info('checking for outcome file');
-    my $outcome_path = path($self->{project_path}, 'outcome');
-    if ( $outcome_path->exists ) {
-        my $num_outcomes = $self->_read_outcome_set($outcome_path);
-        if($num_outcomes != $self->num_exemplars){
-            croak 'Found ' . $self->num_exemplars . ' items in data file, ' .
-                "but $num_outcomes items in outcome file.";
-        }
-    }
-    else {
-        $log->info('...will use data file');
-        $self->_read_outcomes_from_data();
-    }
-
-    $log->debug('...converting outcomes to indices');
-    my $max_length = 0;
-    @{$self->{outcome}} = map { $self->{octonum}{$_} } @{$self->{outcome}};
-    foreach (@{$self->{outcomelist}}) {
-        my $l;
-        $l = length;
-        $max_length = $l if $l > $max_length;
-    }
-    # index 0 is reserved for the AM algorithm
-    unshift @{$self->{outcomelist}}, '';
-    $self->outcome_format("%-$max_length.${max_length}s");
-    return;
-}
-
-# Returns the number of outcome items found in the outcome file and
-# sets several key values in $self:
-# octonum, outcomelist, and outcometonum
-#
-# outcome file should have one outcome per line, with first a short
-# string and then a long one, separated by a space.
-# TODO: The first column is apparently redundant information, since
-# it must also be listed in the data file.
-sub _read_outcome_set {
-    my ($self, $outcome_path) = @_;
-
-    # my @outcome_set = $outcome_path->lines;
-    my $outcome_sub = $self->_read_outcome_sub($outcome_path->openr_utf8);
-    # octonum maps short outcomes to the index of their (first)
-    #   long version listed in in outcomelist
-    # outcometonum maps long outcomes to the same to their own
-    #   (first) position in outcomelist
-    # outcomelist will hold list of all long outcome strings in file
-    my $counter = 0;
-    my $outcome_num = 0;
-    my %outcomes;
-    while (my ($short, $long) = $outcome_sub->()) {
-        $counter++;
-        if(!$outcomes{$long}){
-            $outcome_num++;
-            $outcomes{$long} = $outcome_num;
-            $self->{outcometonum}{$long} ||= $outcome_num;
-            push @{$self->{outcomelist}}, $long;
-        }
-        $self->{octonum}{$short}   ||= $outcome_num;
-    }
-    return $counter;
-}
-
-# uses the outcomes from the data file for both "short"
-# and "long" outcome names
-#
-# sets several key values in $self:
-# octonum, outcomelist, and outcometonum
-sub _read_outcomes_from_data {
-    my ($self) = @_;
-
-    # Use a hash (%oc) to obtain a list of unique outcomes
-    my %oc;
-    $_++ for @oc{ @{$self->{outcome}} };
-
-    my $counter = 0;
-    # sort the keys to maintain the same ordering across multiple runs
-    for(sort {lc($a) cmp lc($b)} keys %oc){
-        $counter++;
-        $self->{octonum}{$_} = $counter;
-        $self->{outcometonum}{$_} = $counter;
-        push @{$self->{outcomelist}}, $_;
-    }
-
+    push @{$self->{outcome}}, $self->{octonum}{$short};
     return;
 }
 
