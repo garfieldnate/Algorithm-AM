@@ -350,8 +350,6 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     my $t = $project->get_test_item($item_number);
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
         @$t;
-    # set to index outcomelist instead of actual outcome string
-    $curTestOutcome = $project->short_outcome_index($curTestOutcome);
     # activeVar is the number of active variables; if we exclude nulls,
     # then we need to minus the number of '=' found in this test item;
     # otherwise, it's just the number of columns in a single item vector

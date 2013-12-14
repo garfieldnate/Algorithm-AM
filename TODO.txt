@@ -1,11 +1,19 @@
 Algorithm::AM
 
-Right now: make _add_data public and test it
+Right now:
+
+Test the test data!
+
+make _add_data and _add_test public and test them
 	- may require changing constructor, etc.
 
 Next: Remove most of the corpus projects and just create them on the fly instead.
 
+Add a test where the test file contains an outcome not seen in the data set. This will currently make something very bad happen. Then fix it.
+
 check that data and test and outcome lines are formatted properly, don't just assume that they are (above change will make it easier).
+
+perhaps require user to input number of variables in their vectors in the constructor?
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
 

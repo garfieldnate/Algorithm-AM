@@ -94,6 +94,8 @@ sub new {
     $self->{outcome_num} = 0;
     # index 0 of outcomelist is reserved for the AM algorithm
     unshift @{$self->{outcomelist}}, '';
+    # 0 means number of data columns has not been determined
+    $self->{num_feats} = 0;
 
     $log->info('Reading data file...');
     $self->_read_data_set();
@@ -181,10 +183,7 @@ in the project.
 
 =cut
 sub num_variables {
-    my ($self, $num) = @_;
-    if($num){
-        $self->{num_feats} = $num;
-    }
+    my ($self) = @_;
     return $self->{num_feats};
 }
 
@@ -400,8 +399,8 @@ sub _read_data_set {
 
     # total lines in data file
     my $line_num = 0;
-    while (my ($short, $long, $data, $spec) = $data_sub->()) {
-        $self->_add_data($short, $long, $data, $spec);
+    while (my ($data, $spec, $short, $long) = $data_sub->()) {
+        $self->_add_data($data, $spec, $short, $long);
     }
     $log->debug( 'Data file: ' . $self->num_exemplars );
 
@@ -421,7 +420,8 @@ sub _read_data_sub {
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
-        return ($outcome, $outcome, \@data_vars, $spec);
+        # return $outcome twice for "short" and "long" versions
+        return (\@data_vars, $spec, $outcome, $outcome);
     };
 }
 
@@ -450,14 +450,14 @@ sub _read_data_outcome_sub {
         # becomes obvious here that data file and outcome file have
         # redundant information
         my ($short, $long) = $outcome_sub->();
-        my ($temp1, $temp2, $data, $spec) = $data_sub->();
+        my ($data, $spec) = $data_sub->();
         if($short && !$data){
             croak 'Found more items in outcome file than in data file';
         }elsif(!$short && $data){
             croak 'Found more items in data file than in outcome file';
         }
         if($short){
-            return ($short, $long, $data, $spec);
+            return ($data, $spec, $short, $long);
         }
         return;
     };
@@ -466,17 +466,9 @@ sub _read_data_outcome_sub {
 # $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
 sub _add_data {
-    my ($self, $short, $long, $data, $spec) = @_;
+    my ($self, $data, $spec, $short, $long) = @_;
 
-    # first check that the number of variables in @$data is correct
-    # if num_variables is 0, it means it hasn't been set yet
-    if(my $num = $self->num_variables){
-        $num == @$data or
-            croak "Expected $num variables, but found " . (scalar @$data) .
-                " in @$data" . ($spec ? " ($spec)" : '');
-    }else{
-        $self->num_variables(scalar @$data);
-    }
+    $self->_check_variables($data, $spec);
 
     if((my $l = length $spec) > $self->{longest_spec}){
         $self->{longest_spec} = $l;
@@ -521,31 +513,65 @@ sub _add_data {
     return;
 }
 
+# check the input variable vector for size, and set the data vector
+# size for this project if it isn't set yet
+sub _check_variables {
+    my ($self, $data, $spec) = @_;
+    # check that the number of variables in @$data is correct
+    # if num_variables is 0, it means it hasn't been set yet
+    if(my $num = $self->num_variables){
+        $num == @$data or
+            croak "Expected $num variables, but found " . (scalar @$data) .
+                " in @$data" . ($spec ? " ($spec)" : '');
+    }else{
+        # if not 0, store number of variables and expect all future
+        # data vectors to be the same length
+        if(@$data == 0){
+            croak "Found 0 data variables in @$data " .
+                ($spec ? " ($spec)" : '');
+        }
+        $self->{num_feats} = scalar @$data;
+    }
+    return;
+}
+
 # Sets the testItems to an arrayref of [outcome, [data], spec] for each
-# item in the test file (or data file if there is none)
-# test file, like the data file, should have "short" outcome, data vector,
-# and a spec
+# item in the test file (or data file if there is none). outcome is
+# the index in outcomelist.
+# The test file, like the data file, should have "short" outcome,
+# data vector, and a spec.
 sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->{project_path}, 'test');
-    if(!$test_file->exists){
+    if($test_file->exists){
+        my $test_sub = $self->_read_data_sub($test_file->openr_utf8);
+        while(my ($data, $spec, $outcome) = $test_sub->()){
+            $self->_add_test($data, $spec, $outcome);
+        }
+    }else{
         carp "Couldn't open $test_file";
         $log->warn(qq{Couldn't open $test_file; } .
             q{will run data file against itself});
-        $test_file = path($self->{project_path}, 'data');
+        # we don't need the extra processing of _add_test
+        @{$self->{testItems}} = map {[
+            $self->{outcome}->[$_],
+            $self->{data}->[$_],
+            $self->{spec}->[$_]
+        ]} (0 .. $self->num_exemplars);
     }
-    for my $t ($test_file->lines){
-        #cross-platform chomp
-        $t =~ s/[\n\r]+$//;
-        my ($outcome, $data, $spec ) = split /$self->{bigsep}/, $t, 3;
-        my @vector = split /$self->{smallsep}/, $data;
-        if($self->num_variables != @vector){
-            croak 'expected ' . $self->num_variables . ' variables, but found ' .
-                (scalar @vector) . " in @vector" . ($spec ? " ($spec)" : '');
-        }
+    return;
+}
 
-        push @{$self->{testItems}}, [$outcome, \@vector, $spec || '']
-    }
+sub _add_test {
+    my ($self, $data, $spec, $outcome) = @_;
+    # TODO: make sure outcome exists in index
+
+    $self->_check_variables($data, $spec);
+    push @{$self->{testItems}}, [
+        $self->short_outcome_index($outcome),
+        $data,
+        $spec || ''
+        ];
     return;
 }
 
