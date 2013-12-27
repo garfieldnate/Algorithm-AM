@@ -48,8 +48,13 @@ sub new {
 
     #TODO: what is the purpose of these two statements?
     my $class = ref($proto) || $proto;
+    #TODO: this is not a legal path anyway...
     $project_path = ''
         if $proto =~ /^-/;
+
+    if(!$project_path){
+        croak 'Must specify project';
+    }
 
     # all of the options except commas are for the Project object,
     # but creating the Project first could use a lot of time, and

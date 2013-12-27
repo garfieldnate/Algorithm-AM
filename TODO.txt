@@ -1,11 +1,8 @@
 Algorithm::AM
 
-Right now:
+Right now: Test the test data, and make _add_test public and test it, too.
 
-Test the test data!
-
-make _add_data and _add_test public and test them
-	- may require changing constructor, etc.
+Next: change the Project tests to use the add_data method instead of using files where possible.
 
 Next: Remove most of the corpus projects and just create them on the fly instead.
 
@@ -13,7 +10,11 @@ Add a test where the test file contains an outcome not seen in the data set. Thi
 
 check that data and test and outcome lines are formatted properly, don't just assume that they are (above change will make it easier).
 
-perhaps require user to input number of variables in their vectors in the constructor?
+perhaps require/allow user to input number of variables in their vectors in the constructor?
+
+error checking for getting data data at a specific index; make sure it's a legal index.
+
+possible create a DataSet class to pass to new Projects.
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
 
@@ -36,13 +37,13 @@ Find reasons for 5.14 Perl minimum and see if that is reasonable.
 
 Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
-work on types of input to AM dataset
-
 change activeVars to be accepted at classification time
 
 ask someone about expected outcome file format
 	- finnverb outcome file does not have unique long outcomes to match unique short ones
 	- short outcome column seems redundant with data file
+
+work on types of input to AM dataset
 
 -allow user to specify input format
 	specify bigsep, littlesep
@@ -102,6 +103,7 @@ properly destroy project or AM object on error so that illegal state is not poss
 	running batches
 	bigcmp
 	parameters
+	projects
 -Read through documentation, update/clean if necessary
 	Include Wikipedia pictures
 -Define "specifier" early on in the documentation. Give the anatomy of a data file.

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 50;
+plan tests => 63;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -11,19 +11,27 @@ use Path::Tiny;
 
 my $data_dir = path($Bin, 'data');
 
+test_add_data();
+# test_add_test();
+
 test_param_checking();
 test_paths();
 test_format_vars();
 test_data();
 test_data_errors();
+test_test_items();
 test_private_data();
 
-sub test_param_checking {
-    throws_ok {
-        Algorithm::AM::Project->new();
-    } qr/Must specify project/,
-    'dies without project parameter';
+# test that add_data correctly adds data to the set
+sub test_add_data {
+    my $project = Algorithm::AM::Project->new();
+    $project->add_data(['a'],'stuff','b', 'beta');
+    is($project->num_exemplars, 1,
+        'add_data adds 1 exemplar to project');
+    return;
+}
 
+sub test_param_checking {
     throws_ok {
         Algorithm::AM::Project->new(path($data_dir, 'nonexistent'));
     } qr/Could not find project/,
@@ -71,6 +79,26 @@ sub test_paths {
 }
 
 sub test_format_vars {
+    # format variables don't make sense without data, so errors
+    # are thrown here
+    my $project = Algorithm::AM::Project->new();
+    throws_ok {
+        $project->var_format;
+    } qr/must add data before calling var_format/,
+        'error getting var_format before adding data';
+    throws_ok {
+        $project->spec_format;
+    } qr/must add data before calling spec_format/,
+        'error getting spec_format before adding data';
+    throws_ok {
+        $project->outcome_format;
+    } qr/must add data before calling outcome_format/,
+        'error getting outcome_format before adding data';
+    throws_ok {
+        $project->data_format;
+    } qr/must add data before calling data_format/,
+        'error getting data_format before adding data';
+
     # test all format variables with and without comma use;
     # someday we may have more input formats to test
     my %inputs = (
@@ -81,7 +109,7 @@ sub test_format_vars {
     );
     # sort keys for consistent test output
     for my $name (sort keys %inputs){
-        my $project = $inputs{$name};
+        $project = $inputs{$name};
         is($project->var_format, (join ' ', ('%-1.1s') x 3),
             "correct var_format ($name)");
         is($project->spec_format, '%-19.19s',
@@ -94,7 +122,7 @@ sub test_format_vars {
 
     # test again with this project made specially for testing format
     # variables
-    my $project = Algorithm::AM::Project->new(
+    $project = Algorithm::AM::Project->new(
         path($data_dir, 'format_test'), commas => 'yes');
     is($project->var_format, '%-5.5s %-4.4s %-3.3s',
         'correct var_format (format_test)');
@@ -110,6 +138,16 @@ sub test_format_vars {
 # test all data with and without comma use;
 # someday we may have more input formats to test
 sub test_data {
+
+    # first check empty project
+    my $project = Algorithm::AM::Project->new();
+    is($project->num_exemplars, 0, 'new project has 0 exemplars');
+    is($project->num_variables, 0, 'new project has 0 variables');
+    is($project->num_outcomes, 0, 'new project has 0 outcomes');
+    is($project->num_variables, 0, 'new project has 0 variables');
+
+
+
     my %inputs = (
         'no commas' => Algorithm::AM::Project->new(
             path($data_dir, 'chapter3'), commas => 'no'),
@@ -118,7 +156,7 @@ sub test_data {
     );
     # sort keys for consistent test output
     for my $name (sort keys %inputs){
-        my $project = $inputs{$name};
+        $project = $inputs{$name};
         is($project->num_variables, 3, "3 variables in chapter3 data ($name)");
         is($project->num_exemplars, 5, "3 exemplars in chapter3 data ($name)");
         is_deeply($project->get_exemplar_data(4), [qw(3 1 1)],
@@ -166,10 +204,27 @@ sub test_data_errors {
     return;
 }
 
+# test the project test data
+sub test_test_items{
+    my $project = Algorithm::AM::Project->new();
+    is($project->num_test_items, 0, 'no test items in empty project');
+}
+
 # test all data for use by AM.pm (and the hooks) only, with and
 # without comma use;
 # someday we may have more input formats to test
 sub test_private_data {
+    my $project = Algorithm::AM::Project->new();
+    is_deeply($project->_outcome_list, [''],
+        "empty project has empty outcome list");
+    is_deeply($project->_outcomes, [],
+        "empty project has empty outcomes");
+    is_deeply($project->_data, [],
+        "empty project has empty data");
+    is_deeply($project->_specs, [],
+        "empty project has empty specs");
+
+
     my %inputs = (
         'no commas' => Algorithm::AM::Project->new(
             path($data_dir, 'chapter3'), commas => 'no'),
@@ -178,7 +233,7 @@ sub test_private_data {
     );
     # sort keys for consistent test output
     for my $name (sort keys %inputs){
-        my $project = $inputs{$name};
+        $project = $inputs{$name};
         is_deeply($project->_outcomes, [qw(1 2 2 2 2)],
             "correct project outcomes ($name)");
         is_deeply($project->_data, [

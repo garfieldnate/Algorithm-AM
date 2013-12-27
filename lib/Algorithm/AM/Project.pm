@@ -9,9 +9,9 @@ use Log::Any '$log';
 
 =head2 C<new>
 
-Creates a new Project object. Pass in the path to the project directory
-followed by any named arguments (currently only the required C<commas>
-parameter is accepted).
+Creates a new Project object. You may optionally pass in the path to
+the project directory, followed by any named arguments (currently only
+the required C<commas> parameter is accepted).
 
 A project directory should contain the data set, the test set, and the
 outcome file (named, not surprisingly, F<data>, F<test>, and F<outcome>).
@@ -81,32 +81,25 @@ TODO: A line from your data, test or outcome file could not be parsed.
 sub new {
     my ($class, $path, %opts) = @_;
 
-    my $new_opts = _check_opts($path, %opts);
+    # without a path, no option processing is needed
+    my $new_opts = $path ?
+        _check_opts($path, %opts) :
+        {project_path => '.'};
 
     my $self = bless $new_opts, $class;
 
-    # length of the longest spec string
-    $self->{longest_spec} = 0;
-    # length of the longest outcome string
-    $self->{longest_outcome} = 0;
-    # used to keep track of unique outcomes
-    $self->{outcomes} = {};
-    $self->{outcome_num} = 0;
-    # index 0 of outcomelist is reserved for the AM algorithm
-    unshift @{$self->{outcomelist}}, '';
-    # 0 means number of data columns has not been determined
-    $self->{num_feats} = 0;
+    $self->_init;
 
-    $log->info('Reading data file...');
-    $self->_read_data_set();
+    # read project files if they exist
+    if($path){
+        $log->info('Reading data file...');
+        $self->_read_data_set();
 
-    # $log->info('Reading outcome file...');
-    # $self->_set_outcomes();
+        $log->info('Reading test file...');
+        $self->_read_test_set();
 
-    $log->info('Reading test file...');
-    $self->_read_test_set();
-
-    $log->info('...done');
+        $log->info('...done');
+    }
 
     return $self;
 }
@@ -152,6 +145,27 @@ sub _check_opts {
     }
 
     return \%proj_opts;
+}
+
+# initialize internal state
+sub _init {
+    my ($self) = @_;
+    # length of the longest spec string
+    $self->{longest_spec} = 0;
+    # length of the longest outcome string
+    $self->{longest_outcome} = 0;
+    # used to keep track of unique outcomes
+    $self->{outcomes} = {};
+    $self->{outcome_num} = 0;
+    # index 0 of outcomelist is reserved for the AM algorithm
+    $self->{outcomelist} = [''];
+    # 0 means number of data columns has not been determined
+    $self->{num_feats} = 0;
+
+    $self->{testItems} = [];
+    $self->{data} = [];
+    $self->{outcome} = [];
+    $self->{spec} = [];
 }
 
 =head2 C<base_path>
@@ -288,6 +302,10 @@ a data item.
 sub var_format {
     my ($self) = @_;
 
+    if(!$self->num_variables){
+        croak "must add data before calling var_format";
+    }
+
     return join " ", map { "%-$_.${_}s" }
         @{ $self->{longest_variables} };
 }
@@ -300,6 +318,10 @@ Returns a format string for printing a spec string from the data set.
 sub spec_format {
     my ($self, $spec_format) = @_;
 
+    if(!$self->num_variables){
+        croak "must add data before calling spec_format";
+    }
+
     my $length = $self->{longest_spec};
     return "%-$length.${length}s";
 }
@@ -311,6 +333,11 @@ Returns (and/or sets) a format string for printing a "long" outcome.
 =cut
 sub outcome_format {
     my ($self) = @_;
+
+    if(!$self->num_variables){
+        croak "must add data before calling outcome_format";
+    }
+
     my $length = $self->{longest_outcome};
     return "%-$length.${length}s";
 }
@@ -323,6 +350,11 @@ Returns the format string for printing the number of data items.
 =cut
 sub data_format {
     my ($self) = @_;
+
+    if(!$self->num_variables){
+        croak "must add data before calling data_format";
+    }
+
     return '%' . $self->num_exemplars . '.0u';
 }
 
@@ -377,7 +409,7 @@ sub _outcome_to_num {
     return $self->{outcometonum};
 }
 
-#read data set, calling _add_data for each item found in the data file.
+#read data set, calling add_data for each item found in the data file.
 #Also set spec_format, data_format and var_format.
 # Sets octonum, outcomelist, and outcometonum
 sub _read_data_set {
@@ -400,7 +432,7 @@ sub _read_data_set {
     # total lines in data file
     my $line_num = 0;
     while (my ($data, $spec, $short, $long) = $data_sub->()) {
-        $self->_add_data($data, $spec, $short, $long);
+        $self->add_data($data, $spec, $short, $long);
     }
     $log->debug( 'Data file: ' . $self->num_exemplars );
 
@@ -463,9 +495,16 @@ sub _read_data_outcome_sub {
     };
 }
 
+=head2 C<add_data>
+
+Adds the arguments as a new data exemplar. There are four required
+arguments: an array ref containing the data variables, the spec, the
+short outcome string, and the long outcome string.
+
+=cut
 # $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
-sub _add_data {
+sub add_data {
     my ($self, $data, $spec, $short, $long) = @_;
 
     $self->_check_variables($data, $spec);
