@@ -448,7 +448,7 @@ sub _read_data_sub {
         my $line = <$data_fh>;
         return unless $line;
         # cross-platform chomp
-        $line =~ s/[\n\r]+$//;
+        $line =~ s/\R$//;
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
@@ -465,7 +465,7 @@ sub _read_outcome_sub {
         my $line = <$outcome_fh>;
         return unless $line;
         #cross-platform chomp
-        $line =~ s/[\n\r]+$//;
+        $line =~ s/\R$//;
         my ( $short, $long ) = split /\s+/, $line, 2;
         return ($short, $long);
     };
