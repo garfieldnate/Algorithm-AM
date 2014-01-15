@@ -12,11 +12,15 @@ check that data and test and outcome lines are formatted properly, don't just as
 
 perhaps require/allow user to input number of variables in their vectors in the constructor?
 
+Chomp \R instead of whatever is done now for cross-platform chomp
+
 error checking for getting data data at a specific index; make sure it's a legal index.
 
 possible create a DataSet class to pass to new Projects.
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
+
+Use undef instead of increment for making unique string lists using hashes.
 
 It seems Theron expected no more than 60 data columns. Maybe warn somewhere if more than that are used.
 
