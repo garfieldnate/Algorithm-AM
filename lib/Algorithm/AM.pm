@@ -332,6 +332,8 @@ sub print_summary {
 1;
 __DATA__
 
+# line 1000 "start eval"
+
 #print to amcpresults file instead of to the screen
 #TODO: move file choice to different module, and use Log::Any in this one.
 $logger->remove('Screen');
@@ -350,6 +352,7 @@ $self->{beginhook}->($self, $data);
 
 my $left = scalar $project->num_test_items;
 foreach my $item_number (0 .. $project->num_test_items - 1) {
+# line 1100 "loop items"
     $logger->debug("Test items left: $left");
     --$left;
     my $t = $project->get_test_item($item_number);
@@ -388,6 +391,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
+# line 1200 "repeat"
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
@@ -405,6 +409,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         }
 
         for ( my $i = $data->{datacap} ; $i ; ) {
+# line 1300 "data hook"
             --$i;
             # skip this data item if the datahook returns false
             # TODO: this and the next one below would be better in an if
@@ -446,6 +451,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                 $self->{subtooutcome}->{$context} = $outcome;
             }
         }
+# line 1400 "given"
         if ( exists $self->{subtooutcome}->{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
@@ -453,12 +459,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             delete $self->{subtooutcome}->{$nullcontext}, ++$self->{eg} if $self->{exclude_given};
 ## end exclude given;
         }
+# line 1500 "print summary"
 
         #TODO: choose Nulls and Gang value here instead of in regex for eval string
         $self->print_summary($data);
         $logger->info('Test item is in the data.')
           if $testindata;
 
+# line 1600 "call XS"
         $self->_fillandcount(X);
         $grandtotal = $self->{pointers}->{'grandtotal'};
         unless ($grandtotal) {
@@ -475,6 +483,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         my $outcome_format = $project->outcome_format;
         my $data_format = $project->data_format;
 
+# line 1700 "calculate results"
         #TODO: put all of this information in a return value or something!
         $data->{pointermax}    = "";
         $logger->info('Statistical Summary');
@@ -510,6 +519,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         }
 
 ## begin analogical set
+# line 1800 "analogical set"
         my @datalist = ();
         foreach my $k ( keys %{$self->{pointers}} ) {
             my $p = $self->{pointers}->{$k};
@@ -540,6 +550,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## end analogical set
 
 ## begin gang
+# line 1900 "start gangs"
         #TODO: explain the magic below
         $logger->info('Gang effects');
         my $dashes = '-' x ( $longest + 10 );
@@ -596,6 +607,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                     )
                 );
 ## begin skip gang list
+# line 2000 "skip gang list"
                 my $i;
                 for (
                     $i = $self->{itemcontextchainhead}->{$k} ;
@@ -676,6 +688,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     }
     $self->{endtesthook}->($self, $data);
 }
+# line 2100 "end eval"
 
 ( $sec, $min, $hour ) = localtime();
 $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
