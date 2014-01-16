@@ -360,7 +360,8 @@ sub data_format {
 
 =head2 C<short_outcome_index>
 
-Returns the index of the given "short" outcome in outcomelist.
+Returns the index of the given "short" outcome in outcomelist, or
+-1 if it is not in the list.
 
 This is obviously not very transparent, as outcomelist is only
 accessible via a private method. In the future this will be
@@ -369,7 +370,10 @@ done away with.
 =cut
 sub short_outcome_index {
     my ($self, $outcome) = @_;
-    return $self->{octonum}{$outcome};
+    if(exists $self->{octonum}{$outcome}){
+        return $self->{octonum}{$outcome};
+    }
+    return -1;
 }
 
 # Used by AM.pm to retrieve the arrayref containing all of the "short"
@@ -453,7 +457,7 @@ sub _read_data_sub {
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
         # return $outcome twice for "short" and "long" versions
-        return (\@data_vars, $spec, $outcome, $outcome);
+        return (\@data_vars, $spec, $outcome);
     };
 }
 
@@ -508,42 +512,8 @@ sub add_data {
     my ($self, $data, $spec, $short, $long) = @_;
 
     $self->_check_variables($data, $spec);
-
-    if((my $l = length $spec) > $self->{longest_spec}){
-        $self->{longest_spec} = $l;
-    }
-
-    # longest_variables is an arrayref, each index holding the
-    # length of the longest variable in that column.
-    # Initialize it on addition of first data item.
-    if(!$self->{longest_variables}[0]){
-        $self->{longest_variables} = [((0) x scalar @$data)]
-    }
-    for my $i (0 .. $#$data ) {
-        my $l = length $data->[$i];
-        $self->{longest_variables}[$i] = $l
-            if $l > $self->{longest_variables}[$i];
-    }
-
-    # keep track of outcomes.
-    # Variables:
-    #   outcomes is a hash of the outcomes used for tracking unique
-    #     values
-    #   outcome_num is the total number of outcomes so far
-    #   outcometonum is the index of a "long" outcome in outcomelist
-    #   octonum is the index of a "short" outcome in outcomelist
-    #   outcomelist is a list of the unique outcomes
-    if(!$self->{outcomes}->{$long}){
-        $self->{outcome_num}++;
-        $self->{outcomes}->{$long} = $self->{outcome_num};
-        $self->{outcometonum}{$long} ||= $self->{outcome_num};
-        push @{$self->{outcomelist}}, $long;
-    }
-    $self->{octonum}{$short}   ||= $self->{outcome_num};
-
-    if( (my $l = length $long) > $self->{longest_outcome}) {
-        $self->{longest_outcome} = $l;
-    }
+    $self->_update_format_vars($data, $spec, $short, $long);
+    $self->_update_outcome_vars($short, $long);
 
     # store the new data item
     push @{$self->{spec}}, $spec;
@@ -574,6 +544,57 @@ sub _check_variables {
     return;
 }
 
+# update format variables used for printing;
+# needs updating every data item.
+sub _update_format_vars {
+    my ($self, $data, $spec, $short, $long) = @_;
+    defined($long) or $long = $short;
+
+    if((my $l = length $spec) > $self->{longest_spec}){
+        $self->{longest_spec} = $l;
+    }
+
+    # longest_variables is an arrayref, each index holding the
+    # length of the longest variable in that column.
+    # Initialize it on addition of first data item.
+    if(!$self->{longest_variables}[0]){
+        $self->{longest_variables} = [((0) x scalar @$data)]
+    }
+    for my $i (0 .. $#$data ) {
+        my $l = length $data->[$i];
+        $self->{longest_variables}[$i] = $l
+            if $l > $self->{longest_variables}[$i];
+    }
+
+    if( (my $l = length $long) > $self->{longest_outcome}) {
+        $self->{longest_outcome} = $l;
+    }
+    return;
+}
+
+
+# keep track of outcomes; needs updating for every data/test item.
+# Variables:
+#   outcomes is a hash of the outcomes used for tracking unique
+#     values
+#   outcome_num is the total number of outcomes so far
+#   outcometonum is the index of a "long" outcome in outcomelist
+#   octonum is the index of a "short" outcome in outcomelist
+#   outcomelist is a list of the unique outcomes
+sub _update_outcome_vars {
+    my ($self, $short, $long) = @_;
+
+    defined($long) or $long = $short;
+
+    if(!$self->{outcomes}->{$long}){
+        $self->{outcome_num}++;
+        $self->{outcomes}->{$long} = $self->{outcome_num};
+        $self->{outcometonum}{$long} ||= $self->{outcome_num};
+        push @{$self->{outcomelist}}, $long;
+    }
+    $self->{octonum}{$short}   ||= $self->{outcome_num};
+}
+
 # Sets the testItems to an arrayref of [outcome, [data], spec] for each
 # item in the test file (or data file if there is none). outcome is
 # the index in outcomelist.
@@ -585,13 +606,13 @@ sub _read_test_set {
     if($test_file->exists){
         my $test_sub = $self->_read_data_sub($test_file->openr_utf8);
         while(my ($data, $spec, $outcome) = $test_sub->()){
-            $self->_add_test($data, $spec, $outcome);
+            $self->add_test($data, $spec, $outcome);
         }
     }else{
         carp "Couldn't open $test_file";
         $log->warn(qq{Couldn't open $test_file; } .
             q{will run data file against itself});
-        # we don't need the extra processing of _add_test
+        # we don't need the extra processing of add_test
         @{$self->{testItems}} = map {[
             $self->{outcome}->[$_],
             $self->{data}->[$_],
@@ -601,13 +622,23 @@ sub _read_test_set {
     return;
 }
 
-sub _add_test {
-    my ($self, $data, $spec, $outcome) = @_;
+=head2 C<add_test>
+
+Add a test item to the project. The arguments are the same as for
+c<add_data>.
+
+=cut
+sub add_test {
+    my ($self, $data, $spec, $short, $long) = @_;
     # TODO: make sure outcome exists in index
 
     $self->_check_variables($data, $spec);
+    # if it's a new outcome, add it to the list
+    if($self->short_outcome_index($short) == -1){
+        $self->_update_outcome_vars($short, $long);
+    }
     push @{$self->{testItems}}, [
-        $self->short_outcome_index($outcome),
+        $self->short_outcome_index($short),
         $data,
         $spec || ''
         ];

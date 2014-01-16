@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 63;
+plan tests => 68;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -12,7 +12,6 @@ use Path::Tiny;
 my $data_dir = path($Bin, 'data');
 
 test_add_data();
-# test_add_test();
 
 test_param_checking();
 test_paths();
@@ -146,8 +145,6 @@ sub test_data {
     is($project->num_outcomes, 0, 'new project has 0 outcomes');
     is($project->num_variables, 0, 'new project has 0 variables');
 
-
-
     my %inputs = (
         'no commas' => Algorithm::AM::Project->new(
             path($data_dir, 'chapter3'), commas => 'no'),
@@ -180,7 +177,7 @@ sub test_data {
         'correct number of outcomes (with outcome file)');
     is($outcome_project->get_outcome(1), 'ee',
         'correct outcome returned from list (with outcome file)');
-
+    note explain $outcome_project->{outcomelist};
     return;
 }
 
@@ -205,9 +202,19 @@ sub test_data_errors {
 }
 
 # test the project test data
-sub test_test_items{
+sub test_test_items {
     my $project = Algorithm::AM::Project->new();
     is($project->num_test_items, 0, 'no test items in empty project');
+
+    $project->add_test([qw(a b c)], 'abc', 'foo', 'foo bar');
+    is($project->num_test_items, 1, 'test item added');
+    is($project->num_outcomes, 1, '1 outcome added via test item');
+    is($project->get_outcome(1), 'foo bar',
+        'correct outcome from test item');
+    is($project->num_variables, 3, 'data size set via test item');
+    is($project->short_outcome_index('foo'), 1,
+        q<correct index of 'foo' outcome>);
+    return;
 }
 
 # test all data for use by AM.pm (and the hooks) only, with and
@@ -223,7 +230,6 @@ sub test_private_data {
         "empty project has empty data");
     is_deeply($project->_specs, [],
         "empty project has empty specs");
-
 
     my %inputs = (
         'no commas' => Algorithm::AM::Project->new(
