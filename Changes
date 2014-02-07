@@ -2,6 +2,7 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
+    Using C99 datatypes in AM.xs to ensure correct bit sizes
 2.35      2013-12-05 19:50:27 America/Los_Angeles
     created Algorithm::AM::Project to handle all data file processing
         - also checks size of data vectors!
