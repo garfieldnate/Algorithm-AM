@@ -4,8 +4,9 @@
 
 #include "ppport.h"
 
-typedef unsigned short USHORT;
-typedef unsigned long ULONG;
+#include "stdint.h"
+typedef uint16_t AM_SHORT;
+typedef uint32_t AM_LONG;
 
 /*
  * structure for the supracontexts
@@ -36,7 +37,7 @@ typedef struct AM_supra {
    * integers makes it easy to take
    * intersections (see lattice.pod).
    */
-  USHORT *data;
+  AM_SHORT *data;
 
   /* number of supracontexts that contain
    * precisely these subcontexts;
@@ -56,7 +57,7 @@ typedef struct AM_supra {
    * count to get what we want.
    *
    */
-  USHORT count;
+  AM_SHORT count;
 
   /*
    * used to implement two linked lists
@@ -69,7 +70,7 @@ typedef struct AM_supra {
    * memory that can be used for new
    * supracontexts.
    */
-  USHORT next;
+  AM_SHORT next;
 
   /*
    * used during the filling of the
@@ -124,7 +125,7 @@ typedef struct AM_guts {
    *
    */
 
-  USHORT *lptr[4];
+  AM_SHORT *lptr[4];
   AM_SUPRA *sptr[4];
 
   /* The rest of these come from Parallel.pm -- look there */
@@ -196,8 +197,8 @@ MGVTBL AMguts_vtab = {
  *
  */
 
-ULONG tens[16]; /* 10, 10*2, 10*4, ... */
-ULONG ones[16]; /*  1,  1*2,  1*4, ... */
+AM_LONG tens[16]; /* 10, 10*2, 10*4, ... */
+AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
 
 /*
  * function: normalize(SV *s)
@@ -219,14 +220,14 @@ ULONG ones[16]; /*  1,  1*2,  1*4, ... */
  */
 
 normalize(SV *s) {
-  ULONG dspace[10];
-  ULONG qspace[10];
+  AM_LONG dspace[10];
+  AM_LONG qspace[10];
   char outspace[55];
-  ULONG *dividend, *quotient, *dptr, *qptr;
+  AM_LONG *dividend, *quotient, *dptr, *qptr;
   char *outptr;
   unsigned int outlength = 0;
-  ULONG *p = (ULONG *) SvPVX(s);
-  STRLEN length = SvCUR(s) / sizeof(ULONG);
+  AM_LONG *p = (AM_LONG *) SvPVX(s);
+  STRLEN length = SvCUR(s) / sizeof(AM_LONG);
   long double nn = 0;
   int j;
 
@@ -238,11 +239,11 @@ normalize(SV *s) {
 
   dividend = &dspace[0];
   quotient = &qspace[0];
-  Copy(p, dividend, length, sizeof(ULONG));
+  Copy(p, dividend, length, sizeof(AM_LONG));
   outptr = outspace + 54;
 
   while (1) {
-    ULONG *temp, carry = 0;
+    AM_LONG *temp, carry = 0;
     while (length && (*(dividend + length - 1) == 0)) --length;
     if (length == 0) {
       sv_setpvn(s, outptr, outlength);
@@ -281,10 +282,10 @@ MODULE = Algorithm::AM		PACKAGE = Algorithm::AM
 
 BOOT:
   {
-    ULONG ten = 10;
-    ULONG one = 1;
-    ULONG *tensptr = &tens[0];
-    ULONG *onesptr = &ones[0];
+    AM_LONG ten = 10;
+    AM_LONG one = 1;
+    AM_LONG *tensptr = &tens[0];
+    AM_LONG *onesptr = &ones[0];
     unsigned int i;
     for (i = 16; i; i--) {
       *tensptr = ten;
@@ -335,9 +336,9 @@ _initialize(...)
 
   for (i = 0; i < 4; ++i) {
     UV v = SvUVX(guts.activeVar[i]);
-    Newz(0, guts.lptr[i], 1 << v, USHORT);
+    Newz(0, guts.lptr[i], 1 << v, AM_SHORT);
     Newz(0, guts.sptr[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */
-    Newz(0, guts.sptr[i][0].data, 2, USHORT);
+    Newz(0, guts.sptr[i][0].data, 2, AM_SHORT);
   }
 
   /* Perl magic invoked here */
@@ -355,23 +356,23 @@ _fillandcount(...)
   HV *project;
   AM_GUTS *guts;
   MAGIC *mg;
-  USHORT activeVar[4];
-  USHORT **lptr;
+  AM_SHORT activeVar[4];
+  AM_SHORT **lptr;
   AM_SUPRA **sptr;
-  USHORT nptr[4];/* this helps us manage the free list in sptr[i] */
-  USHORT subcontextnumber;
-  USHORT *subcontext;
-  USHORT *suboutcome;
+  AM_SHORT nptr[4];/* this helps us manage the free list in sptr[i] */
+  AM_SHORT subcontextnumber;
+  AM_SHORT *subcontext;
+  AM_SHORT *suboutcome;
   SV **outcome, **itemcontextchain, **sum;
   HV *itemcontextchainhead, *subtooutcome, *contextsize, *pointers, *gang;
   IV numoutcomes;
   HE *he;
-  ULONG grandtotal[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  AM_LONG grandtotal[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   SV *tempsv;
   int chunk, i;
-  USHORT gaps[16];
-  USHORT *intersect, *intersectlist;
-  USHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
+  AM_SHORT gaps[16];
+  AM_SHORT *intersect, *intersectlist;
+  AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
   project = (HV *) SvRV(ST(0));
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
@@ -386,12 +387,12 @@ _fillandcount(...)
   lptr = guts->lptr;
   sptr = guts->sptr;
   for (chunk = 0; chunk < 4; ++chunk) {
-    activeVar[chunk] = (USHORT) SvUVX(guts->activeVar[chunk]);
-    Zero(lptr[chunk], 1 << activeVar[chunk], USHORT);
+    activeVar[chunk] = (AM_SHORT) SvUVX(guts->activeVar[chunk]);
+    Zero(lptr[chunk], 1 << activeVar[chunk], AM_SHORT);
     sptr[chunk][0].next = 0;
     nptr[chunk] = 1;
     for (i = 1; i < 1 << (activeVar[chunk] + 1); ++i) /* CHANGED */
-      sptr[chunk][i].next = (USHORT) i + 1;
+      sptr[chunk][i].next = (AM_SHORT) i + 1;
   }
 
   /*
@@ -409,30 +410,30 @@ _fillandcount(...)
    */
 
   subtooutcome = guts->subtooutcome;
-  subcontextnumber = (USHORT) HvUSEDKEYS(subtooutcome);
-  Newz(0, subcontext, 4 * (subcontextnumber + 1), USHORT);
+  subcontextnumber = (AM_SHORT) HvUSEDKEYS(subtooutcome);
+  Newz(0, subcontext, 4 * (subcontextnumber + 1), AM_SHORT);
   subcontext += 4 * subcontextnumber;
-  Newz(0, suboutcome, subcontextnumber + 1, USHORT);
+  Newz(0, suboutcome, subcontextnumber + 1, AM_SHORT);
   suboutcome += subcontextnumber;
-  Newz(0, intersectlist, subcontextnumber + 1, USHORT);
-  Newz(0, intersectlist2, subcontextnumber + 1, USHORT);
+  Newz(0, intersectlist, subcontextnumber + 1, AM_SHORT);
+  Newz(0, intersectlist2, subcontextnumber + 1, AM_SHORT);
   ilist2top = intersectlist2 + subcontextnumber;
-  Newz(0, intersectlist3, subcontextnumber + 1, USHORT);
+  Newz(0, intersectlist3, subcontextnumber + 1, AM_SHORT);
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(subtooutcome);
   while (he = hv_iternext(subtooutcome)) {
-    USHORT *contextptr = (USHORT *) HeKEY(he);
-    USHORT outcome = (USHORT) SvUVX(HeVAL(he));
+    AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
+    AM_SHORT outcome = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < 4; ++chunk, ++contextptr) {
-      USHORT active = activeVar[chunk];
-      USHORT *lattice = lptr[chunk];
+      AM_SHORT active = activeVar[chunk];
+      AM_SHORT *lattice = lptr[chunk];
       AM_SUPRA *supralist = sptr[chunk];
-      USHORT nextsupra = nptr[chunk];
-      USHORT context = *contextptr;
+      AM_SHORT nextsupra = nptr[chunk];
+      AM_SHORT context = *contextptr;
       AM_SUPRA *p, *c;
-      USHORT pi, ci;
-      USHORT d, t, tt, numgaps = 0;
+      AM_SHORT pi, ci;
+      AM_SHORT d, t, tt, numgaps = 0;
 
       /* We want to add subcontextnumber to the appropriate
        * supracontexts in the four smaller lattices.
@@ -504,9 +505,9 @@ _fillandcount(...)
       if (context == 0) {
 	for (p = supralist + supralist->next;
 	     p != supralist; p = supralist + p->next) {
-	  USHORT *data;
-	  Newz(0, data, p->data[0] + 3, USHORT);
-	  Copy(p->data + 2, data + 3, p->data[0], USHORT);
+	  AM_SHORT *data;
+	  Newz(0, data, p->data[0] + 3, AM_SHORT);
+	  Copy(p->data + 2, data + 3, p->data[0], AM_SHORT);
 	  data[2] = subcontextnumber;
 	  data[0] = p->data[0] + 1;
 	  Safefree(p->data);
@@ -520,13 +521,13 @@ _fillandcount(...)
       * move pointers
       */
 
-	  USHORT count = 0;
+	  AM_SHORT count = 0;
 	  ci = nptr[chunk];
 	  nptr[chunk] = supralist[ci].next;
 	  c = supralist + ci;
 	  c->next = supralist->next;
 	  supralist->next = ci;
-	  Newz(0, c->data, 3, USHORT);
+	  Newz(0, c->data, 3, AM_SHORT);
 	  c->data[2] = subcontextnumber;
 	  c->data[0] = 1;
 	  for (i = 0; i < (1 << active); ++i) {
@@ -557,8 +558,8 @@ _fillandcount(...)
       c->next = p->next;
       p->next = ci;
       c->count = 1;
-      Newz(0, c->data, p->data[0] + 3, USHORT);
-      Copy(p->data + 2, c->data + 3, p->data[0], USHORT);
+      Newz(0, c->data, p->data[0] + 3, AM_SHORT);
+      Copy(p->data + 2, c->data + 3, p->data[0], AM_SHORT);
       c->data[2] = subcontextnumber;
       c->data[0] = p->data[0] + 1;
       lattice[context] = ci;
@@ -584,8 +585,8 @@ _fillandcount(...)
   	  c->next = p->next;
   	  p->next = ci;
   	  c->count = 1;
-  	  Newz(0, c->data, p->data[0] + 3, USHORT);
-  	  Copy(p->data + 2, c->data + 3, p->data[0], USHORT);
+  	  Newz(0, c->data, p->data[0] + 3, AM_SHORT);
+  	  Copy(p->data + 2, c->data + 3, p->data[0], AM_SHORT);
   	  c->data[2] = subcontextnumber;
   	  c->data[0] = p->data[0] + 1;
   	  lattice[d] = ci;
@@ -603,7 +604,7 @@ _fillandcount(...)
 	  Safefree(supralist[i].data);
   	  p->next = supralist[i].next;
   	  supralist[i].next = nextsupra;
-  	  nextsupra = (USHORT) i;
+  	  nextsupra = (AM_SHORT) i;
   	} else {
   	  p = supralist + p->next;
   	  p->touched = 0;
@@ -642,9 +643,9 @@ _fillandcount(...)
   if (SvUVX(ST(1))) {
     /* squared */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    USHORT outcome;
-    USHORT length;
-    unsigned short *temp, *i, *j, *k;
+    AM_SHORT outcome;
+    AM_SHORT length;
+    uint16_t *temp, *i, *j, *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
@@ -732,10 +733,10 @@ _fillandcount(...)
 
        /* count pointers */
 	    if (length) {
-	      USHORT i;
-	      ULONG pointercount = 0;
-	      ULONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-	      ULONG mask = 0xffff;
+	      AM_SHORT i;
+	      AM_LONG pointercount = 0;
+	      AM_LONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	      AM_LONG mask = 0xffff;
 
 	      count[0]  = p0->count;
 
@@ -761,14 +762,14 @@ _fillandcount(...)
 	      count[2] &= mask;
 
 	      for (i = 0; i < length; ++i)
-		pointercount += (ULONG)
+		pointercount += (AM_LONG)
 		  SvUV(*hv_fetch(contextsize,
 				 (char *) (subcontext + (4 * intersectlist[i])),
 				 8, 0));
 	      if (pointercount & 0xffff0000) {
-		USHORT pchi = (USHORT) (pointercount >> 16);
-		USHORT pclo = (USHORT) (pointercount & 0xffff);
-		ULONG hiprod[6];
+		AM_SHORT pchi = (AM_SHORT) (pointercount >> 16);
+		AM_SHORT pclo = (AM_SHORT) (pointercount & 0xffff);
+		AM_LONG hiprod[6];
 		hiprod[1] = pchi * count[0];
 		hiprod[2] = pchi * count[1];
 		hiprod[3] = pchi * count[2];
@@ -814,18 +815,18 @@ _fillandcount(...)
 	      for (i = 0; i < length; ++i) {
 		int j;
 		SV *tempsv;
-		ULONG *p;
+		AM_LONG *p;
 		tempsv = *hv_fetch(pointers,
 				   (char *) (subcontext + (4 * intersectlist[i])),
 				   8, 1);
 		if (!SvPOK(tempsv)) {
 		  SvUPGRADE(tempsv, SVt_PVNV);
-		  SvGROW(tempsv, 8 * sizeof(ULONG) + 1);
-		  Zero(SvPVX(tempsv), 8, ULONG);
-		  SvCUR_set(tempsv, 8 * sizeof(ULONG));
+		  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
+		  Zero(SvPVX(tempsv), 8, AM_LONG);
+		  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
 		  SvPOK_on(tempsv);
 		}
-		p = (ULONG *) SvPVX(tempsv);
+		p = (AM_LONG *) SvPVX(tempsv);
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
 		  *(p + j + 1) += *(p + j) >> 16;
@@ -851,9 +852,9 @@ _fillandcount(...)
   {
     /* linear */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    USHORT outcome;
-    USHORT length;
-    unsigned short *temp, *i, *j, *k;
+    AM_SHORT outcome;
+    AM_SHORT length;
+    uint16_t *temp, *i, *j, *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
@@ -941,9 +942,9 @@ _fillandcount(...)
 
        /* count occurrences */
 	    if (length) {
-	      USHORT i;
-	      ULONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-	      ULONG mask = 0xffff;
+	      AM_SHORT i;
+	      AM_LONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	      AM_LONG mask = 0xffff;
 
 	      count[0]  = p0->count;
 
@@ -971,18 +972,18 @@ _fillandcount(...)
 	      for (i = 0; i < length; ++i) {
 		int j;
 		SV *tempsv;
-		ULONG *p;
+		AM_LONG *p;
 		tempsv = *hv_fetch(pointers,
 				   (char *) (subcontext + (4 * intersectlist[i])),
 				   8, 1);
 		if (!SvPOK(tempsv)) {
 		  SvUPGRADE(tempsv, SVt_PVNV);
-		  SvGROW(tempsv, 8 * sizeof(ULONG) + 1);
-		  Zero(SvPVX(tempsv), 8, ULONG);
-		  SvCUR_set(tempsv, 8 * sizeof(ULONG));
+		  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
+		  Zero(SvPVX(tempsv), 8, AM_LONG);
+		  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
 		  SvPOK_on(tempsv);
 		}
-		p = (ULONG *) SvPVX(tempsv);
+		p = (AM_LONG *) SvPVX(tempsv);
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
 		  *(p + j + 1) += *(p + j) >> 16;
@@ -1028,17 +1029,17 @@ _fillandcount(...)
   numoutcomes = guts->numoutcomes;
   hv_iterinit(pointers);
   while (he = hv_iternext(pointers)) {
-    ULONG count;
-    USHORT counthi, countlo;
-    ULONG p[8];
-    ULONG gangcount[8];
-    USHORT thisoutcome;
+    AM_LONG count;
+    AM_SHORT counthi, countlo;
+    AM_LONG p[8];
+    AM_LONG gangcount[8];
+    AM_SHORT thisoutcome;
     SV *dataitem;
-    Copy(SvPVX(HeVAL(he)), p, 8, ULONG);
-    tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(USHORT), 0);
-    count = (ULONG) SvUVX(tempsv);
-    counthi = (USHORT) (count >> 16);
-    countlo = (USHORT) (count & 0xffff);
+    Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
+    tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
+    count = (AM_LONG) SvUVX(tempsv);
+    counthi = (AM_SHORT) (count >> 16);
+    countlo = (AM_SHORT) (count & 0xffff);
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
       gangcount[i] += countlo * p[i];
@@ -1058,27 +1059,27 @@ _fillandcount(...)
       grandtotal[i] &= 0xffff;
     }
     grandtotal[7] += gangcount[7];
-    tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(USHORT), 1);
+    tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(AM_SHORT), 1);
     SvUPGRADE(tempsv, SVt_PVNV);
-    sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(ULONG));
+    sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
     normalize(tempsv);
     normalize(HeVAL(he));
 
-    tempsv = *hv_fetch(subtooutcome, HeKEY(he), 4 * sizeof(USHORT), 0);
-    thisoutcome = (USHORT) SvUVX(tempsv);
+    tempsv = *hv_fetch(subtooutcome, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
+    thisoutcome = (AM_SHORT) SvUVX(tempsv);
     if (thisoutcome) {
-      ULONG *s = (ULONG *) SvPVX(sum[thisoutcome]);
+      AM_LONG *s = (AM_LONG *) SvPVX(sum[thisoutcome]);
       for (i = 0; i < 7; ++i) {
 	*(s + i) += gangcount[i];
 	*(s + i + 1) += *(s + i) >> 16;
 	*(s + i) &= 0xffff;
       }
     } else {
-      dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(USHORT), 0);
+      dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
       while (SvIOK(dataitem)) {
 	IV datanum = SvIVX(dataitem);
 	IV ocnum = SvIVX(outcome[datanum]);
-	ULONG *s = (ULONG *) SvPVX(sum[ocnum]);
+	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
 	for (i = 0; i < 7; ++i) {
 	  *(s + i) += p[i];
 	  *(s + i + 1) += *(s + i) >> 16;
@@ -1091,7 +1092,7 @@ _fillandcount(...)
   for (i = 1; i <= numoutcomes; ++i) normalize(sum[i]);
   tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
   SvUPGRADE(tempsv, SVt_PVNV);
-  sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(ULONG));
+  sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
   normalize(tempsv);
 
   Safefree(subcontext);
