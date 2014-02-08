@@ -35,7 +35,6 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
-    "Diagnostics" => 0,
     "File::Find" => 0,
     "File::Slurp" => 0,
     "File::Temp" => 0,
@@ -48,7 +47,7 @@ my %WriteMakefileArgs = (
     "subs" => 0,
     "vars" => 0
   },
-  "VERSION" => "2.36",
+  "VERSION" => "2.37",
   "test" => {
     "TESTS" => "t/*.t"
   }

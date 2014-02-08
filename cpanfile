@@ -14,7 +14,6 @@ requires "strict" => "0";
 requires "warnings" => "0";
 
 on 'test' => sub {
-  requires "Diagnostics" => "0";
   requires "File::Find" => "0";
   requires "File::Slurp" => "0";
   requires "File::Temp" => "0";

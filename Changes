@@ -2,6 +2,8 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
+
+2.37      2014-02-07 18:52:07 America/Los_Angeles
     removed non-existent dependency that prevented installation
 2.36      2014-02-07 16:24:26 America/Los_Angeles
     remove given/when (which trigger 'experimental' warnings)
