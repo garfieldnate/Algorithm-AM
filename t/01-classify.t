@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use Diagnostics;
 use Algorithm::AM;
 # use AM::Parallel;
 use Test::More 0.88;
