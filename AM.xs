@@ -4,9 +4,8 @@
 
 #include "ppport.h"
 
-#include "stdint.h"
-typedef uint16_t AM_SHORT;
-typedef uint32_t AM_LONG;
+typedef unsigned short AM_SHORT;
+typedef unsigned long AM_LONG;
 
 /*
  * structure for the supracontexts
@@ -645,7 +644,7 @@ _fillandcount(...)
     AM_SUPRA *p0, *p1, *p2, *p3;
     AM_SHORT outcome;
     AM_SHORT length;
-    uint16_t *temp, *i, *j, *k;
+    unsigned short *temp, *i, *j, *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
@@ -854,7 +853,7 @@ _fillandcount(...)
     AM_SUPRA *p0, *p1, *p2, *p3;
     AM_SHORT outcome;
     AM_SHORT length;
-    uint16_t *temp, *i, *j, *k;
+    unsigned short *temp, *i, *j, *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
