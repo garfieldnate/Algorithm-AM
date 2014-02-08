@@ -166,6 +166,7 @@ sub _init {
     $self->{data} = [];
     $self->{outcome} = [];
     $self->{spec} = [];
+    return;
 }
 
 =head2 C<base_path>
@@ -316,7 +317,7 @@ Returns a format string for printing a spec string from the data set.
 
 =cut
 sub spec_format {
-    my ($self, $spec_format) = @_;
+    my ($self) = @_;
 
     if(!$self->num_variables){
         croak "must add data before calling spec_format";
@@ -433,8 +434,6 @@ sub _read_data_set {
         $data_sub = $self->_read_data_sub($data_path->openr_utf8);
     }
 
-    # total lines in data file
-    my $line_num = 0;
     while (my ($data, $spec, $short, $long) = $data_sub->()) {
         $self->add_data($data, $spec, $short, $long);
     }
@@ -593,6 +592,7 @@ sub _update_outcome_vars {
         push @{$self->{outcomelist}}, $long;
     }
     $self->{octonum}{$short}   ||= $self->{outcome_num};
+    return;
 }
 
 # Sets the testItems to an arrayref of [outcome, [data], spec] for each
