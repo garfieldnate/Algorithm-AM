@@ -13,6 +13,7 @@ our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
 use Data::Dumper;
 use Algorithm::AM::Project;
+use Devel::Peek 'Dump';
 
 require XSLoader;
 XSLoader::load();
@@ -471,6 +472,10 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 # line 1600 "call XS"
         $self->_fillandcount(X);
         $grandtotal = $self->{pointers}->{'grandtotal'};
+
+        # DEBUG
+        Dump($grandtotal);
+
         unless ($grandtotal) {
             #TODO: is this tested yet?
             $logger->warn('No data items considered.  No prediction possible.');
