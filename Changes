@@ -2,7 +2,7 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
-
+    Added lots of print statements for trial release; need more info!
 2.38      2014-02-07 20:27:29 America/Los_Angeles
     changed back C99 datatypes until further testing
 2.37      2014-02-07 18:52:07 America/Los_Angeles

@@ -1,6 +1,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <stdio.h>
 
 #include "ppport.h"
 
@@ -227,11 +228,13 @@ normalize(SV *s) {
   unsigned int outlength = 0;
   AM_LONG *p = (AM_LONG *) SvPVX(s);
   STRLEN length = SvCUR(s) / sizeof(AM_LONG);
+  /* TODO: is this required to be a certain number of bits?*/
   long double nn = 0;
   int j;
 
   /* you can't put the for block in {}, or it doesn't work
    * ask me for details some time
+   * TODO: is this still necessary? (Nate)
    */
   for (j = 8; j; --j){
     /*   2^16    * nn +           p[j-1] */
@@ -257,11 +260,77 @@ normalize(SV *s) {
       *dptr += carry << 16;
       *qptr = 0;
       for (i = 16; i; ) {
-	--i;
-	if (tens[i] <= *dptr) {
-	  *dptr -= tens[i];
-	  *qptr += ones[i];
-	}
+  --i;
+  if (tens[i] <= *dptr) {
+    *dptr -= tens[i];
+    *qptr += ones[i];
+  }
+      }
+      carry = *dptr;
+      --dptr;
+      --qptr;
+    }
+    --outptr;
+    *outptr = (char) (0x30 + *dividend) & 0x00ff;
+    ++outlength;
+    temp = dividend;
+    dividend = quotient;
+    quotient = temp;
+  }
+
+  SvNVX(s) = nn;
+  SvNOK_on(s);
+}
+
+normalize_debug(SV *s) {
+  AM_LONG dspace[10];
+  AM_LONG qspace[10];
+  char outspace[55];
+  AM_LONG *dividend, *quotient, *dptr, *qptr;
+  char *outptr;
+  unsigned int outlength = 0;
+  AM_LONG *p = (AM_LONG *) SvPVX(s);
+  STRLEN length = SvCUR(s) / sizeof(AM_LONG);
+  /* TODO: is this required to be a certain number of bits?*/
+  long double nn = 0;
+  int j;
+
+  fprintf(stderr, "--------\n");/*DEBUG*/
+  /* you can't put the for block in {}, or it doesn't work
+   * ask me for details some time
+   * TODO: is this still necessary? (Nate)
+   */
+  for (j = 8; j; --j){
+    /*   2^16    * nn +           p[j-1] */
+    nn = 65536.0 * nn + (double) *(p + j - 1);
+    fprintf(stderr, "%lu\n", *(p + j - 1));/*DEBUG*/
+    /* fprintf(stderr, "%Le\n", nn);*/
+  }
+
+  dividend = &dspace[0];
+  quotient = &qspace[0];
+  Copy(p, dividend, length, sizeof(AM_LONG));
+  outptr = outspace + 54;
+
+  while (1) {
+    AM_LONG *temp, carry = 0;
+    while (length && (*(dividend + length - 1) == 0)) --length;
+    if (length == 0) {
+      sv_setpvn(s, outptr, outlength);
+      break;
+    }
+    dptr = dividend + length - 1;
+    qptr = quotient + length - 1;
+    while (dptr >= dividend) {
+      unsigned int i;
+      *dptr += carry << 16;
+      *qptr = 0;
+      for (i = 16; i; ) {
+  --i;
+  if (tens[i] <= *dptr) {
+    *dptr -= tens[i];
+    *qptr += ones[i];
+  }
       }
       carry = *dptr;
       --dptr;
@@ -1106,7 +1175,8 @@ _fillandcount(...)
   tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
   SvUPGRADE(tempsv, SVt_PVNV);
   sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
-  normalize(tempsv);
+  fprintf(stderr, "normalizing grandtotal\n");/*DEBUG*/
+  normalize_debug(tempsv);
 
   Safefree(subcontext);
   Safefree(suboutcome);
