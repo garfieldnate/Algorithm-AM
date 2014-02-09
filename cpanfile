@@ -1,5 +1,6 @@
 requires "Carp" => "0";
 requires "Data::Dumper" => "0";
+requires "Devel::Peek" => "0";
 requires "Exporter::Easy" => "0";
 requires "IO::Handle" => "0";
 requires "Log::Any" => "0";
