@@ -233,8 +233,10 @@ normalize(SV *s) {
   /* you can't put the for block in {}, or it doesn't work
    * ask me for details some time
    */
-  for (j = 8; j; --j)
+  for (j = 8; j; --j){
+    /*   2^16    * nn +           p[j-1] */
     nn = 65536.0 * nn + (double) *(p + j - 1);
+  }
 
   dividend = &dspace[0];
   quotient = &qspace[0];
@@ -313,16 +315,28 @@ _initialize(...)
   MAGIC *mg;
   int i;
  PPCODE:
-  project = (HV *) SvRV(ST(0)); /* $self is here */
+  /* 9 arguments are passed to the _initialize method: */
+  /* $self, the AM object */
+  project = (HV *) SvRV(ST(0));
+  /* number of active variables in each lattice*/
   guts.activeVar = AvARRAY((AV *) SvRV(ST(1)));
+  /* array ref of "short" outcomes for whole data set*/
   guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
+  /* ??? */
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
+  /* ??? */
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
+  /* ??? */
   guts.subtooutcome = (HV *) SvRV(ST(5));
+  /* ??? */
   guts.contextsize = (HV *) SvRV(ST(6));
+  /* ??? */
   guts.pointers = (HV *) SvRV(ST(7));
+  /* ??? */
   guts.gang = (HV *) SvRV(ST(8));
+  /* number of pointers to each outcome */
   guts.sum = AvARRAY((AV *) SvRV(ST(9)));
+  /* ??? */
   guts.numoutcomes = av_len((AV *) SvRV(ST(9)));
 
   /*

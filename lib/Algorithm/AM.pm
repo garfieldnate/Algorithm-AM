@@ -404,6 +404,8 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         %{$self->{subtooutcome}}            = ();
         %{$self->{pointers}}                = ();
         %{$self->{gang}}                    = ();
+        # big ints are used in AM.xs; these consist of an
+        # array of 8 unsigned longs
         foreach (@{$self->{sum}}) {
             $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
         }
