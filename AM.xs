@@ -897,6 +897,7 @@ _fillandcount(...)
 		int j;
 		SV *tempsv;
 		AM_LONG *p;
+    /* TODO: explain this */
 		tempsv = *hv_fetch(pointers,
 				   (char *) (subcontext + (4 * intersectlist[i])),
 				   8, 1);
@@ -1109,6 +1110,11 @@ _fillandcount(...)
     AM_SHORT thisoutcome;
     SV *dataitem;
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
+
+    fprintf(stderr, "value of p for %s:\n", HeKEY(he));
+    for(i = 0; i < 8; i++)
+      fprintf(stderr, "%lu\n", p[i]);
+
     tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
     count = (AM_LONG) SvUVX(tempsv);
     counthi = (AM_SHORT) (high_bits(count));

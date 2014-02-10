@@ -2,7 +2,7 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
-
+    More debug printing
 2.39      2014-02-08 21:32:43 America/Los_Angeles
     Added lots of print statements for trial release; need more info!
 2.38      2014-02-07 20:27:29 America/Los_Angeles
