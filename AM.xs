@@ -1143,7 +1143,7 @@ _fillandcount(...)
     for (i = 0; i < 7; ++i) {
       fprintf(stderr, "before: %lu\n", grandtotal[i]);
       grandtotal[i] += gangcount[i];
-      carry(gangcount, i);
+      carry(grandtotal, i);
       fprintf(stderr, "after: %lu\n", grandtotal[i]);
     }
     fprintf(stderr, "before: %lu\n", grandtotal[i]);
