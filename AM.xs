@@ -1119,22 +1119,36 @@ _fillandcount(...)
     count = (AM_LONG) SvUVX(tempsv);
     counthi = (AM_SHORT) (high_bits(count));
     countlo = (AM_SHORT) (low_bits(count));
+    fprintf(stderr, "countlo: %hu\n", countlo);
+    fprintf(stderr, "counthi: %hu\n", counthi);
+    /* TODO: Why 6 and not 7 here? */
+    fprintf(stderr, "gangcount 1:\n--------\n");
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
+      fprintf(stderr, "before: %lu\n", gangcount[i]);
       gangcount[i] += countlo * p[i];
       carry_replace(gangcount, i);
+      fprintf(stderr, "after: %lu\n", gangcount[i]);
     }
+    fprintf(stderr, "gangcount 2:\n--------\n");
     if (counthi) {
       for (i = 0; i < 6; ++i) {
-	gangcount[i + 1] += counthi * p[i];
+        fprintf(stderr, "before: %lu\n", gangcount[i]);
+  gangcount[i + 1] += counthi * p[i];
   carry(gangcount, i + 1);
+        fprintf(stderr, "after: %lu\n", gangcount[i]);
       }
     }
+    fprintf(stderr, "grandtotal 3:\n--------\n");
     for (i = 0; i < 7; ++i) {
+      fprintf(stderr, "before: %lu\n", grandtotal[i]);
       grandtotal[i] += gangcount[i];
       carry(gangcount, i);
+      fprintf(stderr, "after: %lu\n", grandtotal[i]);
     }
+    fprintf(stderr, "before: %lu\n", grandtotal[i]);
     grandtotal[7] += gangcount[7];
+    fprintf(stderr, "after: %lu\n", grandtotal[i]);
     tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(AM_SHORT), 1);
     SvUPGRADE(tempsv, SVt_PVNV);
     sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
