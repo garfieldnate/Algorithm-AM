@@ -4,7 +4,7 @@ Algorithm::AM - Perl extension for Analogical Modeling using a parallel algorith
 
 # VERSION
 
-version 2.39
+version 2.40
 
 # AUTHOR
 
