@@ -9,7 +9,7 @@
  * This program must deal with integers that are too big to be
  * represented by 32 bits.
  *
- * They are represented by arrays as
+ * They are represented by AM_BIG_INT, which is typedef'd to
  *
  * unsigned long a[8]
  *
@@ -35,6 +35,7 @@
 
 typedef unsigned short AM_SHORT;
 typedef unsigned long AM_LONG;
+typedef AM_LONG AM_BIG_INT[8];
 
 /*
  * structure for the supracontexts
@@ -388,7 +389,7 @@ _fillandcount(...)
   HV *itemcontextchainhead, *subtooutcome, *contextsize, *pointers, *gang;
   IV numoutcomes;
   HE *he;
-  AM_LONG grandtotal[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  AM_BIG_INT grandtotal = {0, 0, 0, 0, 0, 0, 0, 0};
   SV *tempsv;
   int chunk, i;
   AM_SHORT gaps[16];
@@ -756,7 +757,7 @@ _fillandcount(...)
 	    if (length) {
 	      AM_SHORT i;
 	      AM_LONG pointercount = 0;
-	      AM_LONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	      AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
 	      AM_LONG mask = 0xffff;
 
 	      count[0]  = p0->count;
@@ -948,7 +949,7 @@ _fillandcount(...)
        /* count occurrences */
 	    if (length) {
 	      AM_SHORT i;
-	      AM_LONG count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	      AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
 	      AM_LONG mask = 0xffff;
 
 	      count[0]  = p0->count;
@@ -1031,8 +1032,8 @@ _fillandcount(...)
   while (he = hv_iternext(pointers)) {
     AM_LONG count;
     AM_SHORT counthi, countlo;
-    AM_LONG p[8];
-    AM_LONG gangcount[8];
+    AM_BIG_INT p;
+    AM_BIG_INT gangcount;
     AM_SHORT thisoutcome;
     SV *dataitem;
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
