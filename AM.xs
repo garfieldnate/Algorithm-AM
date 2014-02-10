@@ -1057,7 +1057,7 @@ _fillandcount(...)
     }
     for (i = 0; i < 7; ++i) {
       grandtotal[i] += gangcount[i];
-      carry(gangcount, i);
+      carry(grandtotal, i);
     }
     grandtotal[7] += gangcount[7];
     tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(AM_SHORT), 1);
