@@ -35,6 +35,11 @@ typedef AM_LONG AM_BIG_INT[8];
   var[ind + 1] += high_bits(var[ind]); \
   var[ind] = low_bits(var[ind])
 
+/* carry macro for AM_BIG_INT pointers */
+#define carry_pointer(p) \
+  *(p + 1) += high_bits(*(p + 1)); \
+  *(p) = low_bits(*(p))
+
 #define carry_replace(var, ind) \
   var[ind + 1] = high_bits(var[ind]); \
   var[ind] = low_bits(var[ind])
@@ -836,9 +841,7 @@ _fillandcount(...)
 		p = (AM_LONG *) SvPVX(tempsv);
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
-      /* carry */
-		  *(p + j + 1) += high_bits(*(p + j));
-		  *(p + j) = low_bits(*(p + j));
+      carry_pointer(p + j);
 		}
 	      }
 	    }
@@ -988,9 +991,7 @@ _fillandcount(...)
 		p = (AM_LONG *) SvPVX(tempsv);
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
-      /* carry */
-		  *(p + j + 1) += high_bits(*(p + j));
-		  *(p + j) = low_bits(*(p + j));
+      carry_pointer(p + j);
 		}
 	      }
 	    }
@@ -1071,9 +1072,7 @@ _fillandcount(...)
       AM_LONG *s = (AM_LONG *) SvPVX(sum[thisoutcome]);
       for (i = 0; i < 7; ++i) {
 	*(s + i) += gangcount[i];
-  /* carry */
-	*(s + i + 1) += high_bits(*(s + i));
-	*(s + i) = low_bits(*(s + i));
+  carry_pointer(s + i);
       }
     } else {
       dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
@@ -1083,9 +1082,7 @@ _fillandcount(...)
 	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
 	for (i = 0; i < 7; ++i) {
 	  *(s + i) += p[i];
-    /* carry */
-	  *(s + i + 1) += high_bits(*(s + i));
-	  *(s + i) = low_bits(*(s + i));
+    carry_pointer(s + i);
 	  dataitem = itemcontextchain[datanum];
 	}
       }
