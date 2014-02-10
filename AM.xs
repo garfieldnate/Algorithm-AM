@@ -4,7 +4,6 @@
 
 #include "ppport.h"
 
-
 /*
  * This program must deal with integers that are too big to be
  * represented by 32 bits.
@@ -25,17 +24,20 @@
  * Someday I may rewrite this in assembler.
  *
  */
-#define carry(var, ind) \
-  var[ind + 1] += var[ind] >> 16; \
-  var[ind] &= 0xffff
-
-#define carry_replace(var, ind) \
-  var[ind + 1] = var[ind] >> 16; \
-  var[ind] &= 0xffff
-
 typedef unsigned short AM_SHORT;
 typedef unsigned long AM_LONG;
 typedef AM_LONG AM_BIG_INT[8];
+
+#define high_bits(x) x >> 16
+#define low_bits(x) x & 0xffff
+
+#define carry(var, ind) \
+  var[ind + 1] += high_bits(var[ind]); \
+  var[ind] = low_bits(var[ind])
+
+#define carry_replace(var, ind) \
+  var[ind + 1] = high_bits(var[ind]); \
+  var[ind] = low_bits(var[ind])
 
 /*
  * structure for the supracontexts
@@ -783,8 +785,8 @@ _fillandcount(...)
 				 (char *) (subcontext + (4 * intersectlist[i])),
 				 8, 0));
 	      if (pointercount & 0xffff0000) {
-		AM_SHORT pchi = (AM_SHORT) (pointercount >> 16);
-		AM_SHORT pclo = (AM_SHORT) (pointercount & 0xffff);
+		AM_SHORT pchi = (AM_SHORT) (high_bits(pointercount));
+		AM_SHORT pclo = (AM_SHORT) (low_bits(pointercount));
 		AM_LONG hiprod[6];
 		hiprod[1] = pchi * count[0];
 		hiprod[2] = pchi * count[1];
@@ -835,8 +837,8 @@ _fillandcount(...)
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
       /* carry */
-		  *(p + j + 1) += *(p + j) >> 16;
-		  *(p + j) &= mask;
+		  *(p + j + 1) += high_bits(*(p + j));
+		  *(p + j) = low_bits(*(p + j));
 		}
 	      }
 	    }
@@ -987,8 +989,8 @@ _fillandcount(...)
 		for (j = 0; j < 7; ++j) {
 		  *(p + j) += count[j];
       /* carry */
-		  *(p + j + 1) += *(p + j) >> 16;
-		  *(p + j) &= mask;
+		  *(p + j + 1) += high_bits(*(p + j));
+		  *(p + j) = low_bits(*(p + j));
 		}
 	      }
 	    }
@@ -1039,8 +1041,8 @@ _fillandcount(...)
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
     tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
     count = (AM_LONG) SvUVX(tempsv);
-    counthi = (AM_SHORT) (count >> 16);
-    countlo = (AM_SHORT) (count & 0xffff);
+    counthi = (AM_SHORT) (high_bits(count));
+    countlo = (AM_SHORT) (low_bits(count));
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
       gangcount[i] += countlo * p[i];
@@ -1070,8 +1072,8 @@ _fillandcount(...)
       for (i = 0; i < 7; ++i) {
 	*(s + i) += gangcount[i];
   /* carry */
-	*(s + i + 1) += *(s + i) >> 16;
-	*(s + i) &= 0xffff;
+	*(s + i + 1) += high_bits(*(s + i));
+	*(s + i) = low_bits(*(s + i));
       }
     } else {
       dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
@@ -1082,8 +1084,8 @@ _fillandcount(...)
 	for (i = 0; i < 7; ++i) {
 	  *(s + i) += p[i];
     /* carry */
-	  *(s + i + 1) += *(s + i) >> 16;
-	  *(s + i) &= 0xffff;
+	  *(s + i + 1) += high_bits(*(s + i));
+	  *(s + i) = low_bits(*(s + i));
 	  dataitem = itemcontextchain[datanum];
 	}
       }
