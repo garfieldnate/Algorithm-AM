@@ -206,7 +206,7 @@ sub _create_classify_sub {
 
         #check all input parameters and then save them in $self
         my $opts = _check_classify_opts(@_);
-        for my $opt_name(keys $opts){
+        for my $opt_name(keys %$opts){
             $self->{$opt_name} = $opts->{$opt_name};
         }
 
