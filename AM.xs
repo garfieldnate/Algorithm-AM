@@ -1123,6 +1123,7 @@ _fillandcount(...)
     fprintf(stderr, "counthi: %hu\n", counthi);
     /* TODO: Why 6 and not 7 here? */
     fprintf(stderr, "gangcount 1:\n--------\n");
+    /* initialize the elements that won't be overwritten */
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
       fprintf(stderr, "before: %lu\n", gangcount[i]);
@@ -1130,6 +1131,10 @@ _fillandcount(...)
       carry_replace(gangcount, i);
       fprintf(stderr, "after: %lu\n", gangcount[i]);
     }
+    fprintf(stderr, "before: %lu\n", gangcount[7]);
+    gangcount[7] = 0;
+    fprintf(stderr, "after: %lu\n", gangcount[7]);
+
     fprintf(stderr, "gangcount 2:\n--------\n");
     if (counthi) {
       for (i = 0; i < 6; ++i) {

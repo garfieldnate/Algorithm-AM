@@ -2,7 +2,8 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
-
+    More debug printing
+    fix uninitialized array element
 2.41      2014-02-10 12:37:57 America/Los_Angeles
     More debug printing
     Fixed big-int bug introduced in 2.40
