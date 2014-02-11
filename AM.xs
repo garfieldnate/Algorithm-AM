@@ -298,72 +298,6 @@ normalize(SV *s) {
   SvNOK_on(s);
 }
 
-normalize_debug(SV *s) {
-  AM_LONG dspace[10];
-  AM_LONG qspace[10];
-  char outspace[55];
-  AM_LONG *dividend, *quotient, *dptr, *qptr;
-  char *outptr;
-  unsigned int outlength = 0;
-  AM_LONG *p = (AM_LONG *) SvPVX(s);
-  STRLEN length = SvCUR(s) / sizeof(AM_LONG);
-  /* TODO: is this required to be a certain number of bits?*/
-  long double nn = 0;
-  int j;
-
-  fprintf(stderr, "--------\n");/*DEBUG*/
-  /* you can't put the for block in {}, or it doesn't work
-   * ask me for details some time
-   * TODO: is this still necessary? (Nate)
-   */
-  for (j = 8; j; --j){
-    /*   2^16    * nn +           p[j-1] */
-    nn = 65536.0 * nn + (double) *(p + j - 1);
-    fprintf(stderr, "%lu\n", *(p + j - 1));/*DEBUG*/
-    /* fprintf(stderr, "%Le\n", nn);*/
-  }
-
-  dividend = &dspace[0];
-  quotient = &qspace[0];
-  Copy(p, dividend, length, sizeof(AM_LONG));
-  outptr = outspace + 54;
-
-  while (1) {
-    AM_LONG *temp, carry = 0;
-    while (length && (*(dividend + length - 1) == 0)) --length;
-    if (length == 0) {
-      sv_setpvn(s, outptr, outlength);
-      break;
-    }
-    dptr = dividend + length - 1;
-    qptr = quotient + length - 1;
-    while (dptr >= dividend) {
-      unsigned int i;
-      *dptr += carry << 16;
-      *qptr = 0;
-      for (i = 16; i; ) {
-  --i;
-  if (tens[i] <= *dptr) {
-    *dptr -= tens[i];
-    *qptr += ones[i];
-  }
-      }
-      carry = *dptr;
-      --dptr;
-      --qptr;
-    }
-    --outptr;
-    *outptr = (char) (0x30 + *dividend) & 0x00ff;
-    ++outlength;
-    temp = dividend;
-    dividend = quotient;
-    quotient = temp;
-  }
-
-  SvNVX(s) = nn;
-  SvNOK_on(s);
-}
-
 MODULE = Algorithm::AM		PACKAGE = Algorithm::AM
 
 BOOT:
@@ -1121,39 +1055,30 @@ _fillandcount(...)
     countlo = (AM_SHORT) (low_bits(count));
     fprintf(stderr, "countlo: %hu\n", countlo);
     fprintf(stderr, "counthi: %hu\n", counthi);
-    /* TODO: Why 6 and not 7 here? */
+
     fprintf(stderr, "gangcount 1:\n--------\n");
     /* initialize the elements that won't be overwritten */
     gangcount[0] = 0;
     for (i = 0; i < 6; ++i) {
-      fprintf(stderr, "before: %lu\n", gangcount[i]);
+      fprintf(stderr, "before: %lu, %lu\n", gangcount[i], gangcount[i+1]);
       gangcount[i] += countlo * p[i];
-      carry_replace(gangcount, i);
-      fprintf(stderr, "after: %lu\n", gangcount[i]);
+      /* below 2 lines are equivalent to carry_replace(gangcount, i) */
+      gangcount[i + 1] = gangcount[i] >> 16;
+      gangcount[i] = gangcount[i] & 0xffff;
+      fprintf(stderr, "after: %lu, %lu\n", gangcount[i], gangcount[i+1]);
     }
-    fprintf(stderr, "before: %lu\n", gangcount[7]);
-    gangcount[7] = 0;
-    fprintf(stderr, "after: %lu\n", gangcount[7]);
 
-    fprintf(stderr, "gangcount 2:\n--------\n");
     if (counthi) {
       for (i = 0; i < 6; ++i) {
-        fprintf(stderr, "before: %lu\n", gangcount[i]);
   gangcount[i + 1] += counthi * p[i];
   carry(gangcount, i + 1);
-        fprintf(stderr, "after: %lu\n", gangcount[i]);
       }
     }
-    fprintf(stderr, "grandtotal 3:\n--------\n");
     for (i = 0; i < 7; ++i) {
-      fprintf(stderr, "before: %lu\n", grandtotal[i]);
       grandtotal[i] += gangcount[i];
       carry(grandtotal, i);
-      fprintf(stderr, "after: %lu\n", grandtotal[i]);
     }
-    fprintf(stderr, "before: %lu\n", grandtotal[i]);
     grandtotal[7] += gangcount[7];
-    fprintf(stderr, "after: %lu\n", grandtotal[i]);
     tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(AM_SHORT), 1);
     SvUPGRADE(tempsv, SVt_PVNV);
     sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
@@ -1186,8 +1111,7 @@ _fillandcount(...)
   tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
   SvUPGRADE(tempsv, SVt_PVNV);
   sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
-  fprintf(stderr, "normalizing grandtotal\n");/*DEBUG*/
-  normalize_debug(tempsv);
+  normalize(tempsv);
 
   Safefree(subcontext);
   Safefree(suboutcome);
