@@ -1,7 +1,6 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include <stdio.h>
 
 #include "ppport.h"
 
@@ -1049,10 +1048,7 @@ _fillandcount(...)
     count = (AM_LONG) SvUVX(tempsv);
     counthi = (AM_SHORT) (high_bits(count));
     countlo = (AM_SHORT) (low_bits(count));
-    fprintf(stderr, "countlo: %hu\n", countlo);
-    fprintf(stderr, "counthi: %hu\n", counthi);
 
-    fprintf(stderr, "gangcount:\n--------\n");
     /* initialize 0 because it won't be overwritten */
     /*
      * TODO: multiply through p[7] into gangcount[7]
@@ -1060,10 +1056,8 @@ _fillandcount(...)
      */
     gangcount[0] = 0;
     for (i = 0; i < 7; ++i) {
-      fprintf(stderr, "before: %lu, %lu\n", gangcount[i], gangcount[i+1]);
       gangcount[i] += countlo * p[i];
       carry_replace(gangcount, i);
-      fprintf(stderr, "after: %lu, %lu\n", gangcount[i], gangcount[i+1]);
     }
     gangcount[7] += countlo * p[7];
 
