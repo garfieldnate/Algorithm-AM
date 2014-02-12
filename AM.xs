@@ -1065,7 +1065,9 @@ _fillandcount(...)
       carry_replace(gangcount, i);
       fprintf(stderr, "after: %lu, %lu\n", gangcount[i], gangcount[i+1]);
     }
+    gangcount[7] += countlo * p[7];
 
+    /* TODO: why is element 0 not considered here? */
     if (counthi) {
       for (i = 0; i < 6; ++i) {
   gangcount[i + 1] += counthi * p[i];
