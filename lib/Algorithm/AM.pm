@@ -2,7 +2,7 @@ package Algorithm::AM;
 use strict;
 use warnings;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
-# VERSION;
+our $VERSION = 2.44;# VERSION;
 use feature 'state';
 use Path::Tiny;
 use Exporter::Easy (
@@ -15,7 +15,7 @@ use Data::Dumper;
 use Algorithm::AM::Project;
 
 require XSLoader;
-XSLoader::load();
+XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Dispatch;
 use Log::Dispatch::File;
