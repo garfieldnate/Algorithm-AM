@@ -1067,7 +1067,7 @@ _fillandcount(...)
     }
 
     if (counthi) {
-      for (i = 0; i < 7; ++i) {
+      for (i = 0; i < 6; ++i) {
   gangcount[i + 1] += counthi * p[i];
   carry(gangcount, i + 1);
       }
