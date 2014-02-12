@@ -1045,10 +1045,6 @@ _fillandcount(...)
     SV *dataitem;
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
 
-    fprintf(stderr, "value of p for %s:\n", HeKEY(he));
-    for(i = 0; i < 8; i++)
-      fprintf(stderr, "%lu\n", p[i]);
-
     tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
     count = (AM_LONG) SvUVX(tempsv);
     counthi = (AM_SHORT) (high_bits(count));
@@ -1056,20 +1052,22 @@ _fillandcount(...)
     fprintf(stderr, "countlo: %hu\n", countlo);
     fprintf(stderr, "counthi: %hu\n", counthi);
 
-    fprintf(stderr, "gangcount 1:\n--------\n");
-    /* initialize the elements that won't be overwritten */
+    fprintf(stderr, "gangcount:\n--------\n");
+    /* initialize 0 because it won't be overwritten */
+    /*
+     * TODO: multiply through p[7] into gangcount[7]
+     * and warn if there's potential overflow
+     */
     gangcount[0] = 0;
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 7; ++i) {
       fprintf(stderr, "before: %lu, %lu\n", gangcount[i], gangcount[i+1]);
       gangcount[i] += countlo * p[i];
-      /* below 2 lines are equivalent to carry_replace(gangcount, i) */
-      gangcount[i + 1] = gangcount[i] >> 16;
-      gangcount[i] = gangcount[i] & 0xffff;
+      carry_replace(gangcount, i);
       fprintf(stderr, "after: %lu, %lu\n", gangcount[i], gangcount[i+1]);
     }
 
     if (counthi) {
-      for (i = 0; i < 6; ++i) {
+      for (i = 0; i < 7; ++i) {
   gangcount[i + 1] += counthi * p[i];
   carry(gangcount, i + 1);
       }

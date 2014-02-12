@@ -2,8 +2,9 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
-
+    Fix gangcount updating (2.42 was correct)
 2.43      2014-02-11 12:22:57 America/Los_Angeles
+    reverse 2.42 (think I was wrong)
     More debug printing
     don't pass ref to keys (experimental feature)
 2.42      2014-02-10 21:32:23 America/Los_Angeles
