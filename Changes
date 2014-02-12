@@ -3,6 +3,22 @@ Revision history for AM-Algorithm
 
 {{$NEXT}}
 
+2.44      2014-02-11 16:13:54 America/Los_Angeles
+    Fix gangcount updating (2.42 was correct)
+2.43      2014-02-11 12:22:57 America/Los_Angeles
+    reverse 2.42 (think I was wrong)
+    More debug printing
+    don't pass ref to keys (experimental feature)
+2.42      2014-02-10 21:32:23 America/Los_Angeles
+    More debug printing
+    fix uninitialized array element
+2.41      2014-02-10 12:37:57 America/Los_Angeles
+    More debug printing
+    Fixed big-int bug introduced in 2.40
+2.40      2014-02-09 18:37:58 America/Los_Angeles
+    More debug printing
+2.39      2014-02-08 21:32:43 America/Los_Angeles
+    Added lots of print statements for trial release; need more info!
 2.38      2014-02-07 20:27:29 America/Los_Angeles
     changed back C99 datatypes until further testing
 2.37      2014-02-07 18:52:07 America/Los_Angeles

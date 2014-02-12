@@ -9,7 +9,7 @@ requires "Path::Tiny" => "0";
 requires "XSLoader" => "0";
 requires "feature" => "0";
 requires "integer" => "0";
-requires "perl" => "5.014";
+requires "perl" => "5.010";
 requires "strict" => "0";
 requires "warnings" => "0";
 

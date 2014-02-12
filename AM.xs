@@ -243,11 +243,13 @@ normalize(SV *s) {
   unsigned int outlength = 0;
   AM_LONG *p = (AM_LONG *) SvPVX(s);
   STRLEN length = SvCUR(s) / sizeof(AM_LONG);
+  /* TODO: is this required to be a certain number of bits?*/
   long double nn = 0;
   int j;
 
   /* you can't put the for block in {}, or it doesn't work
    * ask me for details some time
+   * TODO: is this still necessary? (Nate)
    */
   for (j = 8; j; --j){
     /*   2^16    * nn +           p[j-1] */
@@ -273,11 +275,11 @@ normalize(SV *s) {
       *dptr += carry << 16;
       *qptr = 0;
       for (i = 16; i; ) {
-	--i;
-	if (tens[i] <= *dptr) {
-	  *dptr -= tens[i];
-	  *qptr += ones[i];
-	}
+  --i;
+  if (tens[i] <= *dptr) {
+    *dptr -= tens[i];
+    *qptr += ones[i];
+  }
       }
       carry = *dptr;
       --dptr;
@@ -828,6 +830,7 @@ _fillandcount(...)
 		int j;
 		SV *tempsv;
 		AM_LONG *p;
+    /* TODO: explain this */
 		tempsv = *hv_fetch(pointers,
 				   (char *) (subcontext + (4 * intersectlist[i])),
 				   8, 1);
@@ -1040,18 +1043,28 @@ _fillandcount(...)
     AM_SHORT thisoutcome;
     SV *dataitem;
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
+
     tempsv = *hv_fetch(contextsize, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
     count = (AM_LONG) SvUVX(tempsv);
     counthi = (AM_SHORT) (high_bits(count));
     countlo = (AM_SHORT) (low_bits(count));
+
+    /* initialize 0 because it won't be overwritten */
+    /*
+     * TODO: multiply through p[7] into gangcount[7]
+     * and warn if there's potential overflow
+     */
     gangcount[0] = 0;
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 7; ++i) {
       gangcount[i] += countlo * p[i];
       carry_replace(gangcount, i);
     }
+    gangcount[7] += countlo * p[7];
+
+    /* TODO: why is element 0 not considered here? */
     if (counthi) {
       for (i = 0; i < 6; ++i) {
-	gangcount[i + 1] += counthi * p[i];
+  gangcount[i + 1] += counthi * p[i];
   carry(gangcount, i + 1);
       }
     }

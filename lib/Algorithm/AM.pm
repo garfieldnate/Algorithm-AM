@@ -2,7 +2,7 @@ package Algorithm::AM;
 use strict;
 use warnings;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
-# VERSION;
+our $VERSION = 2.44;# VERSION;
 use feature 'state';
 use Path::Tiny;
 use Exporter::Easy (
@@ -15,7 +15,7 @@ use Data::Dumper;
 use Algorithm::AM::Project;
 
 require XSLoader;
-XSLoader::load();
+XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Dispatch;
 use Log::Dispatch::File;
@@ -206,7 +206,7 @@ sub _create_classify_sub {
 
         #check all input parameters and then save them in $self
         my $opts = _check_classify_opts(@_);
-        for my $opt_name(keys $opts){
+        for my $opt_name(keys %$opts){
             $self->{$opt_name} = $opts->{$opt_name};
         }
 
@@ -471,6 +471,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 # line 1600 "call XS"
         $self->_fillandcount(X);
         $grandtotal = $self->{pointers}->{'grandtotal'};
+
         unless ($grandtotal) {
             #TODO: is this tested yet?
             $logger->warn('No data items considered.  No prediction possible.');
