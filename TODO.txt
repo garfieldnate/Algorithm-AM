@@ -6,9 +6,9 @@ check that data and test and outcome lines are formatted properly, don't just as
 
 perhaps require/allow user to input number of variables in their vectors in the constructor?
 
-The whole long/short thing is broken. You should not be allowed to have more than one short/long combination.
+The whole long/short thing is broken. You should not be allowed to have more than one short/long outcome combination.
 
-Using a Project by itself is bad design. Create another module to hold a dataset. Project can manage 2 datasets (data and test). This would be much more flexible.
+Projects normally contain separate datasets for training/testing/evaluating. Create another module to hold a dataset. Project can manage 2 datasets (data and test). This would be much more flexible.
 
 error checking for getting data data at a specific index; make sure it's a legal index.
 
@@ -32,8 +32,6 @@ Create Algorithm::AM::Datum object to pass to hooks. Add accessors that make the
 Make a single method for reading a data/test file, and move the creation of the format variables to their own loop. Or decide not to.
 
 Change the POD to use Pod::Weaver properly (=method, etc.).
-
-Find reasons for 5.14 Perl minimum and see if that is reasonable.
 
 Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
@@ -97,13 +95,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 		should probably also return the entire analogical set...
 
 ## Documentation TODOs:
--Write guide on porting old AM code.
-	classify, not ->()
-	variables
-	running batches
-	bigcmp
-	parameters
-	projects
 -Read through documentation, update/clean if necessary
 	Include Wikipedia pictures
 -Define "specifier" early on in the documentation. Give the anatomy of a data file.
