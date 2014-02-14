@@ -2,6 +2,8 @@ Revision history for AM-Algorithm
 
 
 {{$NEXT}}
+
+2.46      2014-02-13 17:11:15 America/Los_Angeles
     Fixed test fail on Christian Walde's smoke tester
 2.45      2014-02-11 21:27:02 America/Los_Angeles
     Fixed gang/grandtotal calculation bugs
