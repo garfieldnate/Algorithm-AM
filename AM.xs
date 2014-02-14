@@ -241,7 +241,8 @@ normalize(SV *s) {
   AM_LONG *dividend, *quotient, *dptr, *qptr;
   char *outptr;
   unsigned int outlength = 0;
-  AM_LONG *p = (AM_LONG *) SvPVX(s);
+  AM_BIG_INT p;
+  Copy(SvPVX(s), p, 8, AM_LONG);
   STRLEN length = SvCUR(s) / sizeof(AM_LONG);
   /* TODO: is this required to be a certain number of bits?*/
   long double nn = 0;
@@ -253,7 +254,7 @@ normalize(SV *s) {
    */
   for (j = 8; j; --j){
     /*   2^16    * nn +           p[j-1] */
-    nn = 65536.0 * nn + (double) *(p + j - 1);
+    nn = 65536.0 * nn + (double) p[j-1];
   }
 
   dividend = &dspace[0];
