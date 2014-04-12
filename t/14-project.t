@@ -17,16 +17,22 @@ test_param_checking();
 test_paths();
 test_format_vars();
 test_data();
-test_data_errors();
+test_project_errors();
 test_test_items();
 test_private_data();
 
-# test that add_data correctly adds data to the set
+# test that add_data correctly adds data to the set and
+# validates input
 sub test_add_data {
     my $project = Algorithm::AM::Project->new();
-    $project->add_data(['a'],'stuff','b', 'beta');
+    $project->add_data(['a','b','c'],'stuff','b', 'beta');
     is($project->num_exemplars, 1,
         'add_data adds 1 exemplar to project');
+
+    throws_ok {
+        $project->add_data(['3','1'],'comment','c', 'chi');
+    } qr/Expected 3 variables, but found 2 in 3 1 \(comment\)/,
+    'add_data fails with wrong number of variables';
     return;
 }
 
@@ -49,13 +55,6 @@ sub test_param_checking {
         );
     } qr/Failed to specify comma formatting correctly/,
     q<dies with incorrect 'commas' parameter>;
-
-    throws_ok {
-        Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_no_data'),
-            commas => 'yes');
-    } qr/Project has no data file/,
-    'dies when no data file in project';
 
     throws_ok {
         Algorithm::AM::Project->new(
@@ -181,13 +180,14 @@ sub test_data {
     return;
 }
 
-sub test_data_errors {
+# test that problems are detected in project data files
+sub test_project_errors {
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_bad_data'),
-            commas => 'no');
-    } qr/Expected 3 variables, but found 2 in 3 1 \(myCommentHere\)/,
-    'dies with mismatched number of variables';
+            path($data_dir, 'chapter3_no_data'),
+            commas => 'yes');
+    } qr/Project has no data file/,
+    'dies when no data file in project';
 
     throws_ok {
         Algorithm::AM::Project->new(
