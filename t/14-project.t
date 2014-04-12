@@ -191,13 +191,10 @@ sub test_data_errors {
 
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_bad_outcomes'),
+            path($data_dir, 'chapter3_too_few_outcomes'),
             commas => 'no');
-    } qr/Found more items in data file than in outcome file/,
-    'dies with mismatched number of outcomes';
-    # TODO: test opposite, with more items in outcome file than
-    # in data file
-
+    } qr/Number of items in data and outcome file do not match/,
+    'project creation dies with too few outcomes in file';
     return;
 }
 

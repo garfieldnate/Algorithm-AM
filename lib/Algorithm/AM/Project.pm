@@ -486,10 +486,8 @@ sub _read_data_outcome_sub {
         # redundant information
         my ($short, $long) = $outcome_sub->();
         my ($data, $spec) = $data_sub->();
-        if($short && !$data){
-            croak 'Found more items in outcome file than in data file';
-        }elsif(!$short && $data){
-            croak 'Found more items in data file than in outcome file';
+        if($short xor $data){
+            croak 'Number of items in data and outcome file do not match';
         }
         if($short){
             return ($data, $spec, $short, $long);
