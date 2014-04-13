@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 52;
+plan tests => 53;
 use Test::Exception;
+use Test::Warn;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
 use FindBin '$Bin';
@@ -20,11 +21,6 @@ test_project_errors();
 test_private_data();
 
 sub test_param_checking {
-    throws_ok {
-        Algorithm::AM::Project->new(path($data_dir, 'nonexistent'));
-    } qr/Could not find project/,
-    'dies with non-existent project path';
-
     throws_ok {
         Algorithm::AM::Project->new(
             path($data_dir, 'chapter3'));
@@ -139,11 +135,23 @@ sub test_data {
 # test that problems are detected in project data files
 sub test_project_errors {
     throws_ok {
+        Algorithm::AM::Project->new(path($data_dir, 'nonexistent'));
+    } qr/Could not find project/,
+    'dies with non-existent project path';
+
+    throws_ok {
         Algorithm::AM::Project->new(
             path($data_dir, 'chapter3_no_data'),
             commas => 'yes');
     } qr/Project has no data file/,
     'dies when no data file in project';
+
+    warning_like {
+        Algorithm::AM::Project->new(
+            path($data_dir, 'chapter3_no_test'),
+            commas => 'no');
+    } {carped => qr/Couldn't open .*test at .*/},
+    'dies when no test file in project';
 
     throws_ok {
         Algorithm::AM::Project->new(

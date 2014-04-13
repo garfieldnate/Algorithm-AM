@@ -204,7 +204,6 @@ sub num_variables {
     return $self->{num_feats};
 }
 
-
 =head2 C<num_exemplars>
 
 Returns the number of items in the data (training) set.
@@ -226,6 +225,8 @@ sub num_exemplars {
 Returns the data variables for the exemplar at the given index. The
 return value is an arrayref containing the string value for each
 variable.
+
+TODO: this should probably make a safe copy
 
 =cut
 sub get_exemplar_data {
@@ -509,7 +510,7 @@ short outcome string, and the long outcome string.
 # adds data item to three internal arrays: outcome, data, and spec
 sub add_data {
     my ($self, $data, $spec, $short, $long) = @_;
-    $spec ||= join ' ', @$data;
+    $spec ||= _serialize_data($data);
 
     $self->_check_variables($data, $spec);
     $self->_update_format_vars($data, $spec, $short, $long);
@@ -536,7 +537,7 @@ sub _check_variables {
         # if not 0, store number of variables and expect all future
         # data vectors to be the same length
         if(@$data == 0){
-            croak "Found 0 data variables in @$data " .
+            croak "Found 0 data variables in input" .
                 ($spec ? " ($spec)" : '');
         }
         $self->{num_feats} = scalar @$data;
@@ -641,9 +642,15 @@ sub add_test {
     push @{$self->{testItems}}, [
         $self->short_outcome_index($short),
         $data,
-        $spec || ''
+        $spec || _serialize_data($data)
         ];
     return;
+}
+
+# return a simple string representation for data arrays
+sub _serialize_data {
+    my ($data) = @_;
+    return join ' ', @$data;
 }
 
 1;

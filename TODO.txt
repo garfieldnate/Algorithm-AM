@@ -1,12 +1,23 @@
 Algorithm::AM
 
+Right now: simplify tests in t/project/02-project_dir.t by simply locally overriding *add_data and *add_test and checking that they are called with the right data
+
 Right now: change the Project tests to use the add_data and add_test methods instead of using files where possible.
+	Namely: reduce the number of separate test files used for checking classification accuracy by instead first testing the Project object and then testing lots of different datasets in a single file, reusing as much data as possible. First make the change noted below...
+
+require user to create and pass in the Project object?
+	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
+
+change commas to be either 1 or 0
+	maybe it would be even better to create a "formatting" flag that can be given the name of a class that reads and returns project data.
 
 check that data and test and outcome lines are formatted properly, don't just assume that they are (above change will make it easier).
 
-change Project::add_data to accept named parameters; four is two many, and the input is unclear just by looking at code.
+change Project::add_data to accept named parameters; four is too many, and the input is unclear just by looking at code.
 
 perhaps require/allow user to input number of variables in their vectors in the constructor?
+
+May be helpful to add little readme files explaining each of the test data projects.
 
 The whole long/short thing is broken. You should not be allowed to have more than one short/long outcome combination.
 
@@ -21,11 +32,6 @@ change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->
 Use undef instead of increment for making unique string lists using hashes.
 
 It seems Theron expected no more than 60 data columns. Maybe warn somewhere if more than that are used.
-
-require user to create and pass in the Project object?
-	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
-
-change commas to be either 1 or 0
 
 factor out data line parsing into a single routine
 
