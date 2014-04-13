@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 18;
+plan tests => 27;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -19,6 +19,7 @@ test_paths();
 test_format_vars();
 test_data();
 test_test_items();
+test_private_data();
 
 # test that add_data correctly adds data to the set and
 # validates input
@@ -88,5 +89,55 @@ sub test_test_items {
     is($project->num_variables, 3, 'data size set via test item');
     is($project->short_outcome_index('foo'), 1,
         q<correct index of 'foo' outcome>);
+    return;
+}
+
+# test all data for use by AM.pm (and the hooks) only
+sub test_private_data {
+    my $project = Algorithm::AM::Project->new();
+    is_deeply($project->_outcome_list, [''],
+        "empty project has empty outcome list");
+    is_deeply($project->_outcomes, [],
+        "empty project has empty outcomes");
+    is_deeply($project->_data, [],
+        "empty project has empty data");
+    is_deeply($project->_specs, [],
+        "empty project has empty specs");
+
+    $project->add_data([qw(3 1 0)], 'myFirstCommentHere', 'e');
+    $project->add_data([qw(2 1 0)], '', 'r');
+    $project->add_data([qw(0 3 2)], 'myThirdCommentHere', 'r');
+    $project->add_data([qw(2 1 2)], 'myFourthCommentHere', 'r');
+    $project->add_data([qw(3 1 1)], 'myFifthCommentHere', 'r');
+
+    is_deeply($project->_outcomes, [qw(1 2 2 2 2)],
+        "correct project outcomes");
+    is_deeply($project->_data, [
+        [qw(3 1 0)],
+        [qw(2 1 0)],
+        [qw(0 3 2)],
+        [qw(2 1 2)],
+        [qw(3 1 1)]],
+        "correct project data");
+    is_deeply($project->_outcome_list, ['', 'e', 'r'],
+        "correct project outcome list");
+
+    #specs are slightly different because when one is missing the
+    #data string is used instead
+    my $specs = [
+        'myFirstCommentHere',
+        '2 1 0',
+        qw(myThirdCommentHere
+        myFourthCommentHere
+        myFifthCommentHere)];
+
+    is_deeply($project->_specs, $specs,
+        'correct project specs (commas)');
+
+    #also test with project containing outcomes file
+    my $outcome_project = Algorithm::AM::Project->new(
+        path($data_dir, 'chapter3_outcomes'), commas => 'no');
+    is_deeply($outcome_project->_outcome_list, ['', 'ee', 'are' ],
+        "correct project outcome list (with outcome file)");
     return;
 }

@@ -509,6 +509,7 @@ short outcome string, and the long outcome string.
 # adds data item to three internal arrays: outcome, data, and spec
 sub add_data {
     my ($self, $data, $spec, $short, $long) = @_;
+    $spec ||= join ' ', @$data;
 
     $self->_check_variables($data, $spec);
     $self->_update_format_vars($data, $spec, $short, $long);
