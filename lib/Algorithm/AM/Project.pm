@@ -84,7 +84,7 @@ sub new {
     # without a path, no option processing is needed
     my $new_opts = $path ?
         _check_opts($path, %opts) :
-        {project_path => '.'};
+        {project_path => Path::Tiny->cwd};
 
     my $self = bless $new_opts, $class;
 
@@ -171,7 +171,9 @@ sub _init {
 
 =head2 C<base_path>
 
-Returns the path of the directory containing the project files.
+Returns the path of the directory containing the project files,
+or the current working directory at the time of project creation
+if no project directory was specified.
 
 =cut
 sub base_path {

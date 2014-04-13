@@ -1,40 +1,23 @@
-#test the functionality of Algorithm::AM::Project
+# test the functionality in Algorithm::AM::Project
+# related to reading AM project directories
 use strict;
 use warnings;
 use Test::More;
-plan tests => 68;
+plan tests => 52;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
 use FindBin '$Bin';
 use Path::Tiny;
 
-my $data_dir = path($Bin, 'data');
-
-test_add_data();
+my $data_dir = path($Bin, '..', 'data');
 
 test_param_checking();
 test_paths();
 test_format_vars();
 test_data();
 test_project_errors();
-test_test_items();
 test_private_data();
-
-# test that add_data correctly adds data to the set and
-# validates input
-sub test_add_data {
-    my $project = Algorithm::AM::Project->new();
-    $project->add_data(['a','b','c'],'stuff','b', 'beta');
-    is($project->num_exemplars, 1,
-        'add_data adds 1 exemplar to project');
-
-    throws_ok {
-        $project->add_data(['3','1'],'comment','c', 'chi');
-    } qr/Expected 3 variables, but found 2 in 3 1 \(comment\)/,
-    'add_data fails with wrong number of variables';
-    return;
-}
 
 sub test_param_checking {
     throws_ok {
@@ -77,26 +60,7 @@ sub test_paths {
 }
 
 sub test_format_vars {
-    # format variables don't make sense without data, so errors
-    # are thrown here
-    my $project = Algorithm::AM::Project->new();
-    throws_ok {
-        $project->var_format;
-    } qr/must add data before calling var_format/,
-        'error getting var_format before adding data';
-    throws_ok {
-        $project->spec_format;
-    } qr/must add data before calling spec_format/,
-        'error getting spec_format before adding data';
-    throws_ok {
-        $project->outcome_format;
-    } qr/must add data before calling outcome_format/,
-        'error getting outcome_format before adding data';
-    throws_ok {
-        $project->data_format;
-    } qr/must add data before calling data_format/,
-        'error getting data_format before adding data';
-
+    my $project;
     # test all format variables with and without comma use;
     # someday we may have more input formats to test
     my %inputs = (
@@ -132,18 +96,10 @@ sub test_format_vars {
         'correct data_format (format_test)');
     return;
 }
-
 # test all data with and without comma use;
 # someday we may have more input formats to test
 sub test_data {
-
-    # first check empty project
-    my $project = Algorithm::AM::Project->new();
-    is($project->num_exemplars, 0, 'new project has 0 exemplars');
-    is($project->num_variables, 0, 'new project has 0 variables');
-    is($project->num_outcomes, 0, 'new project has 0 outcomes');
-    is($project->num_variables, 0, 'new project has 0 variables');
-
+    my $project;
     my %inputs = (
         'no commas' => Algorithm::AM::Project->new(
             path($data_dir, 'chapter3'), commas => 'no'),
@@ -176,9 +132,9 @@ sub test_data {
         'correct number of outcomes (with outcome file)');
     is($outcome_project->get_outcome(1), 'ee',
         'correct outcome returned from list (with outcome file)');
-    note explain $outcome_project->{outcomelist};
     return;
 }
+
 
 # test that problems are detected in project data files
 sub test_project_errors {
@@ -195,22 +151,6 @@ sub test_project_errors {
             commas => 'no');
     } qr/Number of items in data and outcome file do not match/,
     'project creation dies with too few outcomes in file';
-    return;
-}
-
-# test the project test data
-sub test_test_items {
-    my $project = Algorithm::AM::Project->new();
-    is($project->num_test_items, 0, 'no test items in empty project');
-
-    $project->add_test([qw(a b c)], 'abc', 'foo', 'foo bar');
-    is($project->num_test_items, 1, 'test item added');
-    is($project->num_outcomes, 1, '1 outcome added via test item');
-    is($project->get_outcome(1), 'foo bar',
-        'correct outcome from test item');
-    is($project->num_variables, 3, 'data size set via test item');
-    is($project->short_outcome_index('foo'), 1,
-        q<correct index of 'foo' outcome>);
     return;
 }
 
