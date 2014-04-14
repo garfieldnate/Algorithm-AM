@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 7;
+plan tests => 9;
 use Test::NoWarnings;
 use Test::LongString;
 
@@ -16,6 +16,8 @@ use File::Slurp;
 test_quadratic();
 test_linear();
 test_nulls();
+test_finnverb();
+test_finnverb();
 
 sub test_quadratic {
     my @data = (
@@ -137,4 +139,27 @@ sub test_nulls {
         if -e $project->results_path;
 
     return;
+}
+
+# test the finnverb data set; just check how many exemplars
+# were correctly classified
+sub test_finnverb {
+    my $p = Algorithm::AM->new(
+        path($Bin, '..', 'data', 'finnverb'),
+        commas => 'no',
+        exclude_given => 1,
+    );
+
+    my $count = 0;
+    $p->classify(
+        endtesthook   => sub {
+            my ($am, $data) = @_;
+            my $sum = $am->{sum};
+            my $pointermax = $data->{pointermax};
+            my $curTestOutcome = ${$data->{curTestOutcome}};
+            ++$count if $sum->[$curTestOutcome] eq $pointermax;
+        }
+    );
+
+    is($count, 161, '161 items correctly predicted');
 }
