@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 38;
+plan tests => 39;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -57,9 +57,12 @@ sub test_data {
     return;
 }
 
+# test correct value for base_path
 sub test_paths {
     my $project = Algorithm::AM::Project->new();
     is($project->base_path, Path::Tiny->cwd,
+        'correct base_path');
+    is($project->results_path, path(Path::Tiny->cwd, 'amcpresults'),
         'correct base_path');
     return;
 }
@@ -138,6 +141,8 @@ sub test_test_items {
 }
 
 # test all data for use by AM.pm (and the hooks) only
+# hopefully this can be eliminated in the future, as private
+# data should not have to be exposed
 sub test_private_data {
     my $project = Algorithm::AM::Project->new();
     is_deeply($project->_outcome_list, [''],
@@ -167,8 +172,8 @@ sub test_private_data {
     is_deeply($project->_outcome_list, ['', 'e', 'r'],
         "correct project outcome list");
 
-    #specs are slightly different because when one is missing the
-    #data string is used instead
+    # specs are slightly different because when one is missing the
+    # data string is used instead
     my $specs = [
         'myFirstCommentHere',
         '2 1 0',
@@ -179,7 +184,7 @@ sub test_private_data {
     is_deeply($project->_specs, $specs,
         'correct project specs (commas)');
 
-    #also test with project containing outcomes file
+    # also test with project containing outcomes file
     my $outcome_project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_outcomes'), commas => 'no');
     is_deeply($outcome_project->_outcome_list, ['', 'ee', 'are' ],
