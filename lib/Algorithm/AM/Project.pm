@@ -456,6 +456,8 @@ sub _read_data_sub {
         # cross-platform chomp
         $line =~ s/\R$//;
         my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
+        # use data string directly as the spec string;
+        # makes it easier for the user to search their file
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
         # return $outcome twice for "short" and "long" versions

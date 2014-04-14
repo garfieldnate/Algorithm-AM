@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 53;
+plan tests => 16;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
@@ -14,11 +14,9 @@ use Path::Tiny;
 my $data_dir = path($Bin, '..', 'data');
 
 test_param_checking();
-test_paths();
-test_format_vars();
-test_data();
 test_project_errors();
-test_private_data();
+test_paths();
+test_data();
 
 sub test_param_checking {
     throws_ok {
@@ -44,93 +42,6 @@ sub test_param_checking {
 
     return;
 }
-
-sub test_paths {
-    my $project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3'), commas => 'no');
-    is($project->base_path, path($data_dir, 'chapter3'),
-        'correct base_path');
-    is($project->results_path, path($data_dir, 'chapter3', 'amcpresults'),
-        'correct results_path');
-    return;
-}
-
-sub test_format_vars {
-    my $project;
-    # test all format variables with and without comma use;
-    # someday we may have more input formats to test
-    my %inputs = (
-        'no commas' => Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'), commas => 'no'),
-        commas => Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_commas'), commas => 'yes'),
-    );
-    # sort keys for consistent test output
-    for my $name (sort keys %inputs){
-        $project = $inputs{$name};
-        is($project->var_format, (join ' ', ('%-1.1s') x 3),
-            "correct var_format ($name)");
-        is($project->spec_format, '%-19.19s',
-            "correct spec_format ($name)");
-        is($project->outcome_format, '%-1.1s',
-            "correct outcome_format ($name)");
-        is($project->data_format, '%5.0u',
-            "correct data_format ($name)");
-    }
-
-    # test again with this project made specially for testing format
-    # variables
-    $project = Algorithm::AM::Project->new(
-        path($data_dir, 'format_test'), commas => 'yes');
-    is($project->var_format, '%-5.5s %-4.4s %-3.3s',
-        'correct var_format (format_test)');
-    is($project->spec_format, '%-42.42s',
-        'correct spec_format (format_test)');
-    is($project->outcome_format, '%-14.14s',
-        'correct outcome_format (format_test)');
-    is($project->data_format, '%7.0u',
-        'correct data_format (format_test)');
-    return;
-}
-# test all data with and without comma use;
-# someday we may have more input formats to test
-sub test_data {
-    my $project;
-    my %inputs = (
-        'no commas' => Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'), commas => 'no'),
-        commas => Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_commas'), commas => 'yes')
-    );
-    # sort keys for consistent test output
-    for my $name (sort keys %inputs){
-        $project = $inputs{$name};
-        is($project->num_variables, 3, "3 variables in chapter3 data ($name)");
-        is($project->num_exemplars, 5, "3 exemplars in chapter3 data ($name)");
-        is_deeply($project->get_exemplar_data(4), [qw(3 1 1)],
-            "correct exmplar data returned ($name)");
-        is($project->get_exemplar_spec(0), 'myFirstCommentHere',
-            "correct exmplar spec returned ($name)");
-        #1 means the first index in $project->get_outcome
-        is($project->get_exemplar_outcome(0), 1,
-            "correct exmplar outcome returned ($name)");
-        is($project->num_outcomes, 2, "correct number of outcomes ($name)");
-        is($project->get_outcome(1), 'e',
-            "correct outcome returned from list ($name)");
-        is($project->short_outcome_index('e'), 1,
-            "correct index of 'e' outcome ($name)");
-    }
-
-    #also test with project containing outcomes file
-    my $outcome_project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_outcomes'), commas => 'no');
-    is($outcome_project->num_outcomes, 2,
-        'correct number of outcomes (with outcome file)');
-    is($outcome_project->get_outcome(1), 'ee',
-        'correct outcome returned from list (with outcome file)');
-    return;
-}
-
 
 # test that problems are detected in project data files
 sub test_project_errors {
@@ -162,62 +73,80 @@ sub test_project_errors {
     return;
 }
 
-# test all data for use by AM.pm (and the hooks) only, with and
-# without comma use;
+sub test_paths {
+    my $project = Algorithm::AM::Project->new(
+        path($data_dir, 'chapter3'), commas => 'no');
+    is($project->base_path, path($data_dir, 'chapter3'),
+        'correct base_path');
+    is($project->results_path, path($data_dir, 'chapter3', 'amcpresults'),
+        'correct results_path');
+    return;
+}
+
+# test all data with and without comma use;
 # someday we may have more input formats to test
-sub test_private_data {
-    my $project = Algorithm::AM::Project->new();
-    is_deeply($project->_outcome_list, [''],
-        "empty project has empty outcome list");
-    is_deeply($project->_outcomes, [],
-        "empty project has empty outcomes");
-    is_deeply($project->_data, [],
-        "empty project has empty data");
-    is_deeply($project->_specs, [],
-        "empty project has empty specs");
+sub test_data {
+    my $project;
+    # test project reading by intercepting calls to add_data and add_test
+    # and checking for character parameters
+    my @data;
+    my @test;
+    no warnings 'redefine';
+    # shift is so we don't test calling object
+    local *Algorithm::AM::Project::add_data = sub {
+        shift;
+        push @data, [@_];
+    };
+    local *Algorithm::AM::Project::add_test = sub {
+        shift;
+        push @test, [@_];
+    };
 
-    my %inputs = (
-        'no commas' => Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'), commas => 'no'),
-        commas => Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_commas'), commas => 'yes')
+    # test plain project
+    my @data_expected = (
+      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+      [[qw(2 1 0)], '210', 'r', undef],
+      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
     );
-    # sort keys for consistent test output
-    for my $name (sort keys %inputs){
-        $project = $inputs{$name};
-        is_deeply($project->_outcomes, [qw(1 2 2 2 2)],
-            "correct project outcomes ($name)");
-        is_deeply($project->_data, [
-            [qw(3 1 0)],
-            [qw(2 1 0)],
-            [qw(0 3 2)],
-            [qw(2 1 2)],
-            [qw(3 1 1)]],
-            "correct project data ($name)");
-        is_deeply($project->_outcome_list, ['', 'e', 'r'],
-            "correct project outcome list ($name)");
-    }
+    my @test_expected = ([[qw(3 1 2)], 'myCommentHere', 'r']);
+    $project = Algorithm::AM::Project->new(
+        path($data_dir, 'chapter3'), commas => 'no');
+    is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)");
+    is_deeply(\@test, \@test_expected, "correct test data (plain project)");
 
-    #specs are slightly different because when one is missing the
-    #data string is used instead
-    my $no_comma_specs = [qw(
-        myFirstCommentHere
-        210
-        myThirdCommentHere
-        myFourthCommentHere
-        myFifthCommentHere)];
-    is_deeply($inputs{'no commas'}->_specs, $no_comma_specs,
-        'correct project specs (no commas)');
+    # test comma-formatted project
+    @data = @test = ();
+    @data_expected = (
+        [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+        [[qw(2 1 0)], '2 1 0', 'r', undef],
+        [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+        [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+        [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+    );
+    $project = Algorithm::AM::Project->new(
+        path($data_dir, 'chapter3_commas'), commas => 'yes');
+    is_deeply(\@data, \@data_expected,
+        "correct exemplar data (commas project)");
+    is_deeply(\@test, \@test_expected,
+        "correct test data (commas project)");
 
-    my $comma_specs = $no_comma_specs;
-    $comma_specs->[1] = '2 1 0';
-    is_deeply($inputs{'commas'}->_specs, $comma_specs,
-        'correct project specs (commas)');
-
-    #also test with project containing outcomes file
+    # test project containing outcomes file
+    @data = @test = ();
+    @data_expected = (
+      [[qw(3 1 0)], 'myCommentHere', 'e', 'ee'],
+      [[qw(2 1 0)], '210', 'r', 'are'],
+      [[qw(0 3 2)], 'myCommentHere', 'r', 'are'],
+      [[qw(2 1 2)], 'myCommentHere', 'r', 'are'],
+      [[qw(3 1 1)], 'myCommentHere', 'r', 'are']
+    );
     my $outcome_project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_outcomes'), commas => 'no');
-    is_deeply($outcome_project->_outcome_list, ['', 'ee', 'are' ],
-        "correct project outcome list (with outcome file)");
+    is_deeply(\@data, \@data_expected,
+        "correct exemplar data (commas project)");
+    is_deeply(\@test, \@test_expected,
+        "correct test data (commas project)");
+    # note explain \@data;
     return;
 }

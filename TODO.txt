@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Right now: simplify tests in t/project/02-project_dir.t by simply locally overriding *add_data and *add_test and checking that they are called with the right data
-
 Right now: change the Project tests to use the add_data and add_test methods instead of using files where possible.
 	Namely: reduce the number of separate test files used for checking classification accuracy by instead first testing the Project object and then testing lots of different datasets in a single file, reusing as much data as possible. First make the change noted below...
 
