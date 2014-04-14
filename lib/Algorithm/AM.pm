@@ -46,7 +46,7 @@ my %import;
 sub new {
     my ($class, $project, %opts) = @_;
 
-    if(!$project_path){
+    if(!$project){
         croak 'Must specify project';
     }
 
@@ -70,11 +70,14 @@ sub new {
     );
     my $self = bless $opts, $class;
 
-    $logger->info("Initializing project $project_path");
+    $logger->info("Initializing project $project");
 
-    # read project files
-    my $project = Algorithm::AM::Project->new(
-        $project_path, commas => $commas);
+    # if $project is not a Project object, then it should be
+    # the path to a project directory.
+    if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
+        $project = Algorithm::AM::Project->new(
+            $project, commas => $commas);
+    }
     # TODO: these lines are necessary for now because each of these variables
     # is assumed to be provided to the hook methods through $self. Once we
     # have data objects, and we can provide proper accessors (and remove
