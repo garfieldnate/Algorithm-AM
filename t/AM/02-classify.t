@@ -1,4 +1,4 @@
-#Sanity test for classification- try the example from chapter 3 of the green book
+# Sanity test for classification- try the example from chapter 3 of the green book
 
 use strict;
 use warnings;

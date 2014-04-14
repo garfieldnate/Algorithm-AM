@@ -133,6 +133,11 @@ sub classify {
     return $self->{_classify_sub}->($self, @args);
 }
 
+sub get_project {
+    my ($self, @args) = @_;
+    return $self->{project};
+}
+
 sub _check_classify_opts {
     my %opts = @_;
 
