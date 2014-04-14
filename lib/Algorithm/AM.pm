@@ -44,13 +44,7 @@ my %import;
 ## %gang
 
 sub new {
-    my ($proto, $project_path, %opts) = @_;
-
-    #TODO: what is the purpose of these two statements?
-    my $class = ref($proto) || $proto;
-    #TODO: this is not a legal path anyway...
-    $project_path = ''
-        if $proto =~ /^-/;
+    my ($class, $project, %opts) = @_;
 
     if(!$project_path){
         croak 'Must specify project';
