@@ -310,7 +310,7 @@ sub bigcmp {
 # TODO: should probably be separate methods:
 # print_config and print_data_stats
 sub print_summary {
-    my ($self, $data) = @_;
+    my ($self, $data, $result) = @_;
 
     $logger->info(
         "Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}");
@@ -322,12 +322,12 @@ sub print_summary {
     $logger->info('Probability of including any one data item: ' .
         $self->{probability})
         if defined $self->{probability};
-    $logger->info("Total Excluded: $self->{excludedData} " .
+    $logger->info("Total Excluded: $result->{excludedData} " .
         qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
     $logger->info('Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include') );
     $logger->info($self->{linear} ?
         'Gang: linear' : 'Gang: squared');
-    $logger->info("Number of active variables: $self->{activeVar}");
+    $logger->info("Number of active variables: $result->{num_variables}");
     return;
 }
 
@@ -360,13 +360,18 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     my $t = $project->get_test_item($item_number);
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
         @$t;
-    # activeVar is the number of active variables; if we exclude nulls,
-    # then we need to minus the number of '=' found in this test item;
-    # otherwise, it's just the number of columns in a single item vector
-    $self->{activeVar} = $project->num_variables;
+
+    # initialize the results object to hold all of the classification
+    # info. num_variables is the number of active variables; if we
+    # exclude nulls, then we need to minus the number of '=' found in
+    # this test item; otherwise, it's just the number of columns in a
+    # single item vector
+    my %result = (
+        num_variables => $project->num_variables,
+    );
 
 ## begin exclude nulls
-    $self->{activeVar} -= grep {$_ eq '='} @{ $data->{curTestItem} };
+    $result{num_variables} -= grep {$_ eq '='} @{ $data->{curTestItem} };
 ## end exclude nulls
 
     $self->{begintesthook}->($self, $data);
@@ -378,7 +383,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     # is a global that could have been edited during classification of the
     # last test item.
     # TODO: pass activeVars into fill_and_count instead of doing this
-    my $lattice_sizes = _compute_lattice_sizes($self->{activeVar});
+    my $lattice_sizes = _compute_lattice_sizes($result{num_variables});
     for(0 .. $#$lattice_sizes){
         $self->{activeVars}->[$_] = $lattice_sizes->[$_];
     }
@@ -394,11 +399,10 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
 # line 1200 "repeat"
-        my %result;
+        $result{excludedData} = 0;
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
-        $self->{excludedData} = 0;
         my $testindata   = 0;
         $self->{eg}      = 0;
 
@@ -420,14 +424,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## begin datahook
             # skip this data item if the datahook returns false
             if(!$self->{datahook}->($self, $data, $i)){
-                ++$self->{excludedData};
+                ++$result{excludedData};
                 next;
             }
 ## end datahook
 ## begin probability
             # skip this data item with probability $self->{probability}
             if(rand() > $self->{probability}){
-                ++$self->{excludedData};
+                ++$result{excludedData};
                 next;
             }
 ## end probability
@@ -472,7 +476,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 # line 1500 "print summary"
 
         #TODO: choose Nulls and Gang value here instead of in regex for eval string
-        $self->print_summary($data);
+        $self->print_summary($data, \%result);
         $logger->info('Test item is in the data.')
           if $testindata;
 
