@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 9;
+plan tests => 10;
 use Test::NoWarnings;
 use Test::LongString;
 
@@ -16,7 +16,7 @@ use File::Slurp;
 test_quadratic();
 test_linear();
 test_nulls();
-test_finnverb();
+test_given();
 test_finnverb();
 
 sub test_quadratic {
@@ -132,6 +132,75 @@ sub test_nulls {
             or diag $results;
         like_string($results, qr/Nulls: include/,
             'Printing with exclude nulls')
+            or diag $results;
+    };
+    #clean up the amcpresults file
+    unlink $project->results_path
+        if -e $project->results_path;
+
+    return;
+}
+
+# test case where test data is in given data
+sub test_given {
+    my @data = (
+      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+      [[qw(2 1 0)], '210', 'r', undef],
+      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef],
+      [[qw(3 1 2)], 'same as the test exemplar', 'r', undef]
+    );
+    my $project = Algorithm::AM::Project->new();
+    for my $datum(@data){
+        $project->add_data(@$datum);
+    }
+    $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+    my $am = Algorithm::AM->new(
+        $project,
+        exclude_given => 1
+    );
+
+    #clean up previous test runs
+    unlink $project->results_path
+        if -e $project->results_path;
+    subtest 'exclude given' => sub {
+        plan tests => 3;
+        $am->classify();
+        my $results = read_file($project->results_path);
+
+        like_string($results,qr/e   4   30.769%\v+r   9   69.231%/,
+            'Results for exclude given'
+        ) or diag $results;
+
+        like_string($results, qr/If context is in data file then exclude/,
+            'Flag should indicate exclude given'
+        ) or diag $results;
+
+        unlike_string($results,
+            qr/Include context even if it is in the data file/,
+            'Flag should not indicate include given'
+        ) or diag $results;
+
+    };
+    #clean up the amcpresults file
+    unlink $project->results_path
+        if -e $project->results_path;
+
+    subtest 'include given' => sub {
+        plan tests => 3;
+        $am->classify(exclude_given => 0);
+        my $results = read_file($project->results_path);
+
+        like_string($results,qr/r\s+15\s+100.000%/, 'Include given')
+            or diag $results;
+
+        like_string($results, qr/Include context even if it is in the data file/,
+         'Flag should indicate include given')
+            or diag $results;
+
+        unlike_string($results, qr/If context is in data file then exclude/,
+         'Flag should not indicate exclude given')
             or diag $results;
     };
     #clean up the amcpresults file
