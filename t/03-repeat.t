@@ -1,4 +1,4 @@
-#make sure we can read different formats (just the comma-delimited one for now)
+# test repeat classification option
 use strict;
 use warnings;
 use Algorithm::AM;
@@ -10,7 +10,6 @@ use Test::LongString;
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
-
 
 my $project_path = path($Bin, 'data', 'chapter3');
 my $results_path = path($project_path, 'amcpresults');
@@ -26,7 +25,7 @@ my $am = Algorithm::AM->new(
 $am->classify();
 my $results = read_file($results_path);
 is(() = $results =~ m/e\s+4\s+30.769%\v+r\s+9\s+69.231%/g, 2,
-	'exemplar is analyzed twice') or diag $results;
+	'exemplar is analyzed twice') or note $results;
 
 #clean up the amcpresults file
 unlink $results_path

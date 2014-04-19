@@ -1524,7 +1524,7 @@ Displayed default value will be used.
 
 =item Couldn't open %s/test
 
-Project %s does not have a F<test> file.  The F<data> file will be
+Project %s does not have a F<test> file. The F<data> file will be
 used.
 
 =back

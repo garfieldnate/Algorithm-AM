@@ -129,10 +129,10 @@ sub test_nulls {
         $am->classify(exclude_nulls => 0);
         my $results = read_file($project->results_path);
         like_string($results,qr/r\s+5\s+100.000%/, 'Include nulls')
-            or diag $results;
+            or note $results;
         like_string($results, qr/Nulls: include/,
             'Printing with exclude nulls')
-            or diag $results;
+            or note $results;
     };
     #clean up the amcpresults file
     unlink $project->results_path
@@ -171,16 +171,16 @@ sub test_given {
 
         like_string($results,qr/e   4   30.769%\v+r   9   69.231%/,
             'Results for exclude given'
-        ) or diag $results;
+        ) or note $results;
 
         like_string($results, qr/If context is in data file then exclude/,
             'Flag should indicate exclude given'
-        ) or diag $results;
+        ) or note $results;
 
         unlike_string($results,
             qr/Include context even if it is in the data file/,
             'Flag should not indicate include given'
-        ) or diag $results;
+        ) or note $results;
 
     };
     #clean up the amcpresults file
@@ -193,15 +193,15 @@ sub test_given {
         my $results = read_file($project->results_path);
 
         like_string($results,qr/r\s+15\s+100.000%/, 'Include given')
-            or diag $results;
+            or note $results;
 
         like_string($results, qr/Include context even if it is in the data file/,
          'Flag should indicate include given')
-            or diag $results;
+            or note $results;
 
         unlike_string($results, qr/If context is in data file then exclude/,
          'Flag should not indicate exclude given')
-            or diag $results;
+            or note $results;
     };
     #clean up the amcpresults file
     unlink $project->results_path

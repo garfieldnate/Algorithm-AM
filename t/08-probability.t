@@ -26,7 +26,7 @@ my $am = Algorithm::AM->new(
 $am->classify();
 my $results = read_file($results_path);
 like_string($results, qr/Probability of including any one data item: 0.9/, 'probability noted in output')
-	or diag $results;
+	or note $results;
 
 #clean up the amcpresults file
 unlink $results_path

@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Right now: general cleanup
+Right now:
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).

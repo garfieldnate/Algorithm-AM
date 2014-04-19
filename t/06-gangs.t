@@ -1,4 +1,4 @@
-#test inclusion/exclusion of givens
+# test gang set printing.
 use strict;
 use warnings;
 use Algorithm::AM;
@@ -11,7 +11,6 @@ use Test::Warn;
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
-
 
 my $project_path = path($Bin, 'data', 'chapter3');
 my $results_path = path($project_path, 'amcpresults');
@@ -27,7 +26,7 @@ my $am = Algorithm::AM->new(
 $am->classify();
 my $results = read_file($results_path);
 unlike_string($results,qr/\sx\s/, q{'-gangs => no' doesn't list gangs})
-	or diag $results;
+	or note $results;
 
 #clean up the amcpresults file
 unlink $results_path
@@ -37,9 +36,9 @@ $am->classify(gangs => 'summary');
 $results = read_file($results_path);
 unlike_string($results, qr/3 1 0\s+myFirstCommentHere/,
     q{'-gangs => summary' doesn't list gang exemplars})
-	or diag $results;
+	or note $results;
 like_string($results, qr/ 61.538%\s+8\s+3 1 2/, q{'-gangs => summary' lists gang effects})
-	or diag $results;
+	or note $results;
 
 #clean up the amcpresults file
 unlink $results_path
@@ -48,9 +47,9 @@ unlink $results_path
 $am->classify(gangs => 'yes');
 $results = read_file($results_path);
 like_string($results,qr/3 1 1\s+myFifthCommentHere/, q{'-gangs => summary' lists gang exemplars})
-	or diag $results;
+	or note $results;
 like_string($results,qr/\s*23.077%\s+3\s+3 1 2/, q{'-gangs => summary' lists gang effects})
-	or diag $results;
+	or note $results;
 
 #clean up the amcpresults file
 unlink $results_path
