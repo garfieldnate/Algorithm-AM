@@ -19,6 +19,7 @@ perhaps require/allow user to input number of variables in their vectors in the 
 
 May be helpful to add little readme files explaining each of the test data projects.
 
+do something better than just calling rand() for the probability/skip function.
 
 Projects normally contain separate datasets for training/testing/evaluating. Create another module to hold a dataset. Project can manage 2 datasets (data and test). This would be much more flexible.
 

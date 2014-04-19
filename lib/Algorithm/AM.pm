@@ -261,7 +261,7 @@ sub _create_classify_sub {
             s/\$self->{beginrepeathook}->.*//;
         }
         if (!exists $self->{datahook} ) {
-            s/next unless \$self->{datahook}->\([^)]+\)//;
+            s/## begin datahook.*?## end datahook//sg;
         }
         if (!exists $self->{endrepeathook} ) {
             s/\$self->{endrepeathook}->.*//;
@@ -394,6 +394,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
 # line 1200 "repeat"
+        my %result;
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
@@ -412,18 +413,23 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
         }
 
+        # determine the data set to be used for classification
         for ( my $i = $data->{datacap} ; $i ; ) {
 # line 1300 "data hook"
             --$i;
+## begin datahook
             # skip this data item if the datahook returns false
-            # TODO: this and the next one below would be better in an if
-            # block, but this code text is searched and replaced in
-            # _create_classify_sub
-            ++$self->{excludedData}, next unless $self->{datahook}->($self, $data, $i);
+            if(!$self->{datahook}->($self, $data, $i)){
+                ++$self->{excludedData};
+                next;
+            }
+## end datahook
 ## begin probability
             # skip this data item with probability $self->{probability}
-            ++$self->{excludedData}, next
-                if rand() > $self->{probability};
+            if(rand() > $self->{probability}){
+                ++$self->{excludedData};
+                next;
+            }
 ## end probability
             my @dataItem = @{ $project->get_exemplar_data($i) };
             my @alist    = @{$self->{activeVars}};
