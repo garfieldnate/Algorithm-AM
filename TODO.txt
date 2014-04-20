@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Right now:
+Right now: Work on result object. Move stuff from $data or elsewhere. Then make an Algorithm::AM::Result class and add printing methods. No more printing when you don't want it! No more always reading amcpresults files! That should speed up testing.
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).

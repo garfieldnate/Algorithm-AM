@@ -278,6 +278,8 @@ sub _create_classify_sub {
         my $data;
         my $pass;
         my $grandtotal;
+        # save the result objects from each run here
+        my @results;
 
         #beginning vars
         $data->{datacap} = $project->num_exemplars;
@@ -299,6 +301,7 @@ sub _create_classify_sub {
 
         # return autoflush setting to what the caller was using
         *STDOUT->autoflush($autoflush);
+        return @results;
     };
 }
 
@@ -307,26 +310,26 @@ sub bigcmp {
     return (length($a) <=> length($b)) || ($a cmp $b);
 }
 
+# this prints info about an upcoming classification configuration
 # TODO: should probably be separate methods:
 # print_config and print_data_stats
-sub print_summary {
-    my ($self, $data, $result) = @_;
+sub print_config {
+    my ($result) = @_;
 
     $logger->info(
-        "Given Context:  @{ $data->{curTestItem} }, $data->{curTestSpec}");
+        "Given Context:  @{ $result->{test_item} }, $result->{test_spec}");
     $logger->info('If context is in data file then exclude')
-        if $self->{exclude_given};
+        if $result->{exclude_given};
     $logger->info('Include context even if it is in the data file')
-        unless $self->{exclude_given};
-    $logger->info("Number of data items: @{[$data->{datacap}]}");
+        unless $result->{exclude_given};
+    $logger->info("Number of data items: $result->{datacap}");
     $logger->info('Probability of including any one data item: ' .
-        $self->{probability})
-        if defined $self->{probability};
+        $result->{probability})
+        if defined $result->{probability};
     $logger->info("Total Excluded: $result->{excludedData} " .
-        qq!@{[ $self->{eg} ? " + test item" : "" ]}!);
-    $logger->info('Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include') );
-    $logger->info($self->{linear} ?
-        'Gang: linear' : 'Gang: squared');
+        ($result->{excluded_given} ? " + test item" : ""));
+    $logger->info('Nulls: ' . ($result->{exclude_nulls} ? 'exclude' : 'include') );
+    $logger->info("Gang: $result->{count_method}");
     $logger->info("Number of active variables: $result->{num_variables}");
     return;
 }
@@ -400,11 +403,11 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     while ( $pass < $self->{repeat} ) {
 # line 1200 "repeat"
         $result{excludedData} = 0;
+        $result{excluded_given} = 0;
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
         my $testindata   = 0;
-        $self->{eg}      = 0;
 
         %{$self->{contextsize}}             = ();
         %{$self->{itemcontextchainhead}}    = ();
@@ -466,17 +469,28 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             }
         }
 # line 1400 "given"
+        # TODO: explain how this is working
         if ( exists $self->{subtooutcome}->{$nullcontext} ) {
             ++$testindata;
 ## begin exclude given
-            # TODO: this doesn't look right. Why does it check exclude_given?
-            delete $self->{subtooutcome}->{$nullcontext}, ++$self->{eg} if $self->{exclude_given};
+            if($self->{exclude_given}){
+               delete $self->{subtooutcome}->{$nullcontext};
+               $result{excluded_given} = 1;
+            }
 ## end exclude given;
         }
 # line 1500 "print summary"
 
+        $result{test_item} = $data->{curTestItem};
+        $result{test_spec} = $data->{curTestSpec};
+        $result{exclude_given} = $self->{exclude_given};
+        $result{exclude_nulls} = $self->{exclude_nulls};
+        $result{probability} = $self->{probability};
+        $result{count_method} = $self->{linear} ? 'linear' : 'squared';
+        $result{datacap} = $data->{datacap};
+
         #TODO: choose Nulls and Gang value here instead of in regex for eval string
-        $self->print_summary($data, \%result);
+        print_config(\%result);
         $logger->info('Test item is in the data.')
           if $testindata;
 
@@ -756,9 +770,9 @@ Using the analogical modeling algorithm, this method classifies the instances
 in the project and prints the results to STDOUT, as well as to
 C<amcpresults> in the project directory.
 
-=head2 C<print_summary>
+=head2 C<print_config>
 THIS METHOD IS UNDER CONSTRUCTION. Currently it is called by
-C<classify> to print a summary of the classifcation results.
+C<classify> to print a summary of the classifcation configuration.
 
 =head1 HISTORY
 
@@ -1237,8 +1251,7 @@ out which hook to put this in.)
 This variable determines how many data items will be considered.  It
 is initially set to C<scalar @data>.  However, if it is set smaller,
 only the first C<$datacap> items in the F<data> file will be
-considered.  C<Algorithm::AM> automatically truncates C<$datacap> if it
-isn't an integer, so you don't have to.
+considered.  C<$datacap> is rounded down if it is not an integer.
 
 Example: It is often of interest to see how results change as the
 number of data items considered decreases.  Here's one way to do it:
