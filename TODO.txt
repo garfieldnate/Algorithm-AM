@@ -2,6 +2,11 @@ Algorithm::AM
 
 Right now: Work on result object. Move stuff from $data or elsewhere. Then make an Algorithm::AM::Result class and add printing methods. No more printing when you don't want it! No more always reading amcpresults files! That should speed up testing.
 
+Add tests for Result.
+Add docs for methods in Result.
+
+Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
+
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
 
@@ -25,7 +30,7 @@ Projects normally contain separate datasets for training/testing/evaluating. Cre
 
 error checking for getting data data at a specific index; make sure it's a legal index.
 
-possible create a DataSet class to pass to new Projects.
+possibly create a DataSet class to pass to new Projects.
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
 

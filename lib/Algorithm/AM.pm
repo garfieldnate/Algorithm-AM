@@ -13,6 +13,7 @@ our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
 use Data::Dumper;
 use Algorithm::AM::Project;
+use Algorithm::AM::Result;
 
 require XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -310,30 +311,6 @@ sub bigcmp {
     return (length($a) <=> length($b)) || ($a cmp $b);
 }
 
-# this prints info about an upcoming classification configuration
-# TODO: should probably be separate methods:
-# print_config and print_data_stats
-sub print_config {
-    my ($result) = @_;
-
-    $logger->info(
-        "Given Context:  @{ $result->{test_item} }, $result->{test_spec}");
-    $logger->info('If context is in data file then exclude')
-        if $result->{exclude_given};
-    $logger->info('Include context even if it is in the data file')
-        unless $result->{exclude_given};
-    $logger->info("Number of data items: $result->{datacap}");
-    $logger->info('Probability of including any one data item: ' .
-        $result->{probability})
-        if defined $result->{probability};
-    $logger->info("Total Excluded: $result->{excludedData} " .
-        ($result->{excluded_given} ? " + test item" : ""));
-    $logger->info('Nulls: ' . ($result->{exclude_nulls} ? 'exclude' : 'include') );
-    $logger->info("Gang: $result->{count_method}");
-    $logger->info("Number of active variables: $result->{num_variables}");
-    return;
-}
-
 1;
 __DATA__
 
@@ -364,17 +341,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
         @$t;
 
-    # initialize the results object to hold all of the classification
-    # info. num_variables is the number of active variables; if we
+    # num_variables is the number of active variables; if we
     # exclude nulls, then we need to minus the number of '=' found in
     # this test item; otherwise, it's just the number of columns in a
     # single item vector
-    my %result = (
-        num_variables => $project->num_variables,
-    );
+    my $num_variables = $project->num_variables;
 
 ## begin exclude nulls
-    $result{num_variables} -= grep {$_ eq '='} @{ $data->{curTestItem} };
+    $num_variables -= grep {$_ eq '='} @{ $data->{curTestItem} };
 ## end exclude nulls
 
     $self->{begintesthook}->($self, $data);
@@ -386,7 +360,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     # is a global that could have been edited during classification of the
     # last test item.
     # TODO: pass activeVars into fill_and_count instead of doing this
-    my $lattice_sizes = _compute_lattice_sizes($result{num_variables});
+    my $lattice_sizes = _compute_lattice_sizes($num_variables);
     for(0 .. $#$lattice_sizes){
         $self->{activeVars}->[$_] = $lattice_sizes->[$_];
     }
@@ -402,8 +376,8 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
 # line 1200 "repeat"
-        $result{excludedData} = 0;
-        $result{excluded_given} = 0;
+        my $excluded_data = 0;
+        my $given_excluded = 0;
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
 
@@ -427,14 +401,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## begin datahook
             # skip this data item if the datahook returns false
             if(!$self->{datahook}->($self, $data, $i)){
-                ++$result{excludedData};
+                ++$excluded_data;
                 next;
             }
 ## end datahook
 ## begin probability
             # skip this data item with probability $self->{probability}
             if(rand() > $self->{probability}){
-                ++$result{excludedData};
+                ++$excluded_data;
                 next;
             }
 ## end probability
@@ -475,24 +449,29 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## begin exclude given
             if($self->{exclude_given}){
                delete $self->{subtooutcome}->{$nullcontext};
-               $result{excluded_given} = 1;
+               $given_excluded = 1;
             }
 ## end exclude given;
         }
 # line 1500 "print summary"
 
-        $result{test_item} = $data->{curTestItem};
-        $result{test_spec} = $data->{curTestSpec};
-        $result{exclude_given} = $self->{exclude_given};
-        $result{exclude_nulls} = $self->{exclude_nulls};
-        $result{probability} = $self->{probability};
-        $result{count_method} = $self->{linear} ? 'linear' : 'squared';
-        $result{datacap} = $data->{datacap};
+        # initialize the results object to hold all of the classification
+        # info.
+        my $result = Algorithm::AM::Result->new(
+            excluded_data => $excluded_data,
+            given_excluded => $given_excluded,
+            num_variables => $num_variables,
+            test_item => $data->{curTestItem},
+            test_spec => $data->{curTestSpec},
+            exclude_given => $self->{exclude_given},
+            exclude_nulls => $self->{exclude_nulls},
+            probability => $self->{probability},
+            count_method => $self->{linear} ? 'linear' : 'squared',
+            datacap => $data->{datacap},
+            test_in_data => $testindata
+        );
 
-        #TODO: choose Nulls and Gang value here instead of in regex for eval string
-        print_config(\%result);
-        $logger->info('Test item is in the data.')
-          if $testindata;
+        $logger->info(${$result->config_info});
 
 # line 1600 "call XS"
         $self->_fillandcount(X);

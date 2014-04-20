@@ -90,6 +90,7 @@ sub test_linear {
 # test with null variables, using both exclude_nulls
 # and include_nulls
 # TODO: can there be nulls in the data, too? I think so...
+# TODO: test for the correct number of active variables
 sub test_nulls {
     my @data = (
       [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
