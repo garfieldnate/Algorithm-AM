@@ -495,26 +495,32 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         #TODO: put all of this information in a return value or something!
         $data->{pointermax}    = "";
         $logger->info('Statistical Summary');
+        # iterate all possible outcomes and
+        # 1) find which one has the most pointers (is the prediction) and
+        # 2) print out the ones with pointers (change of prediction)
         for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
             my $n;
             next unless $n = $self->{sum}->[$i];
 
-            if(
-                length($n) > length($data->{pointermax})
-                or length($n) == length($data->{pointermax})
-                and $n gt $data->{pointermax}
-            ){
-                $data->{pointermax} = $n
+            if(bigcmp($n, $data->{pointermax}) == 1){
+                $data->{pointermax} = $n;
             }
             $logger->info(
+                # print outcome name, number of pointers,
+                # and percentage predicted
                 sprintf(
                     "$outcome_format  $gang_format  %7.3f%%",
                     $project->get_outcome($i), $n, 100 * $n / $grandtotal
                 )
             );
         }
+        # print a separator row of dashes (-) and then the grandtotal in
+        # the same column as the other pointer numbers were printed
         $logger->info( sprintf( "$outcome_format  $gang_format", "", '-' x $longest ) );
         $logger->info( sprintf( "$outcome_format  $gang_format", "", $grandtotal ) );
+        # print the predicted outcome (the one with the highest number
+        # of pointers) and whether or not the prediction was correct.
+        # TODO: should note if there's a tie
         if ( defined $curTestOutcome ) {
             $logger->info('Expected outcome: ' .
                 $project->get_outcome($curTestOutcome));
