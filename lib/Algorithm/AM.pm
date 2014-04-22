@@ -456,7 +456,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         }
 # line 1500 "print summary"
 
-        # initialize the results object to hold all of the classification
+        # initialize the results object to hold all of the configuration
         # info.
         my $result = Algorithm::AM::Result->new(
             excluded_data => $excluded_data,
@@ -464,18 +464,24 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             num_variables => $num_variables,
             test_item => $data->{curTestItem},
             test_spec => $data->{curTestSpec},
+            test_outcome => $data->{curTestOutcome},
             exclude_given => $self->{exclude_given},
             exclude_nulls => $self->{exclude_nulls},
             probability => $self->{probability},
             count_method => $self->{linear} ? 'linear' : 'squared',
             datacap => $data->{datacap},
-            test_in_data => $testindata
+            test_in_data => $testindata,
+            project => $project
         );
 
         $logger->info(${$result->config_info});
 
 # line 1600 "call XS"
+
+        $result->start_time([ (localtime)[0..2] ]);
         $self->_fillandcount(X);
+        $result->end_time([ (localtime)[0..2] ]);
+
         $grandtotal = $self->{pointers}->{'grandtotal'};
 
         unless ($grandtotal) {
@@ -484,54 +490,19 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             next;
         }
 
-        # TODO: explain all of these formatting variables
         my $longest = length $grandtotal;
-        my $gang_format =  "%$longest.${longest}s";
+        my $gang_format = "%$longest.${longest}s";
         my $var_format = $project->var_format;
         my $spec_format = $project->spec_format;
         my $outcome_format = $project->outcome_format;
         my $data_format = $project->data_format;
 
 # line 1700 "calculate results"
-        #TODO: put all of this information in a return value or something!
-        $data->{pointermax}    = "";
-        $logger->info('Statistical Summary');
-        # iterate all possible outcomes and
-        # 1) find which one has the most pointers (is the prediction) and
-        # 2) print out the ones with pointers (change of prediction)
-        for ( my $i = 1 ; $i < @{$self->{outcomelist}} ; ++$i ) {
-            my $n;
-            next unless $n = $self->{sum}->[$i];
-
-            if(bigcmp($n, $data->{pointermax}) == 1){
-                $data->{pointermax} = $n;
-            }
-            $logger->info(
-                # print outcome name, number of pointers,
-                # and percentage predicted
-                sprintf(
-                    "$outcome_format  $gang_format  %7.3f%%",
-                    $project->get_outcome($i), $n, 100 * $n / $grandtotal
-                )
-            );
-        }
-        # print a separator row of dashes (-) and then the grandtotal in
-        # the same column as the other pointer numbers were printed
-        $logger->info( sprintf( "$outcome_format  $gang_format", "", '-' x $longest ) );
-        $logger->info( sprintf( "$outcome_format  $gang_format", "", $grandtotal ) );
-        # print the predicted outcome (the one with the highest number
-        # of pointers) and whether or not the prediction was correct.
-        # TODO: should note if there's a tie
-        if ( defined $curTestOutcome ) {
-            $logger->info('Expected outcome: ' .
-                $project->get_outcome($curTestOutcome));
-            if ( $self->{sum}->[$curTestOutcome] eq $data->{pointermax} ) {
-                $logger->info('Correct outcome predicted.');
-            }
-            else {
-                $logger->info('Incorrect outcome predicted');
-            }
-        }
+        $result->_process_stats(
+            $self->{pointers}->{'grandtotal'},
+            $self->{sum}, $curTestOutcome);
+        $data->{pointermax}    = $result->high_score;
+        $logger->info(${$result->statistical_summary});
 
 ## begin analogical set
 # line 1800 "analogical set"
@@ -692,6 +663,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             }
         }
 ## end gang
+    push @results, $result;
 
     }
     continue {

@@ -1,8 +1,8 @@
 Algorithm::AM
 
-Right now: Move bigcmp into its own file for use by Result, AM and wherever else. Document statistical_summary and process_stats.
+Right now: Work on result object. Next up is gang calculation/printing.
 
-Right now: Work on result object. Move stuff from $data or elsewhere. Then make an Algorithm::AM::Result class and add printing methods. No more printing when you don't want it! No more always reading amcpresults files! That should speed up testing.
+Try to move more of the AM guts stuff back into AM.pm or into Project.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
 Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
 
@@ -13,6 +13,8 @@ Do better time handling in Result; something that will allow checking how long c
 Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
 Add other bigint helper methods into BigInt and test them, as well.
+
+Auto-import Result and Project when caller imports AM.pm.
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
