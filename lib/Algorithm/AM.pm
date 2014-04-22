@@ -5,15 +5,21 @@ use warnings;
 our $VERSION = 2.45; # VERSION
 use feature 'state';
 use Path::Tiny;
-use Exporter::Easy (
-    OK => ['bigcmp']
-);
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use IO::Handle;
 use Data::Dumper;
+
 use Algorithm::AM::Project;
 use Algorithm::AM::Result;
+use Algorithm::AM::BigInt 'bigcmp';
+use Import::Into;
+# Use Import::Into to export classes into caller
+sub import {
+    my $target = caller;
+    Algorithm::AM::BigInt->import::into($target, 'bigcmp');
+    return;
+}
 
 require XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -304,11 +310,6 @@ sub _create_classify_sub {
         *STDOUT->autoflush($autoflush);
         return @results;
     };
-}
-
-sub bigcmp {
-    my($a,$b) = @_;
-    return (length($a) <=> length($b)) || ($a cmp $b);
 }
 
 1;

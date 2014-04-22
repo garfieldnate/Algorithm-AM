@@ -4,7 +4,7 @@ use warnings;
 use Test::More 0.88;
 plan tests => 6;
 use Test::NoWarnings;
-use Algorithm::AM qw(bigcmp);
+use Algorithm::AM;
 use FindBin qw($Bin);
 use Path::Tiny;
 
