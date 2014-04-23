@@ -2,7 +2,7 @@ Algorithm::AM
 
 Right now: figure out the itemcontextchain and itemcontextchainhead variables.
 
-Right now: Work on result object. Next up is gang printing.
+Right now: Make tests for Result, then switch all classification tests over to using this API and then STOP PRINTING EVERYTHING! Also, try to comment the gang printing code.
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 

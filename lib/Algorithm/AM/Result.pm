@@ -179,6 +179,130 @@ sub analogical_set_summary {
     return \$info;
 }
 
+# $print_list means print everything, not just the summary
+sub gang_summary {
+    my ($self, $print_list) = @_;
+    my $project = $self->project;
+    my $gang_format = $self->gang_format;
+    my $outcome_format = $project->outcome_format;
+    my $data_format = $project->data_format;
+    my $grandtotal = $self->grandtotal;
+    my $var_format = $project->var_format;
+    my $test_item = $self->test_item;
+
+    my $info = "Gang effects\n";
+    #TODO: explain the magic below
+    my $dashes = '-' x ( (length $self->grandtotal)  + 10 );
+    my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
+      0, '0', 0, "";
+    foreach my $context (
+        sort { bigcmp($self->{gang}->{$b}, $self->{gang}->{$a})}
+            keys %{$self->{gang}}
+    )
+    {
+        # start by unpacking the (supra)contexts for printing
+        my @context_list   = unpack "S!4", $context;
+        my @alist   = @{$self->{active_vars}};
+        my (@vtemp) = @{ $test_item };
+        my $j       = 1;
+        while (@alist) {
+            my $a = pop @alist;
+            my $partial_context = pop @context_list;
+            for ( ; $a ; --$a ) {
+                if($self->{exclude_nulls}){
+                    ++$j while $vtemp[ -$j ] eq '=';
+                }
+                $vtemp[ -$j ] = '' if $partial_context & 1;
+                $partial_context >>= 1;
+                ++$j;
+            }
+        }
+        my $p = $self->{pointers}->{$context};
+        if ( $self->{subtooutcome}->{$context} ) {
+            {
+                no warnings;
+                # print the effect of the gang
+                $info .= sprintf(
+                    "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
+                    100 * $self->{gang}->{$context} / $grandtotal,
+                    $self->{gang}->{$context}, "", "", @{ $test_item }
+                ) . "\n";
+                # print dashes and the name of the supracontext
+                $info .= sprintf(
+                    "$dashes   $data_format  $outcome_format  $var_format",
+                    "", "", @vtemp
+                ) . "\n";
+            }
+            $info .= sprintf(
+                "%7.3f%%  $gang_format x $data_format  $outcome_format",
+                100 * $self->{gang}->{$context} / $grandtotal,
+                $p,
+                $self->{contextsize}->{$context},
+                $project->get_outcome($self->{subtooutcome}->{$context} )
+            ) . "\n";
+            if($print_list){
+                my $i;
+                for (
+                    $i = $self->{itemcontextchainhead}->{$context} ;
+                    defined $i ;
+                    $i = $self->{itemcontextchain}->[$i]
+                  )
+                {
+                    $info .= sprintf(
+                        "$pad  $var_format  " .
+                        $project->get_exemplar_spec($i),
+                        @{ $project->get_exemplar_data($i) } ) . "\n";
+                }
+            }
+        }
+        else {
+            my @gangsort = (0) x ($project->num_outcomes + 1);
+            my @ganglist = ();
+            my $i;
+            for (
+                $i = $self->{itemcontextchainhead}->{$context} ;
+                defined $i ;
+                $i = $self->{itemcontextchain}->[$i]
+              )
+            {
+                ++$gangsort[ $project->get_exemplar_outcome($i) ];
+                if($print_list){
+                    push @{ $ganglist[
+                        $project->get_exemplar_outcome($i) ] }, $i;
+                }
+            }
+            {
+                no warnings;
+                $info .= sprintf(
+"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
+                    100 * $self->{gang}->{$context} / $grandtotal,
+                    $self->{gang}->{$context}, "", "", @{ $test_item }
+                ) . "\n";
+                $info .= sprintf (
+                    "$dashes   $data_format  $outcome_format  $var_format",
+                    "", "", @vtemp) . "\n";
+            }
+            for $i ( 1 .. $project->num_outcomes ) {
+                next unless $gangsort[$i];
+                $info .= sprintf(
+                    "%7.3f%%  $gang_format x $data_format  $outcome_format",
+                    100 * $gangsort[$i] * $p / $grandtotal,
+                    $p, $gangsort[$i], $project->get_outcome($i)
+                ) . "\n";
+                if($print_list){
+                    foreach ( @{ $ganglist[$i] } ) {
+                        $info .= sprintf( "$pad  $var_format  " .
+                            $project->get_exemplar_spec($_),
+                            @{ $project->get_exemplar_data($_) }
+                        ) . "\n";
+                    }
+                }
+            }
+        }
+    }
+    return \$info;
+}
+
 # input several variables from AM's guts (grandtotal, sum,
 # expected outcome integer, pointers, itemcontextchainhead and
 # itemcontextchain). Calculate the prediction statistics, and
@@ -188,7 +312,8 @@ sub analogical_set_summary {
 # grandtotal.
 sub _process_stats {
     my ($self, $grandtotal, $sum, $expected, $pointers,
-        $itemcontextchainhead, $itemcontextchain) = @_;
+        $itemcontextchainhead, $itemcontextchain, $subtooutcome,
+        $gang, $active_vars, $contextsize) = @_;
     my $max = '';
     my @winners;
     my %scores;
@@ -244,6 +369,10 @@ sub _process_stats {
     $self->{pointers} = $pointers;
     $self->{itemcontextchainhead} = $itemcontextchainhead;
     $self->{itemcontextchain} = $itemcontextchain;
+    $self->{subtooutcome} = $subtooutcome;
+    $self->{gang} = $gang;
+    $self->{active_vars} = $active_vars;
+    $self->{contextsize} = $contextsize;
     return;
 }
 

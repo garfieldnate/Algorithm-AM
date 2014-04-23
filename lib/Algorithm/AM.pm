@@ -550,6 +550,10 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $self->{pointers},
             $self->{itemcontextchainhead},
             $self->{itemcontextchain},
+            $self->{subtooutcome},
+            $self->{gang},
+            $self->{activeVars},
+            $self->{contextsize}
         );
         $data->{pointermax}    = $result->high_score;
         $logger->info(${$result->statistical_summary});
@@ -561,129 +565,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
 ## begin gang
 # line 1900 "start gangs"
-        #TODO: explain the magic below
-        $logger->info('Gang effects');
-        my $dashes = '-' x ( $longest + 10 );
-        my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
-          0, '0', 0, "";
-        foreach my $context (
-            sort { bigcmp($self->{gang}->{$b}, $self->{gang}->{$a})}
-                keys %{$self->{gang}}
-        )
-        {
-            my @context_list   = unpack "S!4", $context;
-            my @alist   = @{$self->{activeVars}};
-            my (@vtemp) = @{ $data->{curTestItem} };
-            my $j       = 1;
-            while (@alist) {
-                my $a = pop @alist;
-                my $context = pop @context_list;
-                for ( ; $a ; --$a ) {
-## begin exclude nulls
-                    ++$j while $vtemp[ -$j ] eq '=';
-## end exclude nulls
-                    $vtemp[ -$j ] = '' if $context & 1;
-                    $context >>= 1;
-                    ++$j;
-                }
-            }
-            my $p = $self->{pointers}->{$context};
-            if ( $self->{subtooutcome}->{$context} ) {
-                {
-                    no warnings;
-                    $logger->info(
-                        sprintf(
-                            "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                            100 * $self->{gang}->{$context} / $grandtotal,
-                            $self->{gang}->{$context}, "", "", @{ $data->{curTestItem} }
-                        )
-                    );
-                    $logger->info(
-                        sprintf(
-                            "$dashes   $data_format  $outcome_format  $var_format",
-                            "", "", @vtemp
-                        )
-                    );
-                }
-                $logger->info(
-                    sprintf(
-                        "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                        100 * $self->{gang}->{$context} / $grandtotal,
-                        $p,
-                        $self->{contextsize}->{$context},
-                        $project->get_outcome($self->{subtooutcome}->{$context} )
-                    )
-                );
-## begin skip gang list
-# line 2000 "skip gang list"
-                my $i;
-                for (
-                    $i = $self->{itemcontextchainhead}->{$context} ;
-                    defined $i ;
-                    $i = $self->{itemcontextchain}->[$i]
-                  )
-                {
-                    $logger->info( sprintf "$pad  $var_format  " .
-                        $project->get_exemplar_spec($i),
-                        @{ $project->get_exemplar_data($i) } );
-                }
-## end skip gang list
-            }
-            else {
-                my @gangsort = (0) x ($project->num_outcomes + 1);
-## begin skip gang list
-                my @ganglist = ();
-## end skip gang list
-                my $i;
-                for (
-                    $i = $self->{itemcontextchainhead}->{$context} ;
-                    defined $i ;
-                    $i = $self->{itemcontextchain}->[$i]
-                  )
-                {
-                    ++$gangsort[ $project->get_exemplar_outcome($i) ];
-## begin skip gang list
-                    push @{ $ganglist[
-                        $project->get_exemplar_outcome($i) ] }, $i;
-## end skip gang list
-                }
-                {
-                    no warnings;
-                    $logger->info(
-                        sprintf(
-"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                            100 * $self->{gang}->{$context} / $grandtotal,
-                            $self->{gang}->{$context}, "", "", @{ $data->{curTestItem} }
-                        )
-                    );
-                    $logger->info(
-                        sprintf(
-                            "$dashes   $data_format  $outcome_format  $var_format",
-                            "", "", @vtemp
-                        )
-                    );
-                }
-                for $i ( 1 .. $project->num_outcomes ) {
-                    next unless $gangsort[$i];
-                    $logger->info(
-                        sprintf(
-                            "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                            100 * $gangsort[$i] * $p / $grandtotal,
-                            $p, $gangsort[$i], $project->get_outcome($i)
-                        )
-                    );
-## begin skip gang list
-                    foreach ( @{ $ganglist[$i] } ) {
-                        $logger->info(
-                            sprintf( "$pad  $var_format  " .
-                                $project->get_exemplar_spec($_),
-                                @{ $project->get_exemplar_data($_) } )
-                        );
-                    }
-## end skip gang list
-                }
-            }
-        }
+    # TODO: properly store this option somewhere.
+    # gangs and gang are two different variables.
+    # That's confusing!
+    if($self->{gangs} =~ /^yes$|^summary$/){
+        $logger->info(
+            ${ $result->gang_summary($self->{gangs} eq 'yes' ? 1 : 0) }
+        );
+    }
 ## end gang
     push @results, $result;
 
