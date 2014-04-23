@@ -164,21 +164,38 @@ typedef struct AM_guts {
   AM_SHORT *lptr[4];
   AM_SUPRA *sptr[4];
 
-  /* The rest of these come from Parallel.pm -- look there */
-
+  /* array ref containing number of active variables in
+   * each lattice (currently we us four lattices)
+   */
   SV **activeVar;
+  /* array ref containing "short" outcomes for whole data set;
+   * array index is data item index in data set.
+   */
   SV **outcome;
+  /* ??? */
   SV **itemcontextchain;
+  /* ??? */
   HV *itemcontextchainhead;
+  /* Maps subcontext binary labels to outcome indices */
   HV *subtooutcome;
+  /* Maps binary context labels to the number of exemplars contained
+   * in that subcontext
+   */
   HV *contextsize;
+  /* ???
+   * The key 'grandtotal' maps to the total number
+   * of pointers. */
   HV *pointers;
+  /* ??? */
   HV *gang;
+  /* number of pointers to each outcome;
+   * keys are outcome indices and values are numbers
+   * of pointers (AM_BIG_INT).
+   */
   SV **sum;
-
   /*
    * contains the total number of possible outcomes;
-   * used below for computing gang effects
+   * used for computing gang effects.
    */
   IV numoutcomes;
 } AM_GUTS;
@@ -336,25 +353,16 @@ _initialize(...)
   /* 9 arguments are passed to the _initialize method: */
   /* $self, the AM object */
   project = (HV *) SvRV(ST(0));
-  /* number of active variables in each lattice*/
+  /* For explanations on these, see the comments on AM_guts */
   guts.activeVar = AvARRAY((AV *) SvRV(ST(1)));
-  /* array ref of "short" outcomes for whole data set*/
   guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
-  /* ??? */
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
-  /* ??? */
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
-  /* ??? */
   guts.subtooutcome = (HV *) SvRV(ST(5));
-  /* ??? */
   guts.contextsize = (HV *) SvRV(ST(6));
-  /* ??? */
   guts.pointers = (HV *) SvRV(ST(7));
-  /* ??? */
   guts.gang = (HV *) SvRV(ST(8));
-  /* number of pointers to each outcome */
   guts.sum = AvARRAY((AV *) SvRV(ST(9)));
-  /* ??? */
   guts.numoutcomes = av_len((AV *) SvRV(ST(9)));
 
   /*
@@ -1064,8 +1072,8 @@ _fillandcount(...)
     /* TODO: why is element 0 not considered here? */
     if (counthi) {
       for (i = 0; i < 6; ++i) {
-  gangcount[i + 1] += counthi * p[i];
-  carry(gangcount, i + 1);
+        gangcount[i + 1] += counthi * p[i];
+        carry(gangcount, i + 1);
       }
     }
     for (i = 0; i < 7; ++i) {
@@ -1073,6 +1081,7 @@ _fillandcount(...)
       carry(grandtotal, i);
     }
     grandtotal[7] += gangcount[7];
+
     tempsv = *hv_fetch(gang, HeKEY(he), 4 * sizeof(AM_SHORT), 1);
     SvUPGRADE(tempsv, SVt_PVNV);
     sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
@@ -1084,20 +1093,20 @@ _fillandcount(...)
     if (thisoutcome) {
       AM_LONG *s = (AM_LONG *) SvPVX(sum[thisoutcome]);
       for (i = 0; i < 7; ++i) {
-	*(s + i) += gangcount[i];
-  carry_pointer(s + i);
+      	*(s + i) += gangcount[i];
+        carry_pointer(s + i);
       }
     } else {
       dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
       while (SvIOK(dataitem)) {
-	IV datanum = SvIVX(dataitem);
-	IV ocnum = SvIVX(outcome[datanum]);
-	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
-	for (i = 0; i < 7; ++i) {
-	  *(s + i) += p[i];
-    carry_pointer(s + i);
-	  dataitem = itemcontextchain[datanum];
-	}
+      	IV datanum = SvIVX(dataitem);
+      	IV ocnum = SvIVX(outcome[datanum]);
+      	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
+      	for (i = 0; i < 7; ++i) {
+      	  *(s + i) += p[i];
+          carry_pointer(s + i);
+      	  dataitem = itemcontextchain[datanum];
+      	}
       }
     }
   }

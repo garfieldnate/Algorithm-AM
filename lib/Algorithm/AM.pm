@@ -105,7 +105,9 @@ sub new {
     @{$self->{sum}} = (0.0) x ($project->num_outcomes + 1);
 
     # preemptively allocate memory
+    # TODO: not sure what this does
     @{$self->{itemcontextchain}} = (0) x $project->num_exemplars;
+    # maps data indices to context labels
     @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x $project->num_exemplars;
 
     $self->{$_} = {} for (
@@ -203,6 +205,46 @@ sub _compute_lattice_sizes {
     $active_vars[2] = $half / 2;
     $active_vars[3] = $half - $active_vars[2];
     return \@active_vars;
+}
+
+# Create binary context labels for a data item
+# by comparing it with a test item. Each data item
+# needs one binary label for each sublattice (of which
+# there are currently four), but this is packed into a
+# single scalar representing an array of 4 shorts (this
+# format is used in the XS side).
+
+# TODO: we have to copy activeVars out of $self in order to
+# iterate it. Otherwise it goes on forever. Why?
+sub _context_label {
+    # inputs:
+    # number of active variables in each lattice,
+    # exemplar (data) variables, item variables,
+    # and boolean indicating if nulls should be excluded
+    my ($active_vars, $exemplar_vars, $item_vars, $skip_nulls) = @_;
+
+    # variable index
+    my $j        = 0;
+    # the binary context labels for each separate lattice
+    my @context_list    = ();
+    for my $a (@$active_vars) {
+        # binary context label for a single sublattice
+        my $context = 0;
+        # loop through all variables in the sublattice
+        for ( ; $a ; --$a ) {
+            # skip null variables
+            if($skip_nulls){
+                ++$j while ${ $item_vars }[$j] eq '=';
+            }
+            # add a 1 for mismatched variable, 0 for matched variable
+            $context = ( $context << 1 ) | ( ${ $item_vars }[$j] ne $exemplar_vars->[$j] );
+            ++$j;
+        }
+        push @context_list, $context;
+    }
+    # a context label is an array of unsigned shorts in XS
+    my $context = pack "S!4", @context_list;
+    return $context;
 }
 
 #create the classification subroutine
@@ -361,9 +403,11 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     # is a global that could have been edited during classification of the
     # last test item.
     # TODO: pass activeVars into fill_and_count instead of doing this
-    my $lattice_sizes = _compute_lattice_sizes($num_variables);
-    for(0 .. $#$lattice_sizes){
-        $self->{activeVars}->[$_] = $lattice_sizes->[$_];
+    {
+        my $lattice_sizes = _compute_lattice_sizes($num_variables);
+        for(0 .. $#$lattice_sizes){
+            $self->{activeVars}->[$_] = $lattice_sizes->[$_];
+        }
     }
 ##  $activeContexts = 1 << $activeVar;
 
@@ -396,12 +440,11 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         }
 
         # determine the data set to be used for classification
-        for ( my $i = $data->{datacap} ; $i ; ) {
+        for my $data_index ( 0 .. $data->{datacap} - 1 ) {
 # line 1300 "data hook"
-            --$i;
 ## begin datahook
             # skip this data item if the datahook returns false
-            if(!$self->{datahook}->($self, $data, $i)){
+            if(!$self->{datahook}->($self, $data, $data_index)){
                 ++$excluded_data;
                 next;
             }
@@ -413,28 +456,27 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                 next;
             }
 ## end probability
-            my @dataItem = @{ $project->get_exemplar_data($i) };
-            my @alist    = @{$self->{activeVars}};
-            my $j        = 0;
-            my @clist    = ();
-            while (@alist) {
-                my $a = shift @alist;
-                my $c = 0;
-                for ( ; $a ; --$a ) {
+            my $context = _context_label(
+                # Note: this must be copied to prevent infinite loop;
+                # see todo note for _context_label
+                [@{$self->{activeVars}}],
+                $project->get_exemplar_data($data_index),
+                $data->{curTestItem},
 ## begin exclude nulls
-                    ++$j while ${ $data->{curTestItem} }[$j] eq '=';
+                1
 ## end exclude nulls
-                    $c = ( $c << 1 ) | ( ${ $data->{curTestItem} }[$j] ne $dataItem[$j] );
-                    ++$j;
-                }
-                push @clist, $c;
-            }
-            my $context = pack "S!4", @clist;
-            $self->{datatocontext}->[$i]              = $context;
-            $self->{itemcontextchain}->[$i]           = $self->{itemcontextchainhead}->{$context};
-            $self->{itemcontextchainhead}->{$context} = $i;
-            ++$self->{contextsize}->{$context};
-            my $outcome = $project->get_exemplar_outcome($i);
+            );
+            $self->{contextsize}->{$context}++;
+            $self->{datatocontext}->[$data_index] = $context;
+            # TODO: explain itemcontextchain and itemcontextchainhead
+            $self->{itemcontextchain}->[$data_index] =
+                $self->{itemcontextchainhead}->{$context};
+            $self->{itemcontextchainhead}->{$context} = $data_index;
+
+            # store the outcome for the subcontext; if there
+            # is already a different outcome for this subcontext,
+            # then store 0, signifying heterogeneity.
+            my $outcome = $project->get_exemplar_outcome($data_index);
             if ( defined $self->{subtooutcome}->{$context} ) {
                 $self->{subtooutcome}->{$context} = 0
                   if $self->{subtooutcome}->{$context} != $outcome;
@@ -442,13 +484,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             else {
                 $self->{subtooutcome}->{$context} = $outcome;
             }
+
         }
 # line 1400 "given"
-        # TODO: explain how this is working
         if ( exists $self->{subtooutcome}->{$nullcontext} ) {
-            ++$testindata;
+            $testindata = 1;
 ## begin exclude given
             if($self->{exclude_given}){
+                # TODO: what is this for?
                delete $self->{subtooutcome}->{$nullcontext};
                $given_excluded = 1;
             }
@@ -499,8 +542,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
 # line 1700 "calculate results"
         $result->_process_stats(
-            $self->{pointers}->{'grandtotal'},
-            $self->{sum}, $curTestOutcome);
+            $grandtotal, $self->{sum}, $curTestOutcome);
         $data->{pointermax}    = $result->high_score;
         $logger->info(${$result->statistical_summary});
 
@@ -508,12 +550,11 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 # line 1800 "analogical set"
         my @datalist = ();
         foreach my $k ( keys %{$self->{pointers}} ) {
-            my $p = $self->{pointers}->{$k};
             for (
-                my $i = $self->{itemcontextchainhead}->{$k} ;
-                defined $i ;
+                my $i = $self->{itemcontextchainhead}->{$k};
+                defined $i;
                 $i = $self->{itemcontextchain}->[$i]
-              )
+            )
             {
                 push @datalist, $i;
             }
@@ -543,25 +584,23 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
           0, '0', 0, "";
         foreach my $k (
-            sort {
-                     ( length( $self->{gang}->{$b} ) <=> length( $self->{gang}->{$a} ) )
-                  || ( $self->{gang}->{$b} cmp $self->{gang}->{$a} )
-            } keys %{$self->{gang}}
-          )
+            sort { bigcmp($self->{gang}->{$b}, $self->{gang}->{$a})}
+                keys %{$self->{gang}}
+        )
         {
-            my @clist   = unpack "S!4", $k;
+            my @context_list   = unpack "S!4", $k;
             my @alist   = @{$self->{activeVars}};
             my (@vtemp) = @{ $data->{curTestItem} };
             my $j       = 1;
             while (@alist) {
                 my $a = pop @alist;
-                my $c = pop @clist;
+                my $context = pop @context_list;
                 for ( ; $a ; --$a ) {
 ## begin exclude nulls
                     ++$j while $vtemp[ -$j ] eq '=';
 ## end exclude nulls
-                    $vtemp[ -$j ] = '' if $c & 1;
-                    $c >>= 1;
+                    $vtemp[ -$j ] = '' if $context & 1;
+                    $context >>= 1;
                     ++$j;
                 }
             }

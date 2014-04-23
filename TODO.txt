@@ -1,6 +1,8 @@
 Algorithm::AM
 
-Right now: Work on result object. Next up is gang calculation/printing.
+Right now: figure out the pointers variable, and after that the itemcontextchain and itemcontextchainhead variables.
+
+Right now: Work on result object. Next up is analogical set printing.
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
@@ -15,6 +17,12 @@ Don't print out both exclude_given and given_excluded. exclude_given only matter
 Add other bigint helper methods into BigInt and test them, as well.
 
 Auto-import Result and Project when caller imports AM.pm.
+
+Make '=' into a constant somewhere so it obvious that it represents UNKNOWN_VARIABLE.
+
+Instead of passing around the "activeVars" variable and skipping nulls if needed, it might make more sense to create an array containing all of the active indices, i.e. [0,1,2,4,6,7] if 3 and 5 are null and exclude nulls is on. This would make it easier to simplify things via `map` or whatever.
+
+Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
@@ -42,6 +50,8 @@ error checking for getting data data at a specific index; make sure it's a legal
 possibly create a DataSet class to pass to new Projects.
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
+
+Move the XS code to a different package so all of those variables can be stored in something private: pointers, itemcontextchainhead, etc. The work done on gangs could also be put into this package, since it requires special knowledge of the underlying structure. Maybe the Guts package?
 
 Use undef instead of increment for making unique string lists using hashes.
 
