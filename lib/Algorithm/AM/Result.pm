@@ -143,13 +143,52 @@ sub statistical_summary {
     return \$info;
 }
 
-# input the grandtotal and sum variables (created in XS) and
-# the expected outcome integer, and calculate the predictions.
+sub analogical_set_summary {
+    my ($self) = @_;
+    my $project = $self->project;
+    my $grandtotal = $self->grandtotal;
+    my $outcome_format = $project->outcome_format;
+    my $spec_format = $project->spec_format;
+    my $gang_format = $self->gang_format;
+
+    my $info = "Analogical Set\nTotal Frequency = $grandtotal\n";
+    # print each item that contributed pointers to the
+    # outcome, grouping items by common subcontexts.
+    foreach my $context ( keys %{$self->{pointers}} ) {
+        next unless
+            exists $self->{itemcontextchainhead}->{$context};
+        for (
+            my $data_index = $self->{itemcontextchainhead}->{$context};
+            defined $data_index;
+            $data_index = $self->{itemcontextchain}->[$data_index]
+        )
+        {
+            my $score = $self->{pointers}->{$context};
+            $info .=
+                sprintf(
+                    "$outcome_format  $spec_format  $gang_format  %7.3f%%",
+                    $project->get_outcome(
+                        $project->get_exemplar_outcome($data_index) ),
+                    $project->get_exemplar_spec($data_index),
+                    $score, 100 * $score / $grandtotal
+                ) . "\n";
+        }
+        # write a separator line between contexts
+        $info .= "-----\n";
+    }
+    return \$info;
+}
+
+# input several variables from AM's guts (grandtotal, sum,
+# expected outcome integer, pointers, itemcontextchainhead and
+# itemcontextchain). Calculate the prediction statistics, and
+# store information needed for computing analogical sets.
 # Set result to tie/correct/incorrect if expected outcome is
 # provided, and set is_tie, high_score, scores, winners, and
 # grandtotal.
 sub _process_stats {
-    my ($self, $grandtotal, $sum, $expected) = @_;
+    my ($self, $grandtotal, $sum, $expected, $pointers,
+        $itemcontextchainhead, $itemcontextchain) = @_;
     my $max = '';
     my @winners;
     my %scores;
@@ -202,6 +241,9 @@ sub _process_stats {
     $self->scores(\%scores);
     $self->winners(\@winners);
     $self->grandtotal($grandtotal);
+    $self->{pointers} = $pointers;
+    $self->{itemcontextchainhead} = $itemcontextchainhead;
+    $self->{itemcontextchain} = $itemcontextchain;
     return;
 }
 

@@ -182,11 +182,15 @@ typedef struct AM_guts {
    * in that subcontext
    */
   HV *contextsize;
-  /* ???
+  /* Maps binary context labels to the number of pointers to each.
    * The key 'grandtotal' maps to the total number
    * of pointers. */
   HV *pointers;
-  /* ??? */
+  /* Maps binary context labels to the size of a gang effect on
+   * that context. A gang effect is the number of pointers in
+   * the given context multiplied by the number exemplars contained
+   * in the context.
+   */
   HV *gang;
   /* number of pointers to each outcome;
    * keys are outcome indices and values are numbers

@@ -24,10 +24,17 @@ my $am = Algorithm::AM->new(
 );
 $am->classify();
 my $results = read_file($results_path);
-my $set = qr/e\s+myFirstCommentHere\s+4\s+30.769%\v+
-r\s+myThirdCommentHere\s+2\s+15.385%\v+
-r\s+myFourthCommentHere\s+3\s+23.077%\v+
-r\s+myFifthCommentHere\s+4\s+30.769%/x;
+# analogical effects are printed with exemplars grouped
+# by containing context
+my $set = qr/
+    r\s+myThirdCommentHere\s+2\s+15.385%\v+
+    -----\v+
+    r\s+myFourthCommentHere\s+3\s+23.077%\v+
+    -----\v+
+    r\s+myFifthCommentHere\s+4\s+30.769%\v+
+    e\s+myFirstCommentHere\s+4\s+30.769%\v+
+    -----
+/x;
 like_string($results, $set, q{'skipset => 0' prints the analogical set})
 	or note $results;
 

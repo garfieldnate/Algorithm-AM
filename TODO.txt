@@ -1,10 +1,10 @@
 Algorithm::AM
 
-Right now: figure out the pointers variable, and after that the itemcontextchain and itemcontextchainhead variables.
+Right now: figure out the itemcontextchain and itemcontextchainhead variables.
 
-Right now: Work on result object. Next up is analogical set printing.
+Right now: Work on result object. Next up is gang printing.
 
-Try to move more of the AM guts stuff back into AM.pm or into Project.pm. Right now quite a bit of it is in Result, which seems sub-par.
+Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
 Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
 
@@ -23,6 +23,12 @@ Make '=' into a constant somewhere so it obvious that it represents UNKNOWN_VARI
 Instead of passing around the "activeVars" variable and skipping nulls if needed, it might make more sense to create an array containing all of the active indices, i.e. [0,1,2,4,6,7] if 3 and 5 are null and exclude nulls is on. This would make it easier to simplify things via `map` or whatever.
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
+
+Rename subtooutcome. Should be contexttooutcome to be consistent with everything else.
+
+Analogical set and gang effects are almost the same thing, and could probably be presented together in a unified format.
+
+It set printing probably looks redundant now, since like-numbers are grouped together. Maybe this can be presented better somehow.
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).

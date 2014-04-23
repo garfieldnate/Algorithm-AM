@@ -121,7 +121,7 @@ sub new {
     );
 
     $self->{_classify_sub} = _create_classify_sub()
-        or die "didn't work out";
+        or die "Fatal error: couldn't create classify() subroutine";
     # calls XS code
     $self->_initialize(
         $self->{activeVars},
@@ -484,14 +484,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             else {
                 $self->{subtooutcome}->{$context} = $outcome;
             }
-
         }
 # line 1400 "given"
+        # $nullcontext is all 0's, which is a context label only
+        # to a data item that exactly matches the test item.
         if ( exists $self->{subtooutcome}->{$nullcontext} ) {
             $testindata = 1;
 ## begin exclude given
             if($self->{exclude_given}){
-                # TODO: what is this for?
                delete $self->{subtooutcome}->{$nullcontext};
                $given_excluded = 1;
             }
@@ -542,38 +542,21 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
 # line 1700 "calculate results"
         $result->_process_stats(
-            $grandtotal, $self->{sum}, $curTestOutcome);
+            # TODO: after refactoring to a "guts" object,
+            # just pass that in
+            $grandtotal,
+            $self->{sum},
+            $curTestOutcome,
+            $self->{pointers},
+            $self->{itemcontextchainhead},
+            $self->{itemcontextchain},
+        );
         $data->{pointermax}    = $result->high_score;
         $logger->info(${$result->statistical_summary});
 
 ## begin analogical set
 # line 1800 "analogical set"
-        my @datalist = ();
-        foreach my $k ( keys %{$self->{pointers}} ) {
-            for (
-                my $i = $self->{itemcontextchainhead}->{$k};
-                defined $i;
-                $i = $self->{itemcontextchain}->[$i]
-            )
-            {
-                push @datalist, $i;
-            }
-        }
-        $logger->info('Analogical Set');
-        $logger->info("Total Frequency = $grandtotal");
-        @datalist = sort { $a <=> $b } @datalist;
-        foreach my $i (@datalist) {
-            my $p = $self->{pointers}->{$self->{datatocontext}->[$i] };
-            $logger->info(
-                sprintf(
-                    "$outcome_format  $spec_format  $gang_format  %7.3f%%",
-                    $project->get_outcome(
-                        $project->get_exemplar_outcome($i) ),
-                    $project->get_exemplar_spec($i),
-                    $p, 100 * $p / $grandtotal
-                )
-            );
-        }
+    $logger->info(${$result->analogical_set_summary()});
 ## end analogical set
 
 ## begin gang
@@ -583,12 +566,12 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         my $dashes = '-' x ( $longest + 10 );
         my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
           0, '0', 0, "";
-        foreach my $k (
+        foreach my $context (
             sort { bigcmp($self->{gang}->{$b}, $self->{gang}->{$a})}
                 keys %{$self->{gang}}
         )
         {
-            my @context_list   = unpack "S!4", $k;
+            my @context_list   = unpack "S!4", $context;
             my @alist   = @{$self->{activeVars}};
             my (@vtemp) = @{ $data->{curTestItem} };
             my $j       = 1;
@@ -604,15 +587,15 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                     ++$j;
                 }
             }
-            my $p = $self->{pointers}->{$k};
-            if ( $self->{subtooutcome}->{$k} ) {
+            my $p = $self->{pointers}->{$context};
+            if ( $self->{subtooutcome}->{$context} ) {
                 {
                     no warnings;
                     $logger->info(
                         sprintf(
                             "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                            100 * $self->{gang}->{$k} / $grandtotal,
-                            $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
+                            100 * $self->{gang}->{$context} / $grandtotal,
+                            $self->{gang}->{$context}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
@@ -625,17 +608,17 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                 $logger->info(
                     sprintf(
                         "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                        100 * $self->{gang}->{$k} / $grandtotal,
+                        100 * $self->{gang}->{$context} / $grandtotal,
                         $p,
-                        $self->{contextsize}->{$k},
-                        $project->get_outcome($self->{subtooutcome}->{$k} )
+                        $self->{contextsize}->{$context},
+                        $project->get_outcome($self->{subtooutcome}->{$context} )
                     )
                 );
 ## begin skip gang list
 # line 2000 "skip gang list"
                 my $i;
                 for (
-                    $i = $self->{itemcontextchainhead}->{$k} ;
+                    $i = $self->{itemcontextchainhead}->{$context} ;
                     defined $i ;
                     $i = $self->{itemcontextchain}->[$i]
                   )
@@ -653,7 +636,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## end skip gang list
                 my $i;
                 for (
-                    $i = $self->{itemcontextchainhead}->{$k} ;
+                    $i = $self->{itemcontextchainhead}->{$context} ;
                     defined $i ;
                     $i = $self->{itemcontextchain}->[$i]
                   )
@@ -669,8 +652,8 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
                     $logger->info(
                         sprintf(
 "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                            100 * $self->{gang}->{$k} / $grandtotal,
-                            $self->{gang}->{$k}, "", "", @{ $data->{curTestItem} }
+                            100 * $self->{gang}->{$context} / $grandtotal,
+                            $self->{gang}->{$context}, "", "", @{ $data->{curTestItem} }
                         )
                     );
                     $logger->info(
