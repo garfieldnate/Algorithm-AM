@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Right now: Add methods to get more classification details from Result, and switch all classification tests over to using this API so we can STOP PRINTING EVERYTHING! Also, try to comment the gang printing code when possible. What are the itemcontextchain and itemcontextchainhead variables?
+Right now: Add methods to get more classification details from Result, and switch all classification tests over to using this API so we can STOP PRINTING EVERYTHING! Next files for switching are skipset and gangs. Also, try to comment the gang printing code when possible. What are the itemcontextchain and itemcontextchainhead variables?
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
