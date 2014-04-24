@@ -85,7 +85,7 @@ sub grandtotal {
     my ($self, $grandtotal) = @_;
     if($grandtotal){
         my $length = length $grandtotal;
-        $self->gang_format("%$length.${length}s");
+        $self->{gang_format} = "%$length.${length}s";
         $self->{grandtotal} = $grandtotal;
     }
     return $self->{grandtotal};
@@ -106,7 +106,7 @@ sub statistical_summary {
     my %scores = %{$self->scores};
     my $outcome_format = $self->project->outcome_format;
     my $grand_total = $self->grandtotal;
-    my $gang_format = $self->gang_format;
+    my $gang_format = $self->{gang_format};
 
     my $info = "Statistical Summary\n";
     for my $outcome(sort keys %scores){
@@ -149,7 +149,7 @@ sub analogical_set_summary {
     my $grandtotal = $self->grandtotal;
     my $outcome_format = $project->outcome_format;
     my $spec_format = $project->spec_format;
-    my $gang_format = $self->gang_format;
+    my $gang_format = $self->{gang_format};
 
     my $info = "Analogical Set\nTotal Frequency = $grandtotal\n";
     # print each item that contributed pointers to the
@@ -183,7 +183,7 @@ sub analogical_set_summary {
 sub gang_summary {
     my ($self, $print_list) = @_;
     my $project = $self->project;
-    my $gang_format = $self->gang_format;
+    my $gang_format = $self->{gang_format};
     my $outcome_format = $project->outcome_format;
     my $data_format = $project->data_format;
     my $grandtotal = $self->grandtotal;
