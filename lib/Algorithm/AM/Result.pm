@@ -79,16 +79,16 @@ sub config_info {
     return \$info;
 }
 
-# given the grandtotal, create a format for printing gangs
-# then return the current grandtotal
-sub grandtotal {
-    my ($self, $grandtotal) = @_;
-    if($grandtotal){
-        my $length = length $grandtotal;
+# given the total number of pointers, create a format for printing gangs
+# then return the current total number of pointers
+sub total_pointers {
+    my ($self, $total_pointers) = @_;
+    if($total_pointers){
+        my $length = length $total_pointers;
         $self->{gang_format} = "%$length.${length}s";
-        $self->{grandtotal} = $grandtotal;
+        $self->{total_pointers} = $total_pointers;
     }
-    return $self->{grandtotal};
+    return $self->{total_pointers};
 }
 
 =head2 C<statistical_summary>
@@ -105,7 +105,7 @@ sub statistical_summary {
     my ($self) = @_;
     my %scores = %{$self->scores};
     my $outcome_format = $self->project->outcome_format;
-    my $grand_total = $self->grandtotal;
+    my $grand_total = $self->total_pointers;
     my $gang_format = $self->{gang_format};
 
     my $info = "Statistical Summary\n";
@@ -120,7 +120,7 @@ sub statistical_summary {
                 100 * $scores{$outcome} / $grand_total
             );
     }
-    # separator row of dashes (-) followed by the grandtotal in
+    # separator row of dashes (-) followed by the total_pointers in
     # the same column as the other pointer numbers were printed
     $info .= sprintf(
         "$outcome_format  $gang_format\n",
@@ -146,12 +146,12 @@ sub statistical_summary {
 sub analogical_set_summary {
     my ($self) = @_;
     my $project = $self->project;
-    my $grandtotal = $self->grandtotal;
+    my $total_pointers = $self->total_pointers;
     my $outcome_format = $project->outcome_format;
     my $spec_format = $project->spec_format;
     my $gang_format = $self->{gang_format};
 
-    my $info = "Analogical Set\nTotal Frequency = $grandtotal\n";
+    my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
     # print each item that contributed pointers to the
     # outcome, grouping items by common subcontexts.
     foreach my $context ( keys %{$self->{pointers}} ) {
@@ -170,7 +170,7 @@ sub analogical_set_summary {
                     $project->get_outcome(
                         $project->get_exemplar_outcome($data_index) ),
                     $project->get_exemplar_spec($data_index),
-                    $score, 100 * $score / $grandtotal
+                    $score, 100 * $score / $total_pointers
                 ) . "\n";
         }
         # write a separator line between contexts
@@ -186,13 +186,13 @@ sub gang_summary {
     my $gang_format = $self->{gang_format};
     my $outcome_format = $project->outcome_format;
     my $data_format = $project->data_format;
-    my $grandtotal = $self->grandtotal;
+    my $total_pointers = $self->total_pointers;
     my $var_format = $project->var_format;
     my $test_item = $self->test_item;
 
     my $info = "Gang effects\n";
     #TODO: explain the magic below
-    my $dashes = '-' x ( (length $self->grandtotal)  + 10 );
+    my $dashes = '-' x ( (length $self->total_pointers)  + 10 );
     my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
       0, '0', 0, "";
     foreach my $context (
@@ -224,7 +224,7 @@ sub gang_summary {
                 # print the effect of the gang
                 $info .= sprintf(
                     "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                    100 * $self->{gang}->{$context} / $grandtotal,
+                    100 * $self->{gang}->{$context} / $total_pointers,
                     $self->{gang}->{$context}, "", "", @{ $test_item }
                 ) . "\n";
                 # print dashes and the name of the supracontext
@@ -235,7 +235,7 @@ sub gang_summary {
             }
             $info .= sprintf(
                 "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                100 * $self->{gang}->{$context} / $grandtotal,
+                100 * $self->{gang}->{$context} / $total_pointers,
                 $p,
                 $self->{contextsize}->{$context},
                 $project->get_outcome($self->{subtooutcome}->{$context} )
@@ -275,7 +275,7 @@ sub gang_summary {
                 no warnings;
                 $info .= sprintf(
 "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                    100 * $self->{gang}->{$context} / $grandtotal,
+                    100 * $self->{gang}->{$context} / $total_pointers,
                     $self->{gang}->{$context}, "", "", @{ $test_item }
                 ) . "\n";
                 $info .= sprintf (
@@ -286,7 +286,7 @@ sub gang_summary {
                 next unless $gangsort[$i];
                 $info .= sprintf(
                     "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                    100 * $gangsort[$i] * $p / $grandtotal,
+                    100 * $gangsort[$i] * $p / $total_pointers,
                     $p, $gangsort[$i], $project->get_outcome($i)
                 ) . "\n";
                 if($print_list){
@@ -309,9 +309,9 @@ sub gang_summary {
 # store information needed for computing analogical sets.
 # Set result to tie/correct/incorrect if expected outcome is
 # provided, and set is_tie, high_score, scores, winners, and
-# grandtotal.
+# total_pointers.
 sub _process_stats {
-    my ($self, $grandtotal, $sum, $expected, $pointers,
+    my ($self, $total_pointers, $sum, $expected, $pointers,
         $itemcontextchainhead, $itemcontextchain, $subtooutcome,
         $gang, $active_vars, $contextsize) = @_;
     my $max = '';
@@ -365,7 +365,7 @@ sub _process_stats {
     $self->high_score($max);
     $self->scores(\%scores);
     $self->winners(\@winners);
-    $self->grandtotal($grandtotal);
+    $self->total_pointers($total_pointers);
     $self->{pointers} = $pointers;
     $self->{itemcontextchainhead} = $itemcontextchainhead;
     $self->{itemcontextchain} = $itemcontextchain;
