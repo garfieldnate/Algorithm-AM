@@ -11,7 +11,6 @@ use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-
 my $project_path = path($Bin, 'data', 'chapter3');
 my $results_path = path($project_path, 'amcpresults');
 #clean up previous test runs
@@ -25,6 +24,7 @@ my $am = Algorithm::AM->new(
 );
 $am->classify();
 my $results = read_file($results_path);
+#TODO: test this more explicitly, perhaps by overriding rand()
 like_string($results, qr/Probability of including any one data item: 0.9/, 'probability noted in output')
 	or note $results;
 
