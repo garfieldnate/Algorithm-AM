@@ -560,21 +560,21 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
 ## begin analogical set
 # line 1800 "analogical set"
-    $logger->info(${$result->analogical_set_summary()});
+        $logger->info(${$result->analogical_set_summary()});
 ## end analogical set
 
 ## begin gang
 # line 1900 "start gangs"
-    # TODO: properly store this option somewhere.
-    # gangs and gang are two different variables.
-    # That's confusing!
-    if($self->{gangs} =~ /^yes$|^summary$/){
-        $logger->info(
-            ${ $result->gang_summary($self->{gangs} eq 'yes' ? 1 : 0) }
-        );
-    }
+        # TODO: properly store this option somewhere.
+        # gangs and gang are two different variables.
+        # That's confusing!
+        if($self->{gangs} =~ /^yes$|^summary$/){
+            $logger->info(
+                ${ $result->gang_summary($self->{gangs} eq 'yes' ? 1 : 0) }
+            );
+        }
 ## end gang
-    push @results, $result;
+        push @results, $result;
 
     }
     continue {

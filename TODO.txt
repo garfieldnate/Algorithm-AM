@@ -1,14 +1,12 @@
 Algorithm::AM
 
-Right now: figure out the itemcontextchain and itemcontextchainhead variables.
-
-Right now: Make tests for Result, then switch all classification tests over to using this API and then STOP PRINTING EVERYTHING! Also, try to comment the gang printing code.
+Right now: Add methods to get more classification details from Result, and switch all classification tests over to using this API so we can STOP PRINTING EVERYTHING! Also, try to comment the gang printing code when possible. What are the itemcontextchain and itemcontextchainhead variables?
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
 Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
 
-Add tests for Result.
+Refactor and make result able to return structured, detailed information, such as items in the analogical set, etc., instead of just providing them through print methods.
 Add docs for methods in Result.
 Do better time handling in Result; something that will allow checking how long classification took would be nice.
 

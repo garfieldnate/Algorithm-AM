@@ -143,6 +143,14 @@ sub statistical_summary {
     return \$info;
 }
 
+=head2 C<statistical_summary>
+
+Returns a scalar reference (string) containing the analogical set,
+meaning all items that contributed to the predicted outcome, along
+with the amount contributed by each item (number of pointers and
+percentage overall). Items are grouped by containing subcontext.
+
+=cut
 sub analogical_set_summary {
     my ($self) = @_;
     my $project = $self->project;
@@ -179,6 +187,18 @@ sub analogical_set_summary {
     return \$info;
 }
 
+=head2 C<statistical_summary>
+
+Returns a scalar reference (string) containing the gang effects on the
+final outcome. Gang effects are basically the same as analogical sets,
+but the total effects of entire subcontexts and supracontexts
+are also calculated and printed.
+
+A single boolean parameter can be provided to turn on full list
+printing, meaning that all relevant items are printed. This is false
+(off) by default.
+
+=cut
 # $print_list means print everything, not just the summary
 sub gang_summary {
     my ($self, $print_list) = @_;
