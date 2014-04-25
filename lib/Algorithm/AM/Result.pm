@@ -143,16 +143,40 @@ sub statistical_summary {
     return \$info;
 }
 
-=head2 C<statistical_summary>
+=head2 C<analogical_set>
+
+Returns the analogical set in the form of a hash ref mapping exemplar
+indices to the number of pointers contributed by the item towards
+the final classification outcome. Further information about each
+exemplar can be retrieved from the project object using
+C<get_exemplar_(data|spec|outcome)> methods.
+
+=cut
+sub analogical_set {
+    my ($self) = @_;
+    if(!exists $self->{_analogical_set}){
+        $self->_calculate_analogical_set;
+    }
+    # make a safe copy
+    my %set = %{$self->{_analogical_set}};
+    return \%set;
+}
+
+=head2 C<analogical_set_summary>
 
 Returns a scalar reference (string) containing the analogical set,
 meaning all items that contributed to the predicted outcome, along
 with the amount contributed by each item (number of pointers and
-percentage overall). Items are grouped by containing subcontext.
+percentage overall). Items are ordered by appearance in the data
+set.
 
 =cut
 sub analogical_set_summary {
     my ($self) = @_;
+    if(!exists $self->{_analogical_set}){
+        $self->_calculate_analogical_set;
+    }
+    my $set = $self->{_analogical_set};
     my $project = $self->project;
     my $total_pointers = $self->total_pointers;
     my $outcome_format = $project->outcome_format;
@@ -161,7 +185,25 @@ sub analogical_set_summary {
 
     my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
     # print each item that contributed pointers to the
-    # outcome, grouping items by common subcontexts.
+    # outcome, ordered by appearance in the dataset
+    foreach my $data_index (sort keys %$set){
+        my $score = $set->{$data_index};
+        $info .=
+            sprintf(
+                "$outcome_format  $spec_format  $gang_format  %7.3f%%",
+                $project->get_outcome(
+                    $project->get_exemplar_outcome($data_index) ),
+                $project->get_exemplar_spec($data_index),
+                $score, 100 * $score / $total_pointers
+            ) . "\n";
+    }
+    return \$info;
+}
+
+# calculate and store analogical effects in $self->{_analogical_set}
+sub _calculate_analogical_set {
+    my ($self) = @_;
+    my %set;
     foreach my $context ( keys %{$self->{pointers}} ) {
         next unless
             exists $self->{itemcontextchainhead}->{$context};
@@ -171,20 +213,11 @@ sub analogical_set_summary {
             $data_index = $self->{itemcontextchain}->[$data_index]
         )
         {
-            my $score = $self->{pointers}->{$context};
-            $info .=
-                sprintf(
-                    "$outcome_format  $spec_format  $gang_format  %7.3f%%",
-                    $project->get_outcome(
-                        $project->get_exemplar_outcome($data_index) ),
-                    $project->get_exemplar_spec($data_index),
-                    $score, 100 * $score / $total_pointers
-                ) . "\n";
+            $set{$data_index} = $self->{pointers}->{$context};
         }
-        # write a separator line between contexts
-        $info .= "-----\n";
     }
-    return \$info;
+    $self->{_analogical_set} = \%set;
+    return;
 }
 
 =head2 C<statistical_summary>

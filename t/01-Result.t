@@ -103,13 +103,10 @@ END_STATS
         is_string_nows($set, <<'END_SET') or note $set;
 Analogical Set
 Total Frequency = 13
-r  myThirdCommentHere    2   15.385%
------
-r  myFourthCommentHere   3   23.077%
------
-r  myFifthCommentHere    4   30.769%
 e  myFirstCommentHere    4   30.769%
------
+r  myThirdCommentHere    2   15.385%
+r  myFourthCommentHere   3   23.077%
+r  myFifthCommentHere    4   30.769%
 END_SET
         my $gang = ${$result->gang_summary(0)};
         is_string_nows($gang, <<'END_GANG') or note $gang;

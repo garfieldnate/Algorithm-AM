@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 8;
+plan tests => 9;
 use Test::NoWarnings;
 use Test::LongString;
 
@@ -17,6 +17,7 @@ test_quadratic();
 test_linear();
 test_nulls();
 test_given();
+test_analogical_set();
 test_finnverb();
 
 sub test_quadratic {
@@ -183,6 +184,53 @@ sub test_given {
     #clean up the amcpresults file
     unlink $project->results_path
         if -e $project->results_path;
+    return;
+}
+
+sub test_analogical_set {
+    subtest 'analogical set' => sub {
+        plan tests => 5;
+        my @data = (
+          [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+          [[qw(2 1 0)], '210', 'r', undef],
+          [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+          [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+          [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+        );
+        my $project = Algorithm::AM::Project->new();
+        for my $datum(@data){
+            $project->add_data(@$datum);
+        }
+        $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+        my $am = Algorithm::AM->new(
+            $project,
+            skipset => 0,
+            commas => 'no'
+        );
+        my ($result) = $am->classify();
+
+        my $set = $result->analogical_set();
+
+        is_deeply($set, {0 => 4, 2 => 2, 3 => 3, 4 => 4},
+            'data indices and pointer values') or note explain $set;
+        # now confirm that the referenced data really are what we think
+        is($project->get_exemplar_spec(0), 'myFirstCommentHere',
+            'confirm first item')
+            or note $project->get_exemplar_spec(0);
+        is($project->get_exemplar_spec(2), 'myThirdCommentHere',
+            'confirm third item')
+            or note $project->get_exemplar_spec(2);
+        is($project->get_exemplar_spec(3), 'myFourthCommentHere',
+            'confirm fourth item')
+            or note $project->get_exemplar_spec(3);
+        is($project->get_exemplar_spec(4), 'myFifthCommentHere',
+            'confirm fifth item')
+            or note $project->get_exemplar_spec(4);
+
+        #clean up the amcpresults file
+        unlink $project->results_path
+            if -e $project->results_path;
+    };
     return;
 }
 
