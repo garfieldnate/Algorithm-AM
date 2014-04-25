@@ -1,21 +1,27 @@
-#test hooks
+# test hooks
 use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
 plan tests => 4;
 use Test::NoWarnings;
-use Test::LongString;
 
-use FindBin qw($Bin);
-use Path::Tiny;
-use File::Slurp;
-
-my $project_path = path($Bin, 'data', 'chapter3_multi_test');
-my $results_path = path($project_path, 'amcpresults');
+my @data = (
+	[[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+	[[qw(2 1 0)], '210', 'r', undef],
+	[[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+	[[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+	[[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+);
+my $project = Algorithm::AM::Project->new();
+for my $datum(@data){
+    $project->add_data(@$datum);
+}
+$project->add_test([qw(3 1 3)], 'first test item', 'r');
+$project->add_test([qw(3 1 2)], 'second test item', 'e');
 
 my $am = Algorithm::AM->new(
-	$project_path,
+	$project,
 	commas => 'no',
 	repeat => 2,
 );
@@ -66,12 +72,8 @@ my @expected = (
 is_deeply(\@record, \@expected, 'hooks called in expected order')
 	or note explain \@record;
 
-#clean up previous test runs
-unlink $results_path
-	if -e $results_path;
-
 #now check that the return value of datahook is correctly interpreted
-$am->classify(
+my ($result) = $am->classify(
 	datahook 	=> sub {
 		my ($am, $data, $index) = @_;
 		#will be false for index 0, so index 0 will be removed
@@ -81,10 +83,14 @@ $am->classify(
 	gangs => 'yes',
 );
 
-my $results = read_file($results_path);
-like_string($results, qr/Total Excluded:\s+1/, 'False datahook return excludes item');
-unlike_string($results, qr/3 1 0/, 'item specified by datahook is not present in output');
+# check that 1 item was excluded, and the item we meant to exclude
+# does not appear in the analogical set (as it would if it were included)
+# TODO: add a real API for querying included data...
+is($result->excluded_data, 1, 'one item excluded via datahook');
+my $set = $result->analogical_set;
+ok(!exists $set->{0},
+	'item at index 0 was excluded via datahook');
 
 # clean up amcpresults file
-unlink $results_path
-	if -e $results_path;
+unlink $project->results_path
+	if -e $project->results_path;
