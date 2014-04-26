@@ -12,15 +12,24 @@ use Test::More 0.88;
 plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 2 + 1;
 use Test::NoWarnings;
 use Algorithm::AM;
-use FindBin qw($Bin);
-use Path::Tiny;
 
-my $project_path = path($Bin, 'data', 'chapter3_multi_test');
-my $results_path = path($project_path, 'amcpresults');
+my $project = Algorithm::AM::Project->new();
+my @data = (
+	[[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+	[[qw(2 1 0)], 'mySecondCommentHere', 'r', undef],
+	[[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+	[[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+	[[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+);
+for my $datum(@data){
+    $project->add_data(@$datum);
+}
+$project->add_test([qw(3 1 3)], 'first test item', 'r');
+$project->add_test([qw(3 1 2)], 'second test item', 'e');
 
 # first test without an outcome file
 my $am = Algorithm::AM->new(
-	$project_path,
+	$project,
 	commas => 'no',
 	repeat => 2,
 	probability => 1,
@@ -35,19 +44,23 @@ $am->classify(
 	endhook => \&endhook,
 );
 
-#cleanup amcpresults file
-$results_path->remove
-	if $results_path->exists;
+# then test just @outcomelist and %outcometonum with "long" outcomes
+# specified in the data
 
-# then test just @outcomelist and %outcometonum with a separate
-# outcome file, since these will contain the "long" outcome names
-# present only in an outcome file
-
-$project_path = path($Bin, 'data', 'chapter3_outcomes');
-$results_path = path($project_path, 'amcpresults');
-
+$project = Algorithm::AM::Project->new();
+@data = (
+	[[qw(3 1 0)], 'myFirstCommentHere', 'e', 'ee'],
+	[[qw(2 1 0)], 'mySecondCommentHere', 'r', 'are'],
+	[[qw(0 3 2)], 'myThirdCommentHere', 'r', 'are'],
+	[[qw(2 1 2)], 'myFourthCommentHere', 'r', 'are'],
+	[[qw(3 1 1)], 'myFifthCommentHere', 'r', 'are']
+);
+for my $datum(@data){
+    $project->add_data(@$datum);
+}
+$project->add_test([qw(3 1 2)], 'second test item', 'e');
 $am = Algorithm::AM->new(
-	$project_path,
+	$project,
 	commas => 'no',
 	probability => 1,
 );
@@ -57,8 +70,8 @@ $am->classify(
 );
 
 #cleanup amcpresults file
-$results_path->remove
-	if $results_path->exists;
+unlink $project->results_path
+	if -e $project->results_path;
 
 sub beginhook {
 	test_beginning_vars('beginhook', @_);
@@ -138,11 +151,11 @@ sub test_beginning_vars {
 		or note explain $am->{data};
 	is_deeply($am->{spec},
 		[
-			'the e item',
-			'first r',
-			'second r',
-			'third r',
-			'fourth r'
+			'myFirstCommentHere',
+			'mySecondCommentHere',
+			'myThirdCommentHere',
+			'myFourthCommentHere',
+			'myFifthCommentHere'
 		], $hook_name . ': @spec')
 		or note explain $data->{spec};
 }

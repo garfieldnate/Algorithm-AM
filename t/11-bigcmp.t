@@ -5,17 +5,25 @@ use Test::More 0.88;
 plan tests => 6;
 use Test::NoWarnings;
 use Algorithm::AM;
-use FindBin qw($Bin);
-use Path::Tiny;
 
 use vars qw(@sum);
 use subs qw(bigcmp);
 
-my $project_path = path($Bin, 'data', 'chapter3');
-my $results_path = path($project_path, 'amcpresults');
+my @data = (
+	[[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+	[[qw(2 1 0)], '210', 'r', undef],
+	[[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+	[[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+	[[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+);
+my $project = Algorithm::AM::Project->new();
+for my $datum(@data){
+    $project->add_data(@$datum);
+}
+$project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
 
 my $am = Algorithm::AM->new(
-	$project_path,
+	$project,
 	commas => 'no',
 );
 $am->classify(
@@ -23,8 +31,8 @@ $am->classify(
 );
 
 #cleanup amcpresults file
-unlink $results_path
-	if -e $results_path;
+unlink $project->results_path
+	if -e $project->results_path;
 
 sub endhook {
 	test_bigcmp(@_);
