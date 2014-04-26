@@ -428,11 +428,19 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
         my $testindata   = 0;
 
+        # initialize classification-related variables
+        # it is important to dereference rather than just
+        # assigning a new one with [] or {}. This is because
+        # the XS code has access to the existing reference,
+        # but will be accessing the wrong variable if we
+        # change it.
         %{$self->{contextsize}}             = ();
         %{$self->{itemcontextchainhead}}    = ();
         %{$self->{subtooutcome}}            = ();
         %{$self->{pointers}}                = ();
         %{$self->{gang}}                    = ();
+        @{$self->{datatocontext}}           = ();
+        @{$self->{itemcontextchain}}        = ();
         # big ints are used in AM.xs; these consist of an
         # array of 8 unsigned longs
         foreach (@{$self->{sum}}) {
@@ -555,7 +563,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $self->{activeVars},
             $self->{contextsize}
         );
-        $data->{pointermax}    = $result->high_score;
+        $data->{pointermax} = $result->high_score;
         $logger->info(${$result->statistical_summary});
 
 ## begin analogical set
