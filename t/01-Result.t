@@ -7,8 +7,18 @@ use Algorithm::AM;
 use Path::Tiny;
 use FindBin '$Bin';
 
-my $project_path = path($Bin, 'data', 'chapter3');
-my $results_path = path($project_path, 'amcpresults');
+my @data = (
+  [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+  [[qw(2 1 0)], '210', 'r', undef],
+  [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+  [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+  [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+);
+my $project = Algorithm::AM::Project->new();
+for my $datum(@data){
+    $project->add_data(@$datum);
+}
+$project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
 
 test_config_info();
 test_result_info();
@@ -20,7 +30,7 @@ sub test_config_info {
     subtest 'configuration info string' => sub {
         plan tests => 2;
         my $result = Algorithm::AM::Result->new(
-            excluded_data => 3,
+            excluded_data => [0,1,2],
             given_excluded => 1,
             num_variables => 3,
             test_item => [qw(a b c)],
@@ -46,7 +56,7 @@ Number of active variables: 3
 Test item is in the data.
 END_INFO
         $result = Algorithm::AM::Result->new(
-            excluded_data => 0,
+            excluded_data => [],
             given_excluded => 0,
             num_variables => 3,
             test_item => [qw(a b c)],
@@ -83,7 +93,7 @@ sub test_result_info {
     subtest 'classification info printing' => sub {
         plan tests => 4;
         my $am = Algorithm::AM->new(
-            $project_path,
+            $project,
             commas => 'no',
             gangs => 'yes',
             skipset => 0,
@@ -143,8 +153,8 @@ END_GANG
 
 
         #clean up the test run
-        unlink $results_path
-            if -e $results_path;
+        unlink $project->results_path
+            if -e $project->results_path;
     };
     return;
 }

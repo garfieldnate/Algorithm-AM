@@ -421,7 +421,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
 # line 1200 "repeat"
-        my $excluded_data = 0;
+        my @excluded_data = ();
         my $given_excluded = 0;
         $self->{beginrepeathook}->($self, $data);
         $data->{datacap} = int($data->{datacap});
@@ -453,14 +453,14 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 ## begin datahook
             # skip this data item if the datahook returns false
             if(!$self->{datahook}->($self, $data, $data_index)){
-                ++$excluded_data;
+                push @excluded_data, $data_index;
                 next;
             }
 ## end datahook
 ## begin probability
             # skip this data item with probability $self->{probability}
             if(rand() > $self->{probability}){
-                ++$excluded_data;
+                push @excluded_data, $data_index;
                 next;
             }
 ## end probability
@@ -510,7 +510,7 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         # initialize the results object to hold all of the configuration
         # info.
         my $result = Algorithm::AM::Result->new(
-            excluded_data => $excluded_data,
+            excluded_data => \@excluded_data,
             given_excluded => $given_excluded,
             num_variables => $num_variables,
             test_item => $data->{curTestItem},

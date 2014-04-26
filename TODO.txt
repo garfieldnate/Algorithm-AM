@@ -6,8 +6,6 @@ Move use test into AM folder and test Import::Into functionality.
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
-Add method to Result for finding out which data was used/excluded during classification
-
 Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
 
 Refactor and make result able to return structured, detailed information, such as items in the analogical set, etc., instead of just providing them through print methods.

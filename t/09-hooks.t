@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 4;
+plan tests => 3;
 use Test::NoWarnings;
 
 my @data = (
@@ -86,10 +86,9 @@ my ($result) = $am->classify(
 # check that 1 item was excluded, and the item we meant to exclude
 # does not appear in the analogical set (as it would if it were included)
 # TODO: add a real API for querying included data...
-is($result->excluded_data, 1, 'one item excluded via datahook');
-my $set = $result->analogical_set;
-ok(!exists $set->{0},
-	'item at index 0 was excluded via datahook');
+is_deeply($result->excluded_data, [0],
+	'item one excluded via datahook')
+	or note explain $result->excluded_data;
 
 # clean up amcpresults file
 unlink $project->results_path

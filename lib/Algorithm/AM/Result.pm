@@ -67,7 +67,7 @@ sub config_info {
         $info .= 'Probability of including any one data item: ' .
             $self->{probability} . "\n";
     }
-    $info .= "Total Excluded: $self->{excluded_data} " .
+    $info .= 'Total Excluded: ' . scalar @{$self->excluded_data} .
         ($self->{given_excluded} ? " + test item\n" : "\n");
     $info .= 'Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include')
         . "\n";
