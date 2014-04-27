@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Next: Reduce classifications run in 02-classify.t.
-
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.

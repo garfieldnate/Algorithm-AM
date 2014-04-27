@@ -14,22 +14,22 @@ use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-test_quadratic();
-test_linear();
+my $project = chapter_3_project();
+my $am = Algorithm::AM->new($project);
+my ($result) = $am->classify();
+test_quadratic_classification($result);
+test_analogical_set($result);
+test_gang_effects($result);
+test_linear_classification();
 test_nulls();
 test_given();
-test_analogical_set();
-test_gang_effects();
 test_finnverb();
 
-sub test_quadratic {
+# test classification results using quadratic counting
+sub test_quadratic_classification {
+    my ($result) = @_;
     subtest 'quadratic calculation' => sub {
         plan tests => 3;
-        my $project = chapter_3_project();
-        my $am = Algorithm::AM->new(
-            $project,
-        );
-        my ($result) = $am->classify();
         is($result->total_pointers, 13, 'total pointers')
             or note $result->total_pointers;;
         is($result->count_method, 'squared',
@@ -41,7 +41,8 @@ sub test_quadratic {
     return;
 }
 
-sub test_linear {
+# test classification results using linear counting
+sub test_linear_classification {
     subtest 'linear calculation' => sub {
         plan tests => 3;
         my $project = chapter_3_project();
@@ -125,12 +126,9 @@ sub test_given {
 }
 
 sub test_analogical_set {
+    my ($result) = @_;
     subtest 'analogical set' => sub {
         plan tests => 5;
-        my $project = chapter_3_project();
-        my $am = Algorithm::AM->new($project);
-        my ($result) = $am->classify();
-
         my $set = $result->analogical_set();
 
         is_deeply($set, {0 => 4, 2 => 2, 3 => 3, 4 => 4},
@@ -153,9 +151,7 @@ sub test_analogical_set {
 }
 
 sub test_gang_effects {
-    my $project = chapter_3_project();
-    my $am = Algorithm::AM->new($project);
-    my ($result) = $am->classify();
+    my ($result) = @_;
     my $expected_effects = {
       '    2' => {
         'data' => {'r' => [2]},
