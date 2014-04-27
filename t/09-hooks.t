@@ -80,7 +80,6 @@ my ($result) = $am->classify(
 		return $index;
 	},
 	repeat => 1,
-	gangs => 'yes',
 );
 
 # check that 1 item was excluded, and the item we meant to exclude

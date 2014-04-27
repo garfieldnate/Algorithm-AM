@@ -1,10 +1,12 @@
 Algorithm::AM
 
-Right now: Remove printing, everywhere! Maybe do Log::Any.
-
 Next: Reduce classifications run in 02-classify.t.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
+
+Don't print $project if it's an object in the note about "Initializing project $project".
+
+Add tests for logging
 
 Move use test into AM folder and test Import::Into functionality.
 
@@ -31,10 +33,6 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
 Rename subtooutcome. Should be contexttooutcome to be consistent with everything else.
-
-Analogical set and gang effects are almost the same thing, and could probably be presented together in a unified format.
-
-It set printing probably looks redundant now, since like-numbers are grouped together. Maybe this can be presented better somehow.
 
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
@@ -96,24 +94,14 @@ work on types of input to AM dataset
 properly destroy project or AM object on error so that illegal state is not possible even if someone catches an error and tries to continue.
 
 ##Printing TODOs:
--Split print_summary into two methods: print_config and print_data_stats
 -Make printing clearer (label gangs, etc.)
 -output something about the number of features in the vectors contained in a data file (I think this is done. Just make it clearer?)
--Refactor gangs param into two different boolean params
-- change logger to Log::Any
-- return classification result objects that have print methods, instead of just printing everything
 
 ## Other TODOs:
 
 - update HISTORY pod section in AM.pm
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
-
--make sure decisions on what is in $self and what is in $data are good
-	so far, $self has options and $data has info about the input data
-		Not so! Now $self has @data, @outcome, and @spec
-	It'd be better if $data had classification information (a result object), another variable had per-iteration information, and $self had everything else
-	Create accessors for $self
 
 -Eliminate outcometonum
 	- using an accessor of some kind
@@ -126,17 +114,13 @@ properly destroy project or AM object on error so that illegal state is not poss
 	Algorithm::AM object should be a single classifier, not a batch runner.
 		classify() method should classify a single vector
 		Should move iteration, and iter vars, into a separate class.
-			This will make testing much easier, since we can then simply return classification outcomes in a single variable and test it, instead of testing printed output or accumulating outcomes and testing them.
-		Don't print as we go; provide print methods or a verbose option
-			also provide method for grabbing format variables
-			pass the AM object to hooks so that these are usable
 	I think beginning vars should just be in the AM object;
 	format vars should also be in the AM object
+		actually these should just die
 	usage of outcometonum should be replaced with a method
 	@sum should be replaced with something with index starting at 0
 		possibly rename to "subtotals"
 	I think endvars should be a return value besides being available in the hook.
-		should probably also return the entire analogical set...
 
 ## Documentation TODOs:
 -Read through documentation, update/clean if necessary

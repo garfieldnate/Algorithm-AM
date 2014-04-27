@@ -24,13 +24,7 @@ sub import {
 require XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
-use Log::Dispatch;
-use Log::Dispatch::File;
-my $logger = Log::Dispatch->new(
-    outputs => [
-        [ 'Screen', min_level => 'info', newline => 1 ],
-    ],
-);
+use Log::Any qw($log);
 
 my $subsource;
 {
@@ -71,13 +65,12 @@ sub new {
         linear      => 0,
         probability => undef,
         repeat      => 1,
-        skipset     => 1,
-        gangs       => 'no',
         %opts
     );
     my $self = bless $opts, $class;
 
-    $logger->info("Initializing project $project");
+    $log->debug("Initializing project $project")
+        if $log->is_debug;
 
     # if $project is not a Project object, then it should be
     # the path to a project directory.
@@ -137,6 +130,17 @@ sub new {
     return $self;
 }
 
+=head2 C<classify>
+
+Using the analogical modeling algorithm, this method classifies
+the test items in the project and returns a list of
+L<Algorithm::AM::Result|Result> objects. Information about the current
+progress, configuration and timing is logged at the debug level.
+The statistical summary, analogical set, and gang summary (without
+items listed) are logged at the info level, and the full gang summary
+with items listed is logged at the debug level.
+
+=cut
 sub classify {
     my ($self, @args) = @_;
     return $self->{_classify_sub}->($self, @args);
@@ -157,8 +161,6 @@ sub _check_classify_opts {
         linear
         probability
         repeat
-        skipset
-        gangs
 
         beginhook
         beginrepeathook
@@ -173,15 +175,6 @@ sub _check_classify_opts {
         if(!grep {$_ eq $option} @$valid_args){
             croak "Unknown option $option";
         }
-    }
-
-    # TODO: should change into two separate booleans;
-    # print_gangs, and print_gang_summaries (or something)
-    if ( $opts{gangs} && $opts{gangs} !~ /^(?:yes|summary|no)$/ ) {
-        carp "Failed to specify option 'gangs' correctly";
-        $logger->warn(q{(must be 'yes', 'summary', or 'no')});
-        $logger->warn(q{Will use default value of 'no'});
-        $opts{gangs} = 'no';
     }
 
     #todo: properly check types of parameters; hooks should be subs, etc.
@@ -287,19 +280,6 @@ sub _create_classify_sub {
             s/## begin probability.*?## end probability//sg;
         }
 
-        if ( $self->{skipset} ) {
-            s/## begin analogical set.*?## end analogical set//sg;
-        }
-
-        if ( $self->{gangs} ne 'yes' ) {
-            if ( $self->{gangs} eq 'summary' ) {
-                s/## begin skip gang list.*?## end skip gang list//sg;
-            }
-            else {
-                s/## begin gang.*?## end gang//sg;
-            }
-        }
-
         if (!exists $self->{beginhook} ) {
             s/\$self->{beginhook}->.*//;
         }
@@ -345,9 +325,9 @@ sub _create_classify_sub {
         $data->{pointertotal} = \$grandtotal;
 
         eval $_; ## no critic (ProhibitStringyEval)
-        $logger->warn($@)
-          if $@;
-
+        if ($@ and $log->is_warn){
+            $log->warn($@);
+        }
         # return autoflush setting to what the caller was using
         *STDOUT->autoflush($autoflush);
         return @results;
@@ -359,18 +339,6 @@ __DATA__
 
 # line 1000 "start eval"
 
-#print to amcpresults file instead of to the screen
-#TODO: move file choice to different module, and use Log::Any in this one.
-$logger->remove('Screen');
-$logger->add(
-    Log::Dispatch::File->new(
-        name      => 'amcpresults',
-        min_level => 'debug',
-        filename  => $project->results_path,
-        newline => 1
-    )
-);
-
 my ( $sec, $min, $hour );
 
 $self->{beginhook}->($self, $data);
@@ -378,7 +346,8 @@ $self->{beginhook}->($self, $data);
 my $left = scalar $project->num_test_items;
 foreach my $item_number (0 .. $project->num_test_items - 1) {
 # line 1100 "loop items"
-    $logger->debug("Test items left: $left");
+    $log->debug("Test items left: $left")
+        if $log->is_debug;
     --$left;
     my $t = $project->get_test_item($item_number);
     ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
@@ -414,9 +383,13 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
     my $nullcontext = pack "b64", '0' x 64;
 
     ( $sec, $min, $hour ) = localtime();
-    $logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
-    $logger->info("@{ $data->{curTestItem} }");
-    $logger->info( sprintf( "0/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
+    if($log->is_debug){
+        $log->info(
+            sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
+            "@{ $data->{curTestItem} }\n" .
+            sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
+                $hour, $min, $sec ) );
+    }
 
     $pass = 0;
     while ( $pass < $self->{repeat} ) {
@@ -525,7 +498,8 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             project => $project
         );
 
-        $logger->info(${$result->config_info});
+        $log->debug(${$result->config_info})
+            if($log->is_debug);
 
 # line 1600 "call XS"
 
@@ -537,7 +511,10 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
 
         unless ($grandtotal) {
             #TODO: is this tested yet?
-            $logger->warn('No data items considered.  No prediction possible.');
+            if($log->is_warn){
+                $log->warn('No data items considered. ' .
+                    'No prediction possible.');
+            }
             next;
         }
 
@@ -564,24 +541,19 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
             $self->{contextsize}
         );
         $data->{pointermax} = $result->high_score;
-        $logger->info(${$result->statistical_summary});
+        $log->info(${$result->statistical_summary})
+            if($log->is_info);
 
-## begin analogical set
 # line 1800 "analogical set"
-        $logger->info(${$result->analogical_set_summary()});
-## end analogical set
+        $log->info(${$result->analogical_set_summary()})
+            if($log->is_info);
 
-## begin gang
 # line 1900 "start gangs"
-        # TODO: properly store this option somewhere.
-        # gangs and gang are two different variables.
-        # That's confusing!
-        if($self->{gangs} =~ /^yes$|^summary$/){
-            $logger->info(
-                ${ $result->gang_summary($self->{gangs} eq 'yes' ? 1 : 0) }
-            );
+        if($log->is_debug){
+            $log->debug(${ $result->gang_summary(1) });
+        }elsif($log->is_info){
+            $log->info(${ $result->gang_summary(0) })
         }
-## end gang
         push @results, $result;
 
     }
@@ -589,27 +561,21 @@ foreach my $item_number (0 .. $project->num_test_items - 1) {
         $self->{endrepeathook}->($self, $data);
         ++$pass;
         ( $sec, $min, $hour ) = localtime();
-        $logger->info(
-            sprintf( "$pass/$self->{repeat}  %2s:%02s:%02s", $hour, $min, $sec ) );
+        $log->info(
+            sprintf(
+                "$pass/$self->{repeat}  %2s:%02s:%02s",
+                $hour, $min, $sec ) )
+            if $log->is_info;
     }
     $self->{endtesthook}->($self, $data);
 }
 # line 2100 "end eval"
 
 ( $sec, $min, $hour ) = localtime();
-$logger->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
+$log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
+    if $log->is_info;
 
 $self->{endhook}->($self, $data);
-
-#go back to printing to the screen
-$logger->remove('amcpresults');
-$logger->add(
-    Log::Dispatch::Screen->new(
-        name        => 'Screen',
-        min_level   => 'warning',
-        newline     => 1,
-    )
-);
 
 __END__
 
@@ -617,14 +583,21 @@ __END__
 
   use Algorithm::AM;
 
-  my $p = Algorithm::AM->new('finnverb', -commas => 'no');
-  $p->classify();
+  my $am = Algorithm::AM->new('finnverb', -commas => 'no');
+  my ($result) = $am->classify;
+  print @{ $result->winners };
+  print $result->statistical_summary;
 
 =head1 DESCRIPTION
 
 Analogical Modeling is an exemplar-based way to model language usage.
-C<Algorithm::AM> is a Perl module which analyzes data sets using
-Analogical Modeling.
+This module analyzes data sets using Analogical Modeling, an
+exemplar-based approach to modeling language usage or other sticky
+phenomena. This module logs information using L<Log::Any>, so if you
+want automatic print-outs you need to set an adaptor. See the
+C<classify> method for more information on logged data.
+
+=head1 DATA SETS
 
 How to create data sets is not explained here.  See the appendices in
 the "red book", I<Analogical Modeling: An exemplar-based approach to
@@ -633,23 +606,15 @@ I<Analogical Modeling of Language>, for an explanation of the method
 in general, and the "blue book", I<Analogy and Structure>, for its
 mathematical basis.
 
+TODO: explain formatting here
+
 =head1 METHODS
 
 =head2 C<new>
 
-Arguments: see "Initializing a Project" (TODO: reorganize POD properly)
+Arguments: see "Initializing a Project". TODO: put it here, not there.
 
-Creates and returns a subroutine to classify the data in a given project.
-
-=head2 C<classify>
-
-Using the analogical modeling algorithm, this method classifies the instances
-in the project and prints the results to STDOUT, as well as to
-C<amcpresults> in the project directory.
-
-=head2 C<print_config>
-THIS METHOD IS UNDER CONSTRUCTION. Currently it is called by
-C<classify> to print a summary of the classifcation configuration.
+Creates a new AM object with the given project and options.
 
 =head1 HISTORY
 
@@ -749,12 +714,6 @@ C<undef>. (TODO: what's undef do here?)
 
 Determines how many times each individual test item will be analyzed.
 Only makes sense if the probability is less than 1.  Default: C<1>.
-
-=item -skipset
-
-Determines whether or not the analogical set is printed.  Can be
-C<yes> or C<no>; any other value will revert to the default.  Default:
-C<yes>.
 
 =item -gangs
 
@@ -1410,11 +1369,6 @@ Displayed default value will be used.
 =item Project %s did not specify option -given correctly
 
 Parameter C<-given> must be either C<include> or C<exclude>.
-Displayed default value will be used.
-
-=item Project %s did not specify option -skipset correctly
-
-Parameter C<-skipset> must be either C<yes> or C<no>.
 Displayed default value will be used.
 
 =item Project %s did not specify option -gangs correctly

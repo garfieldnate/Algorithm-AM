@@ -93,8 +93,6 @@ sub test_result_info {
         my $am = Algorithm::AM->new(
             $project,
             commas => 'no',
-            gangs => 'yes',
-            skipset => 0,
         );
         my ($result) = $am->classify();
         my $stats = ${$result->statistical_summary};

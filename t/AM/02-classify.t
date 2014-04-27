@@ -205,7 +205,6 @@ sub test_analogical_set {
         $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
         my $am = Algorithm::AM->new(
             $project,
-            skipset => 0,
             commas => 'no'
         );
         my ($result) = $am->classify();
