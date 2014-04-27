@@ -1,14 +1,12 @@
 Algorithm::AM
 
-Next: Reduce classifications run in 02-classify.t.
+Next: Reduce classifications run in 02-classify.t. Perhaps create a common testing module that returns a pre-made Project? This could be used across the test files.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Don't print $project if it's an object in the note about "Initializing project $project".
 
 Add tests for logging
-
-Move use test into AM folder and test Import::Into functionality.
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
