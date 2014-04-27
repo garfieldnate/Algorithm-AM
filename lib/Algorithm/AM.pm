@@ -69,8 +69,14 @@ sub new {
     );
     my $self = bless $opts, $class;
 
-    $log->debug("Initializing project $project")
-        if $log->is_debug;
+    if ($log->is_debug){
+        my $debug = 'Initializing project';
+        # print the project path if a path was given
+        if(ref $project && $project->isa('Algorithm::AM::Project')){
+            $debug .= " $project";
+        }
+        $log->debug($debug);
+    }
 
     # if $project is not a Project object, then it should be
     # the path to a project directory.

@@ -4,8 +4,6 @@ Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
-Don't print $project if it's an object in the note about "Initializing project $project".
-
 Add tests for logging
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
