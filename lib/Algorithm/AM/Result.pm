@@ -124,10 +124,10 @@ sub statistical_summary {
     # the same column as the other pointer numbers were printed
     $info .= sprintf(
         "$outcome_format  $gang_format\n",
-        "", '-' x length $grand_total );
+        '', '-' x length $grand_total );
     $info .= sprintf(
         "$outcome_format  $gang_format\n",
-        "", $grand_total );
+        '', $grand_total );
     # the predicted outcome (the one with the highest number
     # of pointers) and whether or not the prediction was correct.
     # TODO: should note if there's a tie
@@ -220,7 +220,21 @@ sub _calculate_analogical_set {
     return;
 }
 
-=head2 C<statistical_summary>
+=head2 C<gang_effects>
+
+Return a hash describing gang effects.
+TODO: details, details!
+
+=cut
+sub gang_effects {
+    my ($self) = @_;
+    if(!$self->{_gang_effects}){
+        $self->_calculate_gangs;
+    }
+    return $self->{_gang_effects};
+}
+
+=head2 C<gang_summary>
 
 Returns a scalar reference (string) containing the gang effects on the
 final outcome. Gang effects are basically the same as analogical sets,
@@ -242,54 +256,47 @@ sub gang_summary {
     my $total_pointers = $self->total_pointers;
     my $var_format = $project->var_format;
     my $test_item = $self->test_item;
+    my $gang = $self->{gang};
 
-    my $info = "Gang effects\n";
     #TODO: explain the magic below
     my $dashes = '-' x ( (length $self->total_pointers)  + 10 );
-    my $pad = " " x length sprintf "%7.3f%%  $gang_format x $data_format  $outcome_format",
-      0, '0', 0, "";
+    my $row_length =
+        length sprintf(
+        "%7.3f%%  $gang_format x $data_format  $outcome_format",
+        0, '0', 0, '');
+    my $pad = ' ' x $row_length;
+    my $header = 'Gang effects';
+
+    #first print a header with test item for easy reference
+    my $info = sprintf(
+        "Gang effects $gang_format $data_format $outcome_format  $var_format\n",
+        '', '0', '', @$test_item
+    );
+
     foreach my $context (
-        sort { bigcmp($self->{gang}->{$b}, $self->{gang}->{$a})}
-            keys %{$self->{gang}}
+        sort { bigcmp($gang->{$b}, $gang->{$a})}
+            keys %{$gang}
     )
     {
-        # start by unpacking the (supra)contexts for printing
-        my @context_list   = unpack "S!4", $context;
-        my @alist   = @{$self->{active_vars}};
-        my (@vtemp) = @{ $test_item };
-        my $j       = 1;
-        while (@alist) {
-            my $a = pop @alist;
-            my $partial_context = pop @context_list;
-            for ( ; $a ; --$a ) {
-                if($self->{exclude_nulls}){
-                    ++$j while $vtemp[ -$j ] eq '=';
-                }
-                $vtemp[ -$j ] = '' if $partial_context & 1;
-                $partial_context >>= 1;
-                ++$j;
-            }
-        }
-        my $p = $self->{pointers}->{$context};
+        my @variables = $self->_unpack_supracontext($context);
+        my $score = $self->{pointers}->{$context};
+        # if the supracontext is heterogeneous
         if ( $self->{subtooutcome}->{$context} ) {
-            {
-                no warnings;
-                # print the effect of the gang
-                $info .= sprintf(
-                    "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                    100 * $self->{gang}->{$context} / $total_pointers,
-                    $self->{gang}->{$context}, "", "", @{ $test_item }
-                ) . "\n";
-                # print dashes and the name of the supracontext
-                $info .= sprintf(
-                    "$dashes   $data_format  $outcome_format  $var_format",
-                    "", "", @vtemp
-                ) . "\n";
-            }
+            # print the supracontext and its effect and number of pointers
+            $info .= sprintf(
+                "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
+                100 * $gang->{$context} / $total_pointers,
+                $gang->{$context}, '0', '', @variables
+            );
+            # print dashes to accent the supracontext header
+            $info .= "$dashes\n";
+            # we know that the supracontext in homogeneous and so there
+            # is only one supported outcome. Print the effect of the gang,
+            # the number of items in the gang, and the supported outcome.
             $info .= sprintf(
                 "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                100 * $self->{gang}->{$context} / $total_pointers,
-                $p,
+                100 * $gang->{$context} / $total_pointers,
+                $score,
                 $self->{contextsize}->{$context},
                 $project->get_outcome($self->{subtooutcome}->{$context} )
             ) . "\n";
@@ -301,14 +308,17 @@ sub gang_summary {
                     $i = $self->{itemcontextchain}->[$i]
                   )
                 {
+                    # print the list of items in the given context
+                    # (they all have the given outcome)
                     $info .= sprintf(
                         "$pad  $var_format  " .
-                        $project->get_exemplar_spec($i),
-                        @{ $project->get_exemplar_data($i) } ) . "\n";
+                        $project->get_exemplar_spec($i) . "\n",
+                        @{ $project->get_exemplar_data($i) } );
                 }
             }
         }
         else {
+            # else if the supracontext is heterogeneous
             my @gangsort = (0) x ($project->num_outcomes + 1);
             my @ganglist = ();
             my $i;
@@ -324,36 +334,134 @@ sub gang_summary {
                         $project->get_exemplar_outcome($i) ] }, $i;
                 }
             }
-            {
-                no warnings;
-                $info .= sprintf(
-"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format",
-                    100 * $self->{gang}->{$context} / $total_pointers,
-                    $self->{gang}->{$context}, "", "", @{ $test_item }
-                ) . "\n";
-                $info .= sprintf (
-                    "$dashes   $data_format  $outcome_format  $var_format",
-                    "", "", @vtemp) . "\n";
-            }
+            # print supracontext name and effect
+            $info .= sprintf(
+"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
+                100 * $gang->{$context} / $total_pointers,
+                $gang->{$context}, '0', '', @variables
+            );
+            # print dashes to accent the header
+            $info .= "$dashes\n";
             for $i ( 1 .. $project->num_outcomes ) {
                 next unless $gangsort[$i];
                 $info .= sprintf(
-                    "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                    100 * $gangsort[$i] * $p / $total_pointers,
-                    $p, $gangsort[$i], $project->get_outcome($i)
-                ) . "\n";
+                    "%7.3f%%  $gang_format x $data_format  $outcome_format\n",
+                    100 * $gangsort[$i] * $score / $total_pointers,
+                    $score, $gangsort[$i], $project->get_outcome($i)
+                );
+                # print the list of items in the given context and outcome
                 if($print_list){
                     foreach ( @{ $ganglist[$i] } ) {
                         $info .= sprintf( "$pad  $var_format  " .
-                            $project->get_exemplar_spec($_),
+                            $project->get_exemplar_spec($_) . "\n",
                             @{ $project->get_exemplar_data($_) }
-                        ) . "\n";
+                        );
                     }
                 }
             }
         }
     }
     return \$info;
+}
+
+# Unpack and return the supracontext variables.
+# Blank entries mean the variable may be anything, e.g.
+# ('a' 'b' '') means a supracontext containing items
+# wich have ('a' 'b' whatever) as variable values.
+sub _unpack_supracontext {
+    my ($self, $context) = @_;
+    my (@variables) = @{ $self->test_item };
+    my @context_list   = unpack "S!4", $context;
+    my @alist   = @{$self->{active_vars}};
+    my $j       = 1;
+    foreach my $a (reverse @alist) {
+        my $partial_context = pop @context_list;
+        for ( ; $a ; --$a ) {
+            if($self->{exclude_nulls}){
+                ++$j while $variables[ -$j ] eq '=';
+            }
+            $variables[ -$j ] = '' if $partial_context & 1;
+            $partial_context >>= 1;
+            ++$j;
+        }
+    }
+    return @variables;
+}
+
+sub _calculate_gangs {
+    my ($self) = @_;
+    my $test_item = $self->test_item;
+    my $project = $self->project;
+    my $total_pointers = $self->total_pointers;
+    my $raw_gang = $self->{gang};
+    my $gangs = {};
+
+    foreach my $context (
+        sort { bigcmp($raw_gang->{$b}, $raw_gang->{$a})}
+            keys %{$raw_gang}
+    )
+    {
+        my @variables = $self->_unpack_supracontext($context);
+        # for now, store gangs by the supracontext printout
+        my $key = sprintf($project->var_format, @variables);
+        $gangs->{$key}->{score} = $raw_gang->{$context};
+        $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_pointers;
+        my $p = $self->{pointers}->{$context};
+        # if the supracontext is homogenous
+        if ( my $outcome = $self->{subtooutcome}->{$context} ) {
+            # store a 'homogenous' key that indicates this, besides
+            # indicating the unanimous outcome.
+            $outcome = $project->get_outcome($outcome);
+            $gangs->{$key}->{homogenous} = $outcome;
+            $gangs->{$key}->{vars} = \@variables;
+            my @data;
+            for (
+                my $i = $self->{itemcontextchainhead}->{$context};
+                defined $i;
+                $i = $self->{itemcontextchain}->[$i]
+              )
+            {
+                push @data, $i;
+            }
+            $gangs->{$key}->{data}->{$outcome} = \@data;
+            $gangs->{$key}->{size} = scalar @data;
+            $gangs->{$key}->{outcome}->{$outcome}->{score} = $p;
+            $gangs->{$key}->{outcome}->{$outcome}->{effect} =
+                $gangs->{$key}->{effect};
+        }
+        # for heterogenous supracontexts we have to store data for
+        # each outcome
+        else {
+            $gangs->{$key}->{homogenous} = 0;
+            # first loop through the data and sort by outcome, also
+            # finding the total gang size
+            my $size = 0;
+            my %data;
+            for (
+                my $i = $self->{itemcontextchainhead}->{$context};
+                defined $i;
+                $i = $self->{itemcontextchain}->[$i]
+              )
+            {
+                my $outcome = $project->get_outcome(
+                    $project->get_exemplar_outcome($i));
+                push @{ $data{$outcome} }, $i;
+                $size++;
+            }
+            $gangs->{$key}->{data} = \%data;
+            $gangs->{$key}->{size} = $size;
+
+            # then store aggregate statistics for each outcome
+            for my $outcome (keys %data){
+                $gangs->{$key}->{outcome}->{$outcome}->{score} = $p;
+                $gangs->{$key}->{outcome}->{$outcome}->{effect} =
+                    # pointers*num_data/total
+                    @{ $data{$outcome} } * $p / $total_pointers;
+            }
+        }
+    }
+    $self->{_gang_effects} = $gangs;
+    return;
 }
 
 # input several variables from AM's guts (grandtotal, sum,

@@ -1,5 +1,9 @@
 Algorithm::AM
 
+Right now: finish calculate_gangs for the heterogeneous case. Look at gangsort.
+
+Right now: refactor gangs to be calculated in a separate method
+
 Right now: Add methods to get more classification details from Result, and switch all classification tests over to using this API so we can STOP PRINTING EVERYTHING! Next file for switching is gangs, which can be moved into the classification test file or at least into the AM folder. Also, try to comment the gang printing code when possible. What are the itemcontextchain and itemcontextchainhead variables?
 
 Move use test into AM folder and test Import::Into functionality.
@@ -7,6 +11,10 @@ Move use test into AM folder and test Import::Into functionality.
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
 Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
+
+Document which strings are allowed for outcomes, data, etc. Definitely not '0'.
+
+Get rid of all of that formatting stuff and just use some other module to print pretty rows. The complication is unnecessary.
 
 Refactor and make result able to return structured, detailed information, such as items in the analogical set, etc., instead of just providing them through print methods.
 Add docs for methods in Result.

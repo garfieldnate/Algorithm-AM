@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Algorithm::AM;
 use Test::More 0.88;
-plan tests => 9;
+plan tests => 10;
 use Test::NoWarnings;
 use Test::LongString;
 
@@ -18,6 +18,7 @@ test_linear();
 test_nulls();
 test_given();
 test_analogical_set();
+test_gang_effects();
 test_finnverb();
 
 sub test_quadratic {
@@ -231,6 +232,79 @@ sub test_analogical_set {
         unlink $project->results_path
             if -e $project->results_path;
     };
+    return;
+}
+
+sub test_gang_effects {
+    my @data = (
+      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
+      [[qw(2 1 0)], '210', 'r', undef],
+      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
+      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
+      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+    );
+    my $project = Algorithm::AM::Project->new();
+    for my $datum(@data){
+        $project->add_data(@$datum);
+    }
+    $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+
+    my $am = Algorithm::AM->new(
+        $project,
+        commas => 'no',
+    );
+    my ($result) = $am->classify();
+    my $expected_effects = {
+      '    2' => {
+        'data' => {'r' => [2]},
+        'effect' => '0.153846153846154',
+        'homogenous' => 'r',
+        'outcome' => {
+          'r' => {
+            'effect' => '0.153846153846154',
+            'score' => '2'
+          }
+        },
+        'score' => 2,
+        'size' => 1,
+        'vars' => ['','','2']
+      },
+      '  1 2' => {
+        'data' => {'r' => [3]},
+        'effect' => '0.230769230769231',
+        'homogenous' => 'r',
+        'outcome' => {
+          'r' => {
+            'effect' => '0.230769230769231',
+            'score' => '3'
+          }
+        },
+        'score' => 3,
+        'size' => 1,
+        'vars' => ['','1','2']
+      },
+      '3 1  ' => {
+        'data' => {'e' => [0], 'r' => [4]},
+        'effect' => '0.615384615384615',
+        'homogenous' => 0,
+        'outcome' => {
+          'e' => {
+            'effect' => '0.307692307692308',
+            'score' => 4
+          },
+          'r' => {
+            'effect' => '0.307692307692308',
+            'score' => 4
+          }
+        },
+        'score' => 8,
+        'size' => 2
+      }
+    };
+    is_deeply($result->gang_effects, $expected_effects,
+        'correct reported gang effects') or
+        note explain $result->gang_effects;
+
     return;
 }
 

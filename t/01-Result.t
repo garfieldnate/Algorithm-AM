@@ -4,8 +4,6 @@ use Test::More 0.88;
 plan tests => 2;
 use Test::LongString;
 use Algorithm::AM;
-use Path::Tiny;
-use FindBin '$Bin';
 
 my @data = (
   [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
@@ -120,37 +118,36 @@ r  myFifthCommentHere    4   30.769%
 END_SET
         my $gang = ${$result->gang_summary(0)};
         is_string_nows($gang, <<'END_GANG') or note $gang;
-Gang effects
- 61.538%   8             3 1 2
-------------             3 1
+Gang effects             3 1 2
+ 61.538%   8             3 1
+------------
  30.769%   4 x     1  e
  30.769%   4 x     1  r
- 23.077%   3             3 1 2
-------------               1 2
+ 23.077%   3               1 2
+------------
  23.077%   3 x     1  r
- 15.385%   2             3 1 2
-------------                 2
+ 15.385%   2                 2
+------------
  15.385%   2 x     1  r
 END_GANG
         $gang = ${$result->gang_summary(1)};
         is_string_nows($gang, <<'END_GANG') or note $gang;
-Gang effects
- 61.538%   8             3 1 2
-------------             3 1
+Gang effects             3 1 2
+ 61.538%   8             3 1
+------------
  30.769%   4 x     1  e
                          3 1 0  myFirstCommentHere
  30.769%   4 x     1  r
                          3 1 1  myFifthCommentHere
- 23.077%   3             3 1 2
-------------               1 2
+ 23.077%   3               1 2
+------------
  23.077%   3 x     1  r
                          2 1 2  myFourthCommentHere
- 15.385%   2             3 1 2
-------------                 2
+ 15.385%   2                 2
+------------
  15.385%   2 x     1  r
                          0 3 2  myThirdCommentHere
 END_GANG
-
 
         #clean up the test run
         unlink $project->results_path

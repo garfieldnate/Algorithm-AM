@@ -224,7 +224,7 @@ sub _context_label {
     my ($active_vars, $exemplar_vars, $item_vars, $skip_nulls) = @_;
 
     # variable index
-    my $j        = 0;
+    my $index        = 0;
     # the binary context labels for each separate lattice
     my @context_list    = ();
     for my $a (@$active_vars) {
@@ -234,11 +234,11 @@ sub _context_label {
         for ( ; $a ; --$a ) {
             # skip null variables
             if($skip_nulls){
-                ++$j while ${ $item_vars }[$j] eq '=';
+                ++$index while ${ $item_vars }[$index] eq '=';
             }
             # add a 1 for mismatched variable, 0 for matched variable
-            $context = ( $context << 1 ) | ( ${ $item_vars }[$j] ne $exemplar_vars->[$j] );
-            ++$j;
+            $context = ( $context << 1 ) | ( ${ $item_vars }[$index] ne $exemplar_vars->[$index] );
+            ++$index;
         }
         push @context_list, $context;
     }
