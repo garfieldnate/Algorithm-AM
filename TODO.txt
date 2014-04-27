@@ -1,8 +1,10 @@
 Algorithm::AM
 
-Next: Reduce classifications run in 02-classify.t. Perhaps create a common testing module that returns a pre-made Project? This could be used across the test files.
+Next: Reduce classifications run in 02-classify.t.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
+
+Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
 Don't print $project if it's an object in the note about "Initializing project $project".
 
@@ -16,11 +18,8 @@ Document which strings are allowed for outcomes, data, etc. Definitely not '0'.
 
 Get rid of all of that formatting stuff and just use some other module to print pretty rows. The complication is unnecessary.
 
-Refactor and make result able to return structured, detailed information, such as items in the analogical set, etc., instead of just providing them through print methods.
-Add docs for methods in Result.
+Add timing accessors to Result.
 Do better time handling in Result; something that will allow checking how long classification took would be nice.
-
-Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
 Add other bigint helper methods into BigInt and test them, as well.
 

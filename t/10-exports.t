@@ -3,6 +3,15 @@ use strict;
 use warnings;
 use feature qw(state);
 use Test::More 0.88;
+use Test::NoWarnings;
+use t::TestAM qw(
+	chapter_3_data
+	chapter_3_project
+	chapter_3_test
+	chapter_3_data_outcomes
+);
+use Algorithm::AM;
+
 #test_beginning_vars contains five tests and is run for every handler (34 times)
 #test_item_vars contains three tests and is run for most handlers (32 times)
 #test_iter_vars contains three tests and is run for most handlers (28 times)
@@ -10,22 +19,9 @@ use Test::More 0.88;
 #beginhook_outcome has two more
 #1 more for Test::NoWarnings
 plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 2 + 1;
-use Test::NoWarnings;
-use Algorithm::AM;
 
-my $project = Algorithm::AM::Project->new();
-my @data = (
-	[[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-	[[qw(2 1 0)], 'mySecondCommentHere', 'r', undef],
-	[[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-	[[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-	[[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-);
-for my $datum(@data){
-    $project->add_data(@$datum);
-}
-$project->add_test([qw(3 1 3)], 'first test item', 'r');
-$project->add_test([qw(3 1 2)], 'second test item', 'e');
+my $project = chapter_3_project();
+$project->add_test([qw(3 1 3)], 'second test item', 'e');
 
 # first test without an outcome file
 my $am = Algorithm::AM->new(
@@ -46,19 +42,12 @@ $am->classify(
 
 # then test just @outcomelist and %outcometonum with "long" outcomes
 # specified in the data
-
 $project = Algorithm::AM::Project->new();
-@data = (
-	[[qw(3 1 0)], 'myFirstCommentHere', 'e', 'ee'],
-	[[qw(2 1 0)], 'mySecondCommentHere', 'r', 'are'],
-	[[qw(0 3 2)], 'myThirdCommentHere', 'r', 'are'],
-	[[qw(2 1 2)], 'myFourthCommentHere', 'r', 'are'],
-	[[qw(3 1 1)], 'myFifthCommentHere', 'r', 'are']
-);
+my @data = chapter_3_data_outcomes();
 for my $datum(@data){
     $project->add_data(@$datum);
 }
-$project->add_test([qw(3 1 2)], 'second test item', 'e');
+$project->add_test( @{chapter_3_test()} );
 $am = Algorithm::AM->new(
 	$project,
 	commas => 'no',
@@ -168,10 +157,10 @@ sub test_item_vars {
 
 	ok(${$data->{curTestOutcome}} == 2 || ${$data->{curTestOutcome}} == 1,
 		$hook . ': $curTestOutcome');
-	if(${$data->{curTestOutcome}} == 2){
+	if(${$data->{curTestOutcome}} == 1){
 		like(
 			$data->{curTestSpec},
-			qr/first test item$/,
+			qr/second test item$/,
 			$hook . ': $curTestSpec'
 		);
 
@@ -180,7 +169,7 @@ sub test_item_vars {
 	}else{
 		like(
 			$data->{curTestSpec},
-			qr/second test item$/,
+			qr/test item spec$/,
 			$hook . ': $curTestSpec'
 		);
 		is_deeply($data->{curTestItem}, [3,1,2], $hook . ': @{ $data->{curTestItem} }')
@@ -202,7 +191,7 @@ sub test_iter_vars {
 sub test_end_vars {
 	my ($hook_name, $am, $data) = @_;
 	my $subtotals = [@{$am->{sum}}[1,2]];
-	if(${$data->{curTestOutcome}} == 2){
+	if(${$data->{curTestOutcome}} == 1){
 		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');
 		is(${$data->{pointertotal}}, '8', $hook_name . ': $pointertotal');
 		is($data->{pointermax}, '4', $hook_name . ': $pointermax');

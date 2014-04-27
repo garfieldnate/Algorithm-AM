@@ -5,10 +5,9 @@ use Algorithm::AM;
 use Test::More 0.88;
 plan tests => 2;
 use Test::NoWarnings;
+use t::TestAM 'chapter_3_project';
 
-my $project = Algorithm::AM::Project->new();
-$project->add_data([qw(3 1 0)], 'myFirstCommentHere', 'e');
-$project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+my $project = chapter_3_project();
 
 my $am = Algorithm::AM->new($project, repeat => 2);
 my @results = $am->classify();

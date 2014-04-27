@@ -8,6 +8,7 @@ plan tests => 39;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
+use t::TestAM 'chapter_3_data';
 use FindBin '$Bin';
 use Path::Tiny;
 
@@ -154,32 +155,23 @@ sub test_private_data {
     is_deeply($project->_specs, [],
         "empty project has empty specs");
 
-    $project->add_data([qw(3 1 0)], 'myFirstCommentHere', 'e');
-    $project->add_data([qw(2 1 0)], '', 'r');
-    $project->add_data([qw(0 3 2)], 'myThirdCommentHere', 'r');
-    $project->add_data([qw(2 1 2)], 'myFourthCommentHere', 'r');
-    $project->add_data([qw(3 1 1)], 'myFifthCommentHere', 'r');
+    my @data = chapter_3_data();
+    # get rid of one of the specs to test that it is filled in
+    $data[1][1] = '';
+    for my $datum(@data){
+        $project->add_data(@$datum);
+    }
 
     is_deeply($project->_outcomes, [qw(1 2 2 2 2)],
         "correct project outcomes");
-    is_deeply($project->_data, [
-        [qw(3 1 0)],
-        [qw(2 1 0)],
-        [qw(0 3 2)],
-        [qw(2 1 2)],
-        [qw(3 1 1)]],
+    # index 0 of each data entry contains the variables
+    is_deeply($project->_data, [map {$_->[0]} @data],
         "correct project data");
     is_deeply($project->_outcome_list, ['', 'e', 'r'],
         "correct project outcome list");
 
-    # specs are slightly different because when one is missing the
-    # data string is used instead
-    my $specs = [
-        'myFirstCommentHere',
-        '2 1 0',
-        qw(myThirdCommentHere
-        myFourthCommentHere
-        myFifthCommentHere)];
+    # index 1 of each data entry contains the specs
+    my $specs = [$data[0][1], '2 1 0', map {$_->[1]} @data[2..4]];
 
     is_deeply($project->_specs, $specs,
         'correct project specs (commas)');

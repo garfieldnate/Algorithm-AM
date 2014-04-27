@@ -8,6 +8,7 @@ use Test::More 0.88;
 plan tests => 10;
 use Test::NoWarnings;
 use Test::LongString;
+use t::TestAM qw(chapter_3_project chapter_3_data);
 
 use FindBin qw($Bin);
 use Path::Tiny;
@@ -24,18 +25,7 @@ test_finnverb();
 sub test_quadratic {
     subtest 'quadratic calculation' => sub {
         plan tests => 3;
-        my @data = (
-          [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-          [[qw(2 1 0)], '210', 'r', undef],
-          [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-          [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-          [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-        );
-        my $project = Algorithm::AM::Project->new();
-        for my $datum(@data){
-            $project->add_data(@$datum);
-        }
-        $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+        my $project = chapter_3_project();
         my $am = Algorithm::AM->new(
             $project,
             commas => 'no',
@@ -59,19 +49,7 @@ sub test_quadratic {
 sub test_linear {
     subtest 'linear calculation' => sub {
         plan tests => 3;
-        my @data = (
-          [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-          [[qw(2 1 0)], '210', 'r', undef],
-          [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-          [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-          [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-        );
-        my $project = Algorithm::AM::Project->new();
-        for my $datum(@data){
-            $project->add_data(@$datum);
-        }
-        $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
-
+        my $project = chapter_3_project();
         my $am = Algorithm::AM->new(
             $project,
             commas => 'no',
@@ -95,15 +73,8 @@ sub test_linear {
 # and include_nulls
 # TODO: test for the correct number of active variables
 sub test_nulls {
-    my @data = (
-      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-      [[qw(2 1 0)], '210', 'r', undef],
-      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-    );
     my $project = Algorithm::AM::Project->new();
-    for my $datum(@data){
+    for my $datum( chapter_3_data() ){
         $project->add_data(@$datum);
     }
     $project->add_test([qw(= 1 2)], '', 'r');
@@ -145,19 +116,9 @@ sub test_nulls {
 
 # test case where test data is in given data
 sub test_given {
-    my @data = (
-      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-      [[qw(2 1 0)], '210', 'r', undef],
-      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef],
-      [[qw(3 1 2)], 'same as the test exemplar', 'r', undef]
-    );
-    my $project = Algorithm::AM::Project->new();
-    for my $datum(@data){
-        $project->add_data(@$datum);
-    }
-    $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+    my $project = chapter_3_project();
+    $project->add_data(
+      [qw(3 1 2)], 'same as the test exemplar', 'r', undef);
     my $am = Algorithm::AM->new(
         $project,
         exclude_given => 1
@@ -191,18 +152,7 @@ sub test_given {
 sub test_analogical_set {
     subtest 'analogical set' => sub {
         plan tests => 5;
-        my @data = (
-          [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-          [[qw(2 1 0)], '210', 'r', undef],
-          [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-          [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-          [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-        );
-        my $project = Algorithm::AM::Project->new();
-        for my $datum(@data){
-            $project->add_data(@$datum);
-        }
-        $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
+        my $project = chapter_3_project();
         my $am = Algorithm::AM->new(
             $project,
             commas => 'no'
@@ -235,19 +185,7 @@ sub test_analogical_set {
 }
 
 sub test_gang_effects {
-    my @data = (
-      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-      [[qw(2 1 0)], '210', 'r', undef],
-      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-    );
-    my $project = Algorithm::AM::Project->new();
-    for my $datum(@data){
-        $project->add_data(@$datum);
-    }
-    $project->add_test([qw(3 1 2)], 'myCommentHere', 'r');
-
+    my $project = chapter_3_project();
     my $am = Algorithm::AM->new(
         $project,
         commas => 'no',

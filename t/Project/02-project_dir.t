@@ -8,6 +8,11 @@ use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
+use t::TestAM qw(
+    chapter_3_data
+    chapter_3_data_outcomes
+    chapter_3_test
+);
 use FindBin '$Bin';
 use Path::Tiny;
 
@@ -103,14 +108,11 @@ sub test_data {
     };
 
     # test plain project
-    my @data_expected = (
-      [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-      [[qw(2 1 0)], '210', 'r', undef],
-      [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-      [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-      [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-    );
-    my @test_expected = ([[qw(3 1 2)], 'myCommentHere', 'r']);
+    my @data_expected = chapter_3_data();
+    # slightly change data because we leave one spec blank to test
+    # that it is filled in
+    $data_expected[1][1] = '210';
+    my @test_expected = chapter_3_test();
     $project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3'), commas => 'no');
     is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)");
@@ -118,13 +120,9 @@ sub test_data {
 
     # test comma-formatted project
     @data = @test = ();
-    @data_expected = (
-        [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-        [[qw(2 1 0)], '2 1 0', 'r', undef],
-        [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-        [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-        [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
-    );
+    # slightly change data because we leave one spec blank to test
+    # that it is filled in
+    $data_expected[1][1] = '2 1 0';
     $project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_commas'), commas => 'yes');
     is_deeply(\@data, \@data_expected,
@@ -134,13 +132,10 @@ sub test_data {
 
     # test project containing outcomes file
     @data = @test = ();
-    @data_expected = (
-      [[qw(3 1 0)], 'myCommentHere', 'e', 'ee'],
-      [[qw(2 1 0)], '210', 'r', 'are'],
-      [[qw(0 3 2)], 'myCommentHere', 'r', 'are'],
-      [[qw(2 1 2)], 'myCommentHere', 'r', 'are'],
-      [[qw(3 1 1)], 'myCommentHere', 'r', 'are']
-    );
+    @data_expected = chapter_3_data_outcomes();
+    # slightly change data because we leave one spec blank to test
+    # that it is filled in
+    $data_expected[1][1] = '210';
     my $outcome_project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_outcomes'), commas => 'no');
     is_deeply(\@data, \@data_expected,
