@@ -26,7 +26,6 @@ $project->add_test([qw(3 1 3)], 'second test item', 'e');
 # first test without an outcome file
 my $am = Algorithm::AM->new(
 	$project,
-	commas => 'no',
 	repeat => 2,
 	probability => 1,
 );
@@ -50,7 +49,6 @@ for my $datum(@data){
 $project->add_test( @{chapter_3_test()} );
 $am = Algorithm::AM->new(
 	$project,
-	commas => 'no',
 	probability => 1,
 );
 

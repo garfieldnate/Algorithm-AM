@@ -10,11 +10,7 @@ use t::TestAM 'chapter_3_project';
 my $project = chapter_3_project();
 $project->add_test([qw(3 1 2)], 'second test item', 'e');
 
-my $am = Algorithm::AM->new(
-	$project,
-	commas => 'no',
-	repeat => 2,
-);
+my $am = Algorithm::AM->new($project, repeat => 2);
 
 #first test that each hook is called at the appropriate time
 #by recording the call of each hook in @record

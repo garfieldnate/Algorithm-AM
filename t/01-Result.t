@@ -79,10 +79,7 @@ END_INFO
 sub test_result_info {
     subtest 'classification info printing' => sub {
         plan tests => 4;
-        my $am = Algorithm::AM->new(
-            $project,
-            commas => 'no',
-        );
+        my $am = Algorithm::AM->new($project);
         my ($result) = $am->classify();
         my $stats = ${$result->statistical_summary};
         is_string_nows($stats, <<'END_STATS') or note $stats;

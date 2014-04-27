@@ -28,7 +28,6 @@ sub test_quadratic {
         my $project = chapter_3_project();
         my $am = Algorithm::AM->new(
             $project,
-            commas => 'no',
         );
         my ($result) = $am->classify();
         is($result->total_pointers, 13, 'total pointers')
@@ -46,10 +45,7 @@ sub test_linear {
     subtest 'linear calculation' => sub {
         plan tests => 3;
         my $project = chapter_3_project();
-        my $am = Algorithm::AM->new(
-            $project,
-            commas => 'no',
-        );
+        my $am = Algorithm::AM->new($project);
         my ($result) = $am->classify(linear => 1);
         is($result->total_pointers, 7, 'total pointers')
             or note $result->total_pointers;;
@@ -70,10 +66,7 @@ sub test_nulls {
         $project->add_data(@$datum);
     }
     $project->add_test([qw(= 1 2)], '', 'r');
-    my $am = Algorithm::AM->new(
-        $project,
-        commas => 'no',
-    );
+    my $am = Algorithm::AM->new($project);
 
     subtest 'exclude nulls' => sub {
         plan tests => 3;
@@ -135,10 +128,7 @@ sub test_analogical_set {
     subtest 'analogical set' => sub {
         plan tests => 5;
         my $project = chapter_3_project();
-        my $am = Algorithm::AM->new(
-            $project,
-            commas => 'no'
-        );
+        my $am = Algorithm::AM->new($project);
         my ($result) = $am->classify();
 
         my $set = $result->analogical_set();
@@ -164,10 +154,7 @@ sub test_analogical_set {
 
 sub test_gang_effects {
     my $project = chapter_3_project();
-    my $am = Algorithm::AM->new(
-        $project,
-        commas => 'no',
-    );
+    my $am = Algorithm::AM->new($project);
     my ($result) = $am->classify();
     my $expected_effects = {
       '    2' => {

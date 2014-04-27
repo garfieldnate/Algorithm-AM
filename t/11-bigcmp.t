@@ -12,10 +12,7 @@ use subs qw(bigcmp);
 
 my $project = chapter_3_project();
 
-my $am = Algorithm::AM->new(
-	$project,
-	commas => 'no',
-);
+my $am = Algorithm::AM->new($project);
 $am->classify(
 	endhook => \&endhook,
 );
