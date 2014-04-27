@@ -1,8 +1,9 @@
 Revision history for AM-Algorithm
 
-
 {{$NEXT}}
-
+    Stopped printing to amcpresults and terminal
+    Switched to Log::Any
+    Added Algorithm::AM::Result module
 2.45      2014-02-11 21:27:02 America/Los_Angeles
     Fixed gang/grandtotal calculation bugs
     removed debug print statements!
