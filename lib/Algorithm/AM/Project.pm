@@ -181,18 +181,6 @@ sub base_path {
     return $self->{project_path};
 }
 
-=head2 C<results_path>
-
-Returns the path of the file where classification results are to be
-printed. Currently this is C<amcpresults> inside of the project
-directory.
-
-=cut
-sub results_path {
-    my ($self) = @_;
-    return '' . path($self->{project_path}, 'amcpresults');
-}
-
 =head2 C<num_variables>
 
 Returns the number of variables contained in a single exemplar

@@ -14,7 +14,3 @@ my ($result) = $am->classify(probability => .9);
 #TODO: test this more explicitly, perhaps by overriding rand()
 is($result->probability, .9, 'probability recorded in result')
     or note $result->probability;
-
-#clean up the amcpresults file
-unlink $project->results_path
-	if -e $project->results_path;

@@ -78,7 +78,3 @@ my ($result) = $am->classify(
 is_deeply($result->excluded_data, [0],
 	'item one excluded via datahook')
 	or note explain $result->excluded_data;
-
-# clean up amcpresults file
-unlink $project->results_path
-	if -e $project->results_path;

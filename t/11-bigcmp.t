@@ -20,10 +20,6 @@ $am->classify(
 	endhook => \&endhook,
 );
 
-#cleanup amcpresults file
-unlink $project->results_path
-	if -e $project->results_path;
-
 sub endhook {
 	test_bigcmp(@_);
 }

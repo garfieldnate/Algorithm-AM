@@ -38,10 +38,6 @@ sub test_quadratic {
         is_deeply($result->scores, {'e' => 4, 'r' => 9},
             'outcome scores') or
             note explain $result->scores;
-
-        #clean up the amcpresults file
-        unlink $project->results_path
-            if -e $project->results_path;
     };
     return;
 }
@@ -61,10 +57,6 @@ sub test_linear {
             'counting configured to quadratic');
         is_deeply($result->scores, {'e' => 2, 'r' => 5}, 'outcome scores')
             or note explain $result->scores;
-
-        #clean up the amcpresults file
-        unlink $project->results_path
-            if -e $project->results_path;
     };
     return;
 }
@@ -83,9 +75,6 @@ sub test_nulls {
         commas => 'no',
     );
 
-    #clean up previous test runs
-    unlink $project->results_path
-        if -e $project->results_path;
     subtest 'exclude nulls' => sub {
         plan tests => 3;
         my ($result) = $am->classify(exclude_nulls => 1);
@@ -106,10 +95,6 @@ sub test_nulls {
         is_deeply($result->scores, {'r' => 5}, 'outcome scores')
             or note explain $result->scores;
     };
-
-    #clean up the amcpresults file
-    unlink $project->results_path
-        if -e $project->results_path;
 
     return;
 }
@@ -143,9 +128,6 @@ sub test_given {
         is_deeply($result->scores, {'r' => 15}, 'outcome scores')
             or note explain $result->scores;
     };
-    #clean up the amcpresults file
-    unlink $project->results_path
-        if -e $project->results_path;
     return;
 }
 
@@ -176,10 +158,6 @@ sub test_analogical_set {
         is($project->get_exemplar_spec(4), 'myFifthCommentHere',
             'confirm fifth item')
             or note $project->get_exemplar_spec(4);
-
-        #clean up the amcpresults file
-        unlink $project->results_path
-            if -e $project->results_path;
     };
     return;
 }

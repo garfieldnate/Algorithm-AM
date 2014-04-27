@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 16;
+plan tests => 15;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
@@ -83,8 +83,6 @@ sub test_paths {
         path($data_dir, 'chapter3'), commas => 'no');
     is($project->base_path, path($data_dir, 'chapter3'),
         'correct base_path');
-    is($project->results_path, path($data_dir, 'chapter3', 'amcpresults'),
-        'correct results_path');
     return;
 }
 

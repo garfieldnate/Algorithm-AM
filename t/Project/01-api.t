@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 39;
+plan tests => 38;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -62,8 +62,6 @@ sub test_data {
 sub test_paths {
     my $project = Algorithm::AM::Project->new();
     is($project->base_path, Path::Tiny->cwd,
-        'correct base_path');
-    is($project->results_path, path(Path::Tiny->cwd, 'amcpresults'),
         'correct base_path');
     return;
 }

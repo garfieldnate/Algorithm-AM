@@ -135,10 +135,6 @@ Gang effects             3 1 2
  15.385%   2 x     1  r
                          0 3 2  myThirdCommentHere
 END_GANG
-
-        #clean up the test run
-        unlink $project->results_path
-            if -e $project->results_path;
     };
     return;
 }

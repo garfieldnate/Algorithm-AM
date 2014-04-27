@@ -58,10 +58,6 @@ $am->classify(
 	beginhook => \&beginhook_outcome,
 );
 
-#cleanup amcpresults file
-unlink $project->results_path
-	if -e $project->results_path;
-
 sub beginhook {
 	test_beginning_vars('beginhook', @_);
 }

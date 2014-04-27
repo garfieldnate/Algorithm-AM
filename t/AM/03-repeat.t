@@ -13,7 +13,3 @@ my $am = Algorithm::AM->new($project, repeat => 2);
 my @results = $am->classify();
 is(scalar @results, 2, 'exemplar is analyzed twice') or
     note scalar @results;
-
-#clean up the amcpresults file
-unlink $project->results_path
-    if -e $project->results_path;
