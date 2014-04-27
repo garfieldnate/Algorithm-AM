@@ -1,10 +1,10 @@
 Algorithm::AM
 
-Right now: finish calculate_gangs for the heterogeneous case. Look at gangsort.
+Right now: Remove printing, everywhere! Maybe do Log::Any.
 
-Right now: refactor gangs to be calculated in a separate method
+Next: Reduce classifications run in 02-classify.t.
 
-Right now: Add methods to get more classification details from Result, and switch all classification tests over to using this API so we can STOP PRINTING EVERYTHING! Next file for switching is gangs, which can be moved into the classification test file or at least into the AM folder. Also, try to comment the gang printing code when possible. What are the itemcontextchain and itemcontextchainhead variables?
+Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Move use test into AM folder and test Import::Into functionality.
 
@@ -23,8 +23,6 @@ Do better time handling in Result; something that will allow checking how long c
 Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
 Add other bigint helper methods into BigInt and test them, as well.
-
-Auto-import Result and Project when caller imports AM.pm.
 
 Make '=' into a constant somewhere so it obvious that it represents UNKNOWN_VARIABLE.
 

@@ -298,7 +298,8 @@ sub test_gang_effects {
           }
         },
         'score' => 8,
-        'size' => 2
+        'size' => 2,
+        'vars' => ['3','1', '']
       }
     };
     is_deeply($result->gang_effects, $expected_effects,

@@ -91,6 +91,79 @@ sub total_pointers {
     return $self->{total_pointers};
 }
 
+# input several variables from AM's guts (grandtotal, sum,
+# expected outcome integer, pointers, itemcontextchainhead and
+# itemcontextchain). Calculate the prediction statistics, and
+# store information needed for computing analogical sets.
+# Set result to tie/correct/incorrect if expected outcome is
+# provided, and set is_tie, high_score, scores, winners, and
+# total_pointers.
+sub _process_stats {
+    my ($self, $total_pointers, $sum, $expected, $pointers,
+        $itemcontextchainhead, $itemcontextchain, $subtooutcome,
+        $gang, $active_vars, $contextsize) = @_;
+    my $max = '';
+    my @winners;
+    my %scores;
+
+    # iterate all possible outcomes and store the ones that have a
+    # non-zero score. Store the high-scorers, as well.
+    # 1) find which one(s) has the most pointers (is the prediction) and
+    # 2) print out the ones with pointers (change of prediction)
+    for my $outcome_index (1 .. $self->project->num_outcomes) {
+        my $outcome_pointers;
+        # skip outcomes with no pointers
+        next unless $outcome_pointers = $sum->[$outcome_index];
+
+        my $outcome = $self->project->get_outcome($outcome_index);
+        $scores{$outcome} = $outcome_pointers;
+
+        # check if the outcome has the highest score, or ties for it
+        do {
+            my $cmp = bigcmp($outcome_pointers, $max);
+            if ($cmp > 0){
+                @winners = ($outcome);
+                $max = $outcome_pointers;
+            }elsif($cmp == 0){
+                push @winners, $outcome;
+            }
+        };
+    }
+
+    # set result to tie/correct/incorrect after comparing
+    # expected/actual outcomes
+    if($expected){
+        #set the expected outcome to the string representation
+        my $test_outcome = $self->project->get_outcome($expected);
+        $self->test_outcome($test_outcome);
+        if(exists $scores{$test_outcome} &&
+                bigcmp($scores{$test_outcome}, $max) == 0){
+            if(@winners > 1){
+                $self->result('tie');
+            }else{
+                $self->result('correct');
+            }
+        }else{
+            $self->result('incorrect');
+        }
+    }
+    if(@winners > 1){
+        $self->is_tie(1);
+    }
+    $self->high_score($max);
+    $self->scores(\%scores);
+    $self->winners(\@winners);
+    $self->total_pointers($total_pointers);
+    $self->{pointers} = $pointers;
+    $self->{itemcontextchainhead} = $itemcontextchainhead;
+    $self->{itemcontextchain} = $itemcontextchain;
+    $self->{subtooutcome} = $subtooutcome;
+    $self->{gang} = $gang;
+    $self->{active_vars} = $active_vars;
+    $self->{contextsize} = $contextsize;
+    return;
+}
+
 =head2 C<statistical_summary>
 
 Returns a scalar reference (string) containing a statistical summary
@@ -173,10 +246,7 @@ set.
 =cut
 sub analogical_set_summary {
     my ($self) = @_;
-    if(!exists $self->{_analogical_set}){
-        $self->_calculate_analogical_set;
-    }
-    my $set = $self->{_analogical_set};
+    my $set = $self->analogical_set;
     my $project = $self->project;
     my $total_pointers = $self->total_pointers;
     my $outcome_format = $project->outcome_format;
@@ -223,7 +293,7 @@ sub _calculate_analogical_set {
 =head2 C<gang_effects>
 
 Return a hash describing gang effects.
-TODO: details, details!
+TODO: details, details! Maybe make a gang class to hold these.
 
 =cut
 sub gang_effects {
@@ -241,9 +311,8 @@ final outcome. Gang effects are basically the same as analogical sets,
 but the total effects of entire subcontexts and supracontexts
 are also calculated and printed.
 
-A single boolean parameter can be provided to turn on full list
-printing, meaning that all relevant items are printed. This is false
-(off) by default.
+A single boolean parameter can be provided to turn on list printing,
+meaning gang items items are printed. This is false (off) by default.
 
 =cut
 # $print_list means print everything, not just the summary
@@ -253,19 +322,20 @@ sub gang_summary {
     my $gang_format = $self->{gang_format};
     my $outcome_format = $project->outcome_format;
     my $data_format = $project->data_format;
-    my $total_pointers = $self->total_pointers;
     my $var_format = $project->var_format;
     my $test_item = $self->test_item;
-    my $gang = $self->{gang};
 
-    #TODO: explain the magic below
+    if(!$self->{_gang_effects}){
+        $self->_calculate_gangs;
+    }
+    my $gangs = $self->gang_effects;
+
+    # TODO: use a module to print pretty columns instead of
+    # doing it by hand
     my $dashes = '-' x ( (length $self->total_pointers)  + 10 );
-    my $row_length =
-        length sprintf(
-        "%7.3f%%  $gang_format x $data_format  $outcome_format",
-        0, '0', 0, '');
-    my $pad = ' ' x $row_length;
-    my $header = 'Gang effects';
+    my $pad = ' ' x length
+        sprintf("%7.3f%%  $gang_format x $data_format  $outcome_format",
+            0, '0', 0, '');
 
     #first print a header with test item for easy reference
     my $info = sprintf(
@@ -273,119 +343,42 @@ sub gang_summary {
         '', '0', '', @$test_item
     );
 
-    foreach my $context (
-        sort { bigcmp($gang->{$b}, $gang->{$a})}
-            keys %{$gang}
-    )
-    {
-        my @variables = $self->_unpack_supracontext($context);
-        my $score = $self->{pointers}->{$context};
-        # if the supracontext is heterogeneous
-        if ( $self->{subtooutcome}->{$context} ) {
-            # print the supracontext and its effect and number of pointers
-            $info .= sprintf(
-                "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
-                100 * $gang->{$context} / $total_pointers,
-                $gang->{$context}, '0', '', @variables
-            );
-            # print dashes to accent the supracontext header
-            $info .= "$dashes\n";
-            # we know that the supracontext in homogeneous and so there
-            # is only one supported outcome. Print the effect of the gang,
-            # the number of items in the gang, and the supported outcome.
+    # print information for each gang; sort by order of highest to
+    # lowest effect
+    foreach my $gang (
+            sort {bigcmp($b->{score}, $a->{score})} values $gangs){
+        my $variables = $gang->{vars};
+        my $score = $gang->{score};
+        # print the gang supracontext, effect and number of pointers
+        $info .= sprintf(
+            "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
+            100 * $gang->{effect}, $gang->{score}, '0', '', @$variables
+        );
+        # print dashes to separate the gang header
+        $info .= "$dashes\n";
+        # print each outcome, along with the total number and effect of
+        # the gang items supporting it
+        my $outcome;
+        for $outcome (keys %{ $gang->{outcome} }){
             $info .= sprintf(
                 "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                100 * $gang->{$context} / $total_pointers,
-                $score,
-                $self->{contextsize}->{$context},
-                $project->get_outcome($self->{subtooutcome}->{$context} )
+                100 * $gang->{outcome}->{$outcome}->{effect},
+                $gang->{outcome}->{$outcome}->{score},
+                scalar @{ $gang->{data}->{$outcome} },
+                $outcome
             ) . "\n";
             if($print_list){
-                my $i;
-                for (
-                    $i = $self->{itemcontextchainhead}->{$context} ;
-                    defined $i ;
-                    $i = $self->{itemcontextchain}->[$i]
-                  )
-                {
-                    # print the list of items in the given context
-                    # (they all have the given outcome)
+                # print the list of items in the given context
+                for my $data_index (@{ $gang->{data}->{$outcome} }){
                     $info .= sprintf(
                         "$pad  $var_format  " .
-                        $project->get_exemplar_spec($i) . "\n",
-                        @{ $project->get_exemplar_data($i) } );
-                }
-            }
-        }
-        else {
-            # else if the supracontext is heterogeneous
-            my @gangsort = (0) x ($project->num_outcomes + 1);
-            my @ganglist = ();
-            my $i;
-            for (
-                $i = $self->{itemcontextchainhead}->{$context} ;
-                defined $i ;
-                $i = $self->{itemcontextchain}->[$i]
-              )
-            {
-                ++$gangsort[ $project->get_exemplar_outcome($i) ];
-                if($print_list){
-                    push @{ $ganglist[
-                        $project->get_exemplar_outcome($i) ] }, $i;
-                }
-            }
-            # print supracontext name and effect
-            $info .= sprintf(
-"%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
-                100 * $gang->{$context} / $total_pointers,
-                $gang->{$context}, '0', '', @variables
-            );
-            # print dashes to accent the header
-            $info .= "$dashes\n";
-            for $i ( 1 .. $project->num_outcomes ) {
-                next unless $gangsort[$i];
-                $info .= sprintf(
-                    "%7.3f%%  $gang_format x $data_format  $outcome_format\n",
-                    100 * $gangsort[$i] * $score / $total_pointers,
-                    $score, $gangsort[$i], $project->get_outcome($i)
-                );
-                # print the list of items in the given context and outcome
-                if($print_list){
-                    foreach ( @{ $ganglist[$i] } ) {
-                        $info .= sprintf( "$pad  $var_format  " .
-                            $project->get_exemplar_spec($_) . "\n",
-                            @{ $project->get_exemplar_data($_) }
-                        );
-                    }
+                        $project->get_exemplar_spec($data_index) . "\n",
+                        @{ $project->get_exemplar_data($data_index) } );
                 }
             }
         }
     }
     return \$info;
-}
-
-# Unpack and return the supracontext variables.
-# Blank entries mean the variable may be anything, e.g.
-# ('a' 'b' '') means a supracontext containing items
-# wich have ('a' 'b' whatever) as variable values.
-sub _unpack_supracontext {
-    my ($self, $context) = @_;
-    my (@variables) = @{ $self->test_item };
-    my @context_list   = unpack "S!4", $context;
-    my @alist   = @{$self->{active_vars}};
-    my $j       = 1;
-    foreach my $a (reverse @alist) {
-        my $partial_context = pop @context_list;
-        for ( ; $a ; --$a ) {
-            if($self->{exclude_nulls}){
-                ++$j while $variables[ -$j ] eq '=';
-            }
-            $variables[ -$j ] = '' if $partial_context & 1;
-            $partial_context >>= 1;
-            ++$j;
-        }
-    }
-    return @variables;
 }
 
 sub _calculate_gangs {
@@ -396,16 +389,15 @@ sub _calculate_gangs {
     my $raw_gang = $self->{gang};
     my $gangs = {};
 
-    foreach my $context (
-        sort { bigcmp($raw_gang->{$b}, $raw_gang->{$a})}
-            keys %{$raw_gang}
-    )
+    foreach my $context (keys %{$raw_gang})
     {
         my @variables = $self->_unpack_supracontext($context);
         # for now, store gangs by the supracontext printout
         my $key = sprintf($project->var_format, @variables);
         $gangs->{$key}->{score} = $raw_gang->{$context};
         $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_pointers;
+        $gangs->{$key}->{vars} = \@variables;
+
         my $p = $self->{pointers}->{$context};
         # if the supracontext is homogenous
         if ( my $outcome = $self->{subtooutcome}->{$context} ) {
@@ -413,7 +405,6 @@ sub _calculate_gangs {
             # indicating the unanimous outcome.
             $outcome = $project->get_outcome($outcome);
             $gangs->{$key}->{homogenous} = $outcome;
-            $gangs->{$key}->{vars} = \@variables;
             my @data;
             for (
                 my $i = $self->{itemcontextchainhead}->{$context};
@@ -464,77 +455,28 @@ sub _calculate_gangs {
     return;
 }
 
-# input several variables from AM's guts (grandtotal, sum,
-# expected outcome integer, pointers, itemcontextchainhead and
-# itemcontextchain). Calculate the prediction statistics, and
-# store information needed for computing analogical sets.
-# Set result to tie/correct/incorrect if expected outcome is
-# provided, and set is_tie, high_score, scores, winners, and
-# total_pointers.
-sub _process_stats {
-    my ($self, $total_pointers, $sum, $expected, $pointers,
-        $itemcontextchainhead, $itemcontextchain, $subtooutcome,
-        $gang, $active_vars, $contextsize) = @_;
-    my $max = '';
-    my @winners;
-    my %scores;
-
-    # iterate all possible outcomes and store the ones that have a
-    # non-zero score. Store the high-scorers, as well.
-    # 1) find which one(s) has the most pointers (is the prediction) and
-    # 2) print out the ones with pointers (change of prediction)
-    for my $outcome_index (1 .. $self->project->num_outcomes) {
-        my $outcome_pointers;
-        # skip outcomes with no pointers
-        next unless $outcome_pointers = $sum->[$outcome_index];
-
-        my $outcome = $self->project->get_outcome($outcome_index);
-        $scores{$outcome} = $outcome_pointers;
-
-        # check if the outcome has the highest score, or ties for it
-        do {
-            my $cmp = bigcmp($outcome_pointers, $max);
-            if ($cmp > 0){
-                @winners = ($outcome);
-                $max = $outcome_pointers;
-            }elsif($cmp == 0){
-                push @winners, $outcome;
+# Unpack and return the supracontext variables.
+# Blank entries mean the variable may be anything, e.g.
+# ('a' 'b' '') means a supracontext containing items
+# wich have ('a' 'b' whatever) as variable values.
+sub _unpack_supracontext {
+    my ($self, $context) = @_;
+    my (@variables) = @{ $self->test_item };
+    my @context_list   = unpack "S!4", $context;
+    my @alist   = @{$self->{active_vars}};
+    my $j       = 1;
+    foreach my $a (reverse @alist) {
+        my $partial_context = pop @context_list;
+        for ( ; $a ; --$a ) {
+            if($self->{exclude_nulls}){
+                ++$j while $variables[ -$j ] eq '=';
             }
-        };
-    }
-
-    # set result to tie/correct/incorrect after comparing
-    # expected/actual outcomes
-    if($expected){
-        #set the expected outcome to the string representation
-        my $test_outcome = $self->project->get_outcome($expected);
-        $self->test_outcome($test_outcome);
-        if(exists $scores{$test_outcome} &&
-                bigcmp($scores{$test_outcome}, $max) == 0){
-            if(@winners > 1){
-                $self->result('tie');
-            }else{
-                $self->result('correct');
-            }
-        }else{
-            $self->result('incorrect');
+            $variables[ -$j ] = '' if $partial_context & 1;
+            $partial_context >>= 1;
+            ++$j;
         }
     }
-    if(@winners > 1){
-        $self->is_tie(1);
-    }
-    $self->high_score($max);
-    $self->scores(\%scores);
-    $self->winners(\@winners);
-    $self->total_pointers($total_pointers);
-    $self->{pointers} = $pointers;
-    $self->{itemcontextchainhead} = $itemcontextchainhead;
-    $self->{itemcontextchain} = $itemcontextchain;
-    $self->{subtooutcome} = $subtooutcome;
-    $self->{gang} = $gang;
-    $self->{active_vars} = $active_vars;
-    $self->{contextsize} = $contextsize;
-    return;
+    return @variables;
 }
 
 1;
