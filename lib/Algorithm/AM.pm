@@ -7,7 +7,6 @@ use feature 'state';
 use Path::Tiny;
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
-use IO::Handle;
 use Data::Dumper;
 
 use Algorithm::AM::Project;
@@ -25,13 +24,6 @@ require XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Any qw($log);
-
-my $subsource;
-{
-    local $/;
-    $subsource = <DATA>;
-}
-$subsource =~ s/__END__.*//s;
 
 my %import;
 
@@ -119,8 +111,6 @@ sub new {
         )
     );
 
-    $self->{_classify_sub} = _create_classify_sub()
-        or die "Fatal error: couldn't create classify() subroutine";
     # calls XS code
     $self->_initialize(
         $self->{activeVars},
@@ -149,7 +139,284 @@ with items listed is logged at the debug level.
 =cut
 sub classify {
     my ($self, @args) = @_;
-    return $self->{_classify_sub}->($self, @args);
+
+    #check all input parameters and then save them in $self
+    my $opts = _check_classify_opts(@args);
+    for my $opt_name(keys %$opts){
+        $self->{$opt_name} = $opts->{$opt_name};
+    }
+
+    my $project = $self->{project};
+
+## stuff to be exported
+    my ($curTestOutcome);
+    my $data;
+    my $pass;
+    my $grandtotal;
+    # save the result objects from each run here
+    my @results;
+
+    #beginning vars
+    $data->{datacap} = $project->num_exemplars;
+
+    #item vars
+    #TODO: stop using scalar pointers here. Should
+    #have some sort of an CurrentIteration object instead.
+    $data->{curTestOutcome} = \$curTestOutcome;
+
+    #iter vars
+    $data->{pass} = \$pass;
+
+    #end vars
+    $data->{pointertotal} = \$grandtotal;
+
+
+    # line 1000 "start eval"
+
+    my ( $sec, $min, $hour );
+
+    if(exists $self->{beginhook}){
+        $self->{beginhook}->($self, $data);
+    }
+
+    my $left = scalar $project->num_test_items;
+    foreach my $item_number (0 .. $project->num_test_items - 1) {
+    # line 1100 "loop items"
+        $log->debug("Test items left: $left")
+            if $log->is_debug;
+        --$left;
+        my $t = $project->get_test_item($item_number);
+        ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
+            @$t;
+
+        # num_variables is the number of active variables; if we
+        # exclude nulls, then we need to minus the number of '=' found in
+        # this test item; otherwise, it's just the number of columns in a
+        # single item vector
+        my $num_variables = $project->num_variables;
+
+        if($self->{exclude_nulls}){
+            $num_variables -= grep {$_ eq '='} @{ $data->{curTestItem} };
+        }
+        if(exists $self->{begintesthook}){
+            $self->{begintesthook}->($self, $data);
+        }
+
+        # recalculate the lattice sizes with new number of active variables;
+        # must edit activeVars instead of assigning it a new arrayref because
+        # the XS code only has the existing arrayref and will not be given
+        # a new one. This must be done for every test item because activeVars
+        # is a global that could have been edited during classification of the
+        # last test item.
+        # TODO: pass activeVars into fill_and_count instead of doing this
+        {
+            my $lattice_sizes = _compute_lattice_sizes($num_variables);
+            for(0 .. $#$lattice_sizes){
+                $self->{activeVars}->[$_] = $lattice_sizes->[$_];
+            }
+        }
+    ##  $activeContexts = 1 << $activeVar;
+
+        my $nullcontext = pack "b64", '0' x 64;
+
+        ( $sec, $min, $hour ) = localtime();
+        if($log->is_debug){
+            $log->info(
+                sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
+                "@{ $data->{curTestItem} }\n" .
+                sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
+                    $hour, $min, $sec ) );
+        }
+
+        $pass = 0;
+        while ( $pass < $self->{repeat} ) {
+    # line 1200 "repeat"
+            my @excluded_data = ();
+            my $given_excluded = 0;
+            if(exists $self->{beginrepeathook}){
+                $self->{beginrepeathook}->($self, $data);
+            }
+            $data->{datacap} = int($data->{datacap});
+
+            my $testindata   = 0;
+
+            # initialize classification-related variables
+            # it is important to dereference rather than just
+            # assigning a new one with [] or {}. This is because
+            # the XS code has access to the existing reference,
+            # but will be accessing the wrong variable if we
+            # change it.
+            %{$self->{contextsize}}             = ();
+            %{$self->{itemcontextchainhead}}    = ();
+            %{$self->{subtooutcome}}            = ();
+            %{$self->{pointers}}                = ();
+            %{$self->{gang}}                    = ();
+            @{$self->{datatocontext}}           = ();
+            @{$self->{itemcontextchain}}        = ();
+            # big ints are used in AM.xs; these consist of an
+            # array of 8 unsigned longs
+            foreach (@{$self->{sum}}) {
+                $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
+            }
+
+            # determine the data set to be used for classification
+            for my $data_index ( 0 .. $data->{datacap} - 1 ) {
+    # line 1300 "data hook"
+                # skip this data item if the datahook returns false
+                if(exists $self->{datahook} &&
+                        !$self->{datahook}->($self, $data, $data_index)){
+                    push @excluded_data, $data_index;
+                    next;
+                }
+                # skip this data item with probability $self->{probability}
+                if(defined $self->{probability} and
+                        rand() > $self->{probability}){
+                    push @excluded_data, $data_index;
+                    next;
+                }
+                my $context = _context_label(
+                    # Note: this must be copied to prevent infinite loop;
+                    # see todo note for _context_label
+                    [@{$self->{activeVars}}],
+                    $project->get_exemplar_data($data_index),
+                    $data->{curTestItem},
+                    $self->{exclude_nulls}
+                );
+                $self->{contextsize}->{$context}++;
+                $self->{datatocontext}->[$data_index] = $context;
+                # TODO: explain itemcontextchain and itemcontextchainhead
+                $self->{itemcontextchain}->[$data_index] =
+                    $self->{itemcontextchainhead}->{$context};
+                $self->{itemcontextchainhead}->{$context} = $data_index;
+
+                # store the outcome for the subcontext; if there
+                # is already a different outcome for this subcontext,
+                # then store 0, signifying heterogeneity.
+                my $outcome = $project->get_exemplar_outcome($data_index);
+                if ( defined $self->{subtooutcome}->{$context} ) {
+                    $self->{subtooutcome}->{$context} = 0
+                      if $self->{subtooutcome}->{$context} != $outcome;
+                }
+                else {
+                    $self->{subtooutcome}->{$context} = $outcome;
+                }
+            }
+    # line 1400 "given"
+            # $nullcontext is all 0's, which is a context label only
+            # to a data item that exactly matches the test item.
+            if ( exists $self->{subtooutcome}->{$nullcontext} ) {
+                $testindata = 1;
+                if($self->{exclude_given}){
+                   delete $self->{subtooutcome}->{$nullcontext};
+                   $given_excluded = 1;
+                }
+            }
+    # line 1500 "print summary"
+
+            # initialize the results object to hold all of the configuration
+            # info.
+            my $result = Algorithm::AM::Result->new(
+                excluded_data => \@excluded_data,
+                given_excluded => $given_excluded,
+                num_variables => $num_variables,
+                test_item => $data->{curTestItem},
+                test_spec => $data->{curTestSpec},
+                test_outcome => $data->{curTestOutcome},
+                exclude_given => $self->{exclude_given},
+                exclude_nulls => $self->{exclude_nulls},
+                probability => $self->{probability},
+                count_method => $self->{linear} ? 'linear' : 'squared',
+                datacap => $data->{datacap},
+                test_in_data => $testindata,
+                project => $project
+            );
+
+            $log->debug(${$result->config_info})
+                if($log->is_debug);
+
+    # line 1600 "call XS"
+
+            $result->start_time([ (localtime)[0..2] ]);
+            $self->_fillandcount($self->{linear} ? 0 : 1);
+            $result->end_time([ (localtime)[0..2] ]);
+
+            $grandtotal = $self->{pointers}->{'grandtotal'};
+
+            unless ($grandtotal) {
+                #TODO: is this tested yet?
+                if($log->is_warn){
+                    $log->warn('No data items considered. ' .
+                        'No prediction possible.');
+                }
+                next;
+            }
+
+            my $longest = length $grandtotal;
+            my $gang_format = "%$longest.${longest}s";
+            my $var_format = $project->var_format;
+            my $spec_format = $project->spec_format;
+            my $outcome_format = $project->outcome_format;
+            my $data_format = $project->data_format;
+
+    # line 1700 "calculate results"
+            $result->_process_stats(
+                # TODO: after refactoring to a "guts" object,
+                # just pass that in
+                $grandtotal,
+                $self->{sum},
+                $curTestOutcome,
+                $self->{pointers},
+                $self->{itemcontextchainhead},
+                $self->{itemcontextchain},
+                $self->{subtooutcome},
+                $self->{gang},
+                $self->{activeVars},
+                $self->{contextsize}
+            );
+            $data->{pointermax} = $result->high_score;
+            $log->info(${$result->statistical_summary})
+                if($log->is_info);
+
+    # line 1800 "analogical set"
+            $log->info(${$result->analogical_set_summary()})
+                if($log->is_info);
+
+    # line 1900 "start gangs"
+            if($log->is_debug){
+                $log->debug(${ $result->gang_summary(1) });
+            }elsif($log->is_info){
+                $log->info(${ $result->gang_summary(0) })
+            }
+            push @results, $result;
+
+        }
+        continue {
+            if(exists $self->{endrepeathook}){
+                $self->{endrepeathook}->($self, $data);
+            }
+            ++$pass;
+            ( $sec, $min, $hour ) = localtime();
+            $log->info(
+                sprintf(
+                    "$pass/$self->{repeat}  %2s:%02s:%02s",
+                    $hour, $min, $sec ) )
+                if $log->is_info;
+        }
+        if(exists $self->{endtesthook}){
+            $self->{endtesthook}->($self, $data);
+        }
+    }
+    # line 2100 "end eval"
+
+    ( $sec, $min, $hour ) = localtime();
+    $log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
+        if $log->is_info;
+
+    if(exists $self->{endhook}){
+        $self->{endhook}->($self, $data);
+    }
+
+    return @results;
 }
 
 sub get_project {
@@ -249,339 +516,13 @@ sub _context_label {
 #create the classification subroutine
 sub _create_classify_sub {
     return sub {
-        my $self = shift;
 
-        # don't buffer messages; remember the caller's autoflush setting
-        my $autoflush = *STDOUT->autoflush(1);
-
-        #check all input parameters and then save them in $self
-        my $opts = _check_classify_opts(@_);
-        for my $opt_name(keys %$opts){
-            $self->{$opt_name} = $opts->{$opt_name};
-        }
-
-        my $project = $self->{project};
-
-        # TODO: neat/ugly hack starts here...
-        local $_ = $subsource;
-        if(!$self->{exclude_nulls}){
-            s/## begin exclude nulls.*?## end exclude nulls//sg;
-        }
-
-        if ( $self->{exclude_given} ) {
-            s/## begin include given.*?## end include given//sg;
-        }
-        else {
-            s/## begin exclude given.*?## end exclude given//sg;
-        }
-
-        if ( $self->{linear} ) {
-            s/_fillandcount\(X\)/_fillandcount(0)/;
-        }
-        else {
-            s/_fillandcount\(X\)/_fillandcount(1)/;
-        }
-
-        if ( not defined $self->{probability} ) {
-            s/## begin probability.*?## end probability//sg;
-        }
-
-        if (!exists $self->{beginhook} ) {
-            s/\$self->{beginhook}->.*//;
-        }
-        if (!exists $self->{begintesthook} ) {
-            s/\$self->{begintesthook}->.*//;
-        }
-        if (!exists $self->{beginrepeathook} ) {
-            s/\$self->{beginrepeathook}->.*//;
-        }
-        if (!exists $self->{datahook} ) {
-            s/## begin datahook.*?## end datahook//sg;
-        }
-        if (!exists $self->{endrepeathook} ) {
-            s/\$self->{endrepeathook}->.*//;
-        }
-        if (!exists $self->{endtesthook} ) {
-            s/\$self->{endtesthook}->.*//;
-        }
-        if (!exists $self->{endhook} ) {
-            s/\$self->{endhook}->.*//;
-        }
-
-## stuff to be exported
-        my ($curTestOutcome);
-        my $data;
-        my $pass;
-        my $grandtotal;
-        # save the result objects from each run here
-        my @results;
-
-        #beginning vars
-        $data->{datacap} = $project->num_exemplars;
-
-        #item vars
-        #TODO: stop using scalar pointers here. Should
-        #have some sort of an CurrentIteration object instead.
-        $data->{curTestOutcome} = \$curTestOutcome;
-
-        #iter vars
-        $data->{pass} = \$pass;
-
-        #end vars
-        $data->{pointertotal} = \$grandtotal;
-
-        eval $_; ## no critic (ProhibitStringyEval)
-        if ($@ and $log->is_warn){
-            $log->warn($@);
-        }
-        # return autoflush setting to what the caller was using
-        *STDOUT->autoflush($autoflush);
-        return @results;
     };
 }
 
 1;
 __DATA__
 
-# line 1000 "start eval"
-
-my ( $sec, $min, $hour );
-
-$self->{beginhook}->($self, $data);
-
-my $left = scalar $project->num_test_items;
-foreach my $item_number (0 .. $project->num_test_items - 1) {
-# line 1100 "loop items"
-    $log->debug("Test items left: $left")
-        if $log->is_debug;
-    --$left;
-    my $t = $project->get_test_item($item_number);
-    ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
-        @$t;
-
-    # num_variables is the number of active variables; if we
-    # exclude nulls, then we need to minus the number of '=' found in
-    # this test item; otherwise, it's just the number of columns in a
-    # single item vector
-    my $num_variables = $project->num_variables;
-
-## begin exclude nulls
-    $num_variables -= grep {$_ eq '='} @{ $data->{curTestItem} };
-## end exclude nulls
-
-    $self->{begintesthook}->($self, $data);
-
-    # recalculate the lattice sizes with new number of active variables;
-    # must edit activeVars instead of assigning it a new arrayref because
-    # the XS code only has the existing arrayref and will not be given
-    # a new one. This must be done for every test item because activeVars
-    # is a global that could have been edited during classification of the
-    # last test item.
-    # TODO: pass activeVars into fill_and_count instead of doing this
-    {
-        my $lattice_sizes = _compute_lattice_sizes($num_variables);
-        for(0 .. $#$lattice_sizes){
-            $self->{activeVars}->[$_] = $lattice_sizes->[$_];
-        }
-    }
-##  $activeContexts = 1 << $activeVar;
-
-    my $nullcontext = pack "b64", '0' x 64;
-
-    ( $sec, $min, $hour ) = localtime();
-    if($log->is_debug){
-        $log->info(
-            sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
-            "@{ $data->{curTestItem} }\n" .
-            sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
-                $hour, $min, $sec ) );
-    }
-
-    $pass = 0;
-    while ( $pass < $self->{repeat} ) {
-# line 1200 "repeat"
-        my @excluded_data = ();
-        my $given_excluded = 0;
-        $self->{beginrepeathook}->($self, $data);
-        $data->{datacap} = int($data->{datacap});
-
-        my $testindata   = 0;
-
-        # initialize classification-related variables
-        # it is important to dereference rather than just
-        # assigning a new one with [] or {}. This is because
-        # the XS code has access to the existing reference,
-        # but will be accessing the wrong variable if we
-        # change it.
-        %{$self->{contextsize}}             = ();
-        %{$self->{itemcontextchainhead}}    = ();
-        %{$self->{subtooutcome}}            = ();
-        %{$self->{pointers}}                = ();
-        %{$self->{gang}}                    = ();
-        @{$self->{datatocontext}}           = ();
-        @{$self->{itemcontextchain}}        = ();
-        # big ints are used in AM.xs; these consist of an
-        # array of 8 unsigned longs
-        foreach (@{$self->{sum}}) {
-            $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
-        }
-
-        # determine the data set to be used for classification
-        for my $data_index ( 0 .. $data->{datacap} - 1 ) {
-# line 1300 "data hook"
-## begin datahook
-            # skip this data item if the datahook returns false
-            if(!$self->{datahook}->($self, $data, $data_index)){
-                push @excluded_data, $data_index;
-                next;
-            }
-## end datahook
-## begin probability
-            # skip this data item with probability $self->{probability}
-            if(rand() > $self->{probability}){
-                push @excluded_data, $data_index;
-                next;
-            }
-## end probability
-            my $context = _context_label(
-                # Note: this must be copied to prevent infinite loop;
-                # see todo note for _context_label
-                [@{$self->{activeVars}}],
-                $project->get_exemplar_data($data_index),
-                $data->{curTestItem},
-## begin exclude nulls
-                1
-## end exclude nulls
-            );
-            $self->{contextsize}->{$context}++;
-            $self->{datatocontext}->[$data_index] = $context;
-            # TODO: explain itemcontextchain and itemcontextchainhead
-            $self->{itemcontextchain}->[$data_index] =
-                $self->{itemcontextchainhead}->{$context};
-            $self->{itemcontextchainhead}->{$context} = $data_index;
-
-            # store the outcome for the subcontext; if there
-            # is already a different outcome for this subcontext,
-            # then store 0, signifying heterogeneity.
-            my $outcome = $project->get_exemplar_outcome($data_index);
-            if ( defined $self->{subtooutcome}->{$context} ) {
-                $self->{subtooutcome}->{$context} = 0
-                  if $self->{subtooutcome}->{$context} != $outcome;
-            }
-            else {
-                $self->{subtooutcome}->{$context} = $outcome;
-            }
-        }
-# line 1400 "given"
-        # $nullcontext is all 0's, which is a context label only
-        # to a data item that exactly matches the test item.
-        if ( exists $self->{subtooutcome}->{$nullcontext} ) {
-            $testindata = 1;
-## begin exclude given
-            if($self->{exclude_given}){
-               delete $self->{subtooutcome}->{$nullcontext};
-               $given_excluded = 1;
-            }
-## end exclude given;
-        }
-# line 1500 "print summary"
-
-        # initialize the results object to hold all of the configuration
-        # info.
-        my $result = Algorithm::AM::Result->new(
-            excluded_data => \@excluded_data,
-            given_excluded => $given_excluded,
-            num_variables => $num_variables,
-            test_item => $data->{curTestItem},
-            test_spec => $data->{curTestSpec},
-            test_outcome => $data->{curTestOutcome},
-            exclude_given => $self->{exclude_given},
-            exclude_nulls => $self->{exclude_nulls},
-            probability => $self->{probability},
-            count_method => $self->{linear} ? 'linear' : 'squared',
-            datacap => $data->{datacap},
-            test_in_data => $testindata,
-            project => $project
-        );
-
-        $log->debug(${$result->config_info})
-            if($log->is_debug);
-
-# line 1600 "call XS"
-
-        $result->start_time([ (localtime)[0..2] ]);
-        $self->_fillandcount(X);
-        $result->end_time([ (localtime)[0..2] ]);
-
-        $grandtotal = $self->{pointers}->{'grandtotal'};
-
-        unless ($grandtotal) {
-            #TODO: is this tested yet?
-            if($log->is_warn){
-                $log->warn('No data items considered. ' .
-                    'No prediction possible.');
-            }
-            next;
-        }
-
-        my $longest = length $grandtotal;
-        my $gang_format = "%$longest.${longest}s";
-        my $var_format = $project->var_format;
-        my $spec_format = $project->spec_format;
-        my $outcome_format = $project->outcome_format;
-        my $data_format = $project->data_format;
-
-# line 1700 "calculate results"
-        $result->_process_stats(
-            # TODO: after refactoring to a "guts" object,
-            # just pass that in
-            $grandtotal,
-            $self->{sum},
-            $curTestOutcome,
-            $self->{pointers},
-            $self->{itemcontextchainhead},
-            $self->{itemcontextchain},
-            $self->{subtooutcome},
-            $self->{gang},
-            $self->{activeVars},
-            $self->{contextsize}
-        );
-        $data->{pointermax} = $result->high_score;
-        $log->info(${$result->statistical_summary})
-            if($log->is_info);
-
-# line 1800 "analogical set"
-        $log->info(${$result->analogical_set_summary()})
-            if($log->is_info);
-
-# line 1900 "start gangs"
-        if($log->is_debug){
-            $log->debug(${ $result->gang_summary(1) });
-        }elsif($log->is_info){
-            $log->info(${ $result->gang_summary(0) })
-        }
-        push @results, $result;
-
-    }
-    continue {
-        $self->{endrepeathook}->($self, $data);
-        ++$pass;
-        ( $sec, $min, $hour ) = localtime();
-        $log->info(
-            sprintf(
-                "$pass/$self->{repeat}  %2s:%02s:%02s",
-                $hour, $min, $sec ) )
-            if $log->is_info;
-    }
-    $self->{endtesthook}->($self, $data);
-}
-# line 2100 "end eval"
-
-( $sec, $min, $hour ) = localtime();
-$log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
-    if $log->is_info;
-
-$self->{endhook}->($self, $data);
 
 __END__
 
