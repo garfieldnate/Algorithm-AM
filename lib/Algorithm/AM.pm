@@ -82,9 +82,9 @@ sub new {
     # the need for outcometonum, outcomelist, and outcome).
     $self->{outcometonum} = $project->_outcome_to_num;
     $self->{outcomelist} = $project->_outcome_list;
-    $self->{outcome} = $project->_outcomes;
-    $self->{spec} = $project->_specs;
-    $self->{data} = $project->_data;
+    $self->{outcome} = $project->_exemplar_outcomes;
+    $self->{spec} = $project->_exemplar_specs;
+    $self->{data} = $project->_exemplar_vars;
 
     $self->{project} = $project;
 
@@ -114,7 +114,7 @@ sub new {
     # calls XS code
     $self->_initialize(
         $self->{activeVars},
-        $project->_outcomes,
+        $project->_exemplar_outcomes,
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
         $self->{subtooutcome},

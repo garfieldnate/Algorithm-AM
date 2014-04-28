@@ -351,21 +351,21 @@ sub outcome_index {
 
 # Used by AM.pm to retrieve the arrayref containing all of the
 # outcomes for the data set (ordered the same as the data set).
-sub _outcomes {
+sub _exemplar_outcomes {
     my ($self) = @_;
     return $self->{exemplar_outcomes};
 }
 
 # Used by AM.pm to retrieve the arrayref containing all of the
 # specs for the data set (ordered the same as the data set).
-sub _specs {
+sub _exemplar_specs {
     my ($self) = @_;
     return $self->{spec};
 }
 
 # Used by AM.pm to retrieve the arrayref containing all of the
 # data vectors for the data set (ordered the same as the data set).
-sub _data {
+sub _exemplar_vars {
     my ($self) = @_;
     return $self->{data};
 }

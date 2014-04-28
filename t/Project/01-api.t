@@ -146,11 +146,11 @@ sub test_private_data {
     my $project = Algorithm::AM::Project->new();
     is_deeply($project->_outcome_list, [''],
         "empty project has empty outcome list");
-    is_deeply($project->_outcomes, [],
+    is_deeply($project->_exemplar_outcomes, [],
         "empty project has empty outcomes");
-    is_deeply($project->_data, [],
+    is_deeply($project->_exemplar_vars, [],
         "empty project has empty data");
-    is_deeply($project->_specs, [],
+    is_deeply($project->_exemplar_specs, [],
         "empty project has empty specs");
 
     my @data = chapter_3_data();
@@ -160,10 +160,10 @@ sub test_private_data {
         $project->add_data(@$datum);
     }
 
-    is_deeply($project->_outcomes, [qw(1 2 2 2 2)],
+    is_deeply($project->_exemplar_outcomes, [qw(1 2 2 2 2)],
         "correct project outcomes");
     # index 0 of each data entry contains the variables
-    is_deeply($project->_data, [map {$_->[0]} @data],
+    is_deeply($project->_exemplar_vars, [map {$_->[0]} @data],
         "correct project data");
     is_deeply($project->_outcome_list, ['', 'e', 'r'],
         "correct project outcome list");
@@ -171,7 +171,7 @@ sub test_private_data {
     # index 1 of each data entry contains the specs
     my $specs = [$data[0][1], '2 1 0', map {$_->[1]} @data[2..4]];
 
-    is_deeply($project->_specs, $specs,
+    is_deeply($project->_exemplar_specs, $specs,
         'correct project specs (commas)');
     return;
 }
