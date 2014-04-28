@@ -8,7 +8,6 @@ use Exporter::Easy (
     OK => [qw(
         chapter_3_project
         chapter_3_data
-        chapter_3_data_outcomes
         chapter_3_test)]
 );
 
@@ -25,25 +24,12 @@ sub chapter_3_project {
 # return a list of array refs containing the data from chapter 3
 sub chapter_3_data {
     return (
-        [[qw(3 1 0)], 'myFirstCommentHere', 'e', undef],
-        [[qw(2 1 0)], 'mySecondCommentHere', 'r', undef],
-        [[qw(0 3 2)], 'myThirdCommentHere', 'r', undef],
-        [[qw(2 1 2)], 'myFourthCommentHere', 'r', undef],
-        [[qw(3 1 1)], 'myFifthCommentHere', 'r', undef]
+        [[qw(3 1 0)], 'myFirstCommentHere', 'e'],
+        [[qw(2 1 0)], 'mySecondCommentHere', 'r'],
+        [[qw(0 3 2)], 'myThirdCommentHere', 'r'],
+        [[qw(2 1 2)], 'myFourthCommentHere', 'r'],
+        [[qw(3 1 1)], 'myFifthCommentHere', 'r']
     );
-}
-
-# return chapter 3 data, but with 'ee' and 'are' for "long" outcomes
-sub chapter_3_data_outcomes {
-    my @data = chapter_3_data();
-    {
-        # add "long" outcomes to data
-        my $index = 0;
-        for ('ee', ('are') x 4){
-            $data[$index++][3] = $_;
-        }
-    }
-    return @data;
 }
 
 # return an array ref containing the test item used in chapter 3

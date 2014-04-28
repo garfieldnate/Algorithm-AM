@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 38;
+plan tests => 37;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -89,27 +89,27 @@ sub test_format_vars {
 
     # test with data made specially for testing format variables
     $project->add_data([qw(aaaaa bbb bbb)],
-        'myCommentHere', 'exception', 'exceppppption!');
+        'myCommentHere', 'exception');
     $project->add_data([qw(dd bbb bbb)],
         'myCommentHere blah blah blah blah',
-        'regular', 'regullllar!');
+        'regular');
     $project->add_data([qw(aaaaa cccc dd)],
-        'myCommentHere', 'regular', 'regullllar!');
+        'myCommentHere', 'regular');
     $project->add_data([qw(dd bbb dd)],
-        'myCommentHere', 'regular', 'regullllar!');
+        'myCommentHere', 'regular');
     $project->add_data([qw(aaaaa bbb bbb)],
-        'myCommentHere', 'regular', 'regullllar!');
+        'myCommentHere', 'regular');
     $project->add_data([qw(aaaaa bbb dd)],
-        'myCommentHere', 'exception', 'exceppppption!');
+        'myCommentHere', 'exception');
     $project->add_data([qw(dd bbb bbb)],
         'myCommentHere blah blah blah blah longest!',
-        'regular', 'regullllar!');
+        'regular');
 
     is($project->var_format, '%-5.5s %-4.4s %-3.3s',
         'correct var_format');
     is($project->spec_format, '%-42.42s',
         'correct spec_format');
-    is($project->outcome_format, '%-14.14s',
+    is($project->outcome_format, '%-9.9s',
         'correct outcome_format');
     is($project->data_format, '%7.0u',
         'correct data_format');
@@ -124,10 +124,10 @@ sub test_test_items {
     $project->add_test([qw(a b c)], 'abc', 'foo', 'foo bar');
     is($project->num_test_items, 1, 'test item added');
     is($project->num_outcomes, 1, '1 outcome added via test item');
-    is($project->get_outcome(1), 'foo bar',
+    is($project->get_outcome(1), 'foo',
         'correct outcome from test item');
     is($project->num_variables, 3, 'data size set via test item');
-    is($project->short_outcome_index('foo'), 1,
+    is($project->outcome_index('foo'), 1,
         q<correct index of 'foo' outcome>);
 
     # empty spec should be set to data string
@@ -173,11 +173,5 @@ sub test_private_data {
 
     is_deeply($project->_specs, $specs,
         'correct project specs (commas)');
-
-    # also test with project containing outcomes file
-    my $outcome_project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_outcomes'), commas => 'no');
-    is_deeply($outcome_project->_outcome_list, ['', 'ee', 'are' ],
-        "correct project outcome list (with outcome file)");
     return;
 }

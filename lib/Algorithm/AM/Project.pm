@@ -35,22 +35,9 @@ variables would still be C<v>, C<a>, C<r>, etc.).
 Any other value for the C<commas> parameter will result in an
 exception.
 
-The outcome file should have the same number of lines as the data file,
-and each line should have the outcome of the item on the same line in
-the data file. The format of the outcome file is like this:
-
-    A V-i
-    B a-oi
-    C tV-si
-
-where each line contains an outcome in a "short" and then "long"
-form, separated by whitespace.
-
-If the test or outcome files are missing, the data file will be used.
-In the case of a missing test file, test items will be taken from the
-data file and each classified using all of the other items in the data
-set. If the outcome file is missing, the outcome strings located in the
-data file will be used for both long and short outcome values.
+If the test file is missing, the data file will be used, and each item
+will be classified using all of the other items in the data
+set.
 
 When this constructor is called, all project files are read and checked
 for errors. Possible errors in your files include the following:
@@ -68,12 +55,7 @@ data files are not all the same.
 
 =item *
 
-The number of items in your outcome file does not match the number
-of items in your data file.
-
-=item *
-
-TODO: A line from your data, test or outcome file could not be parsed.
+TODO: A line from your data or test could not be parsed.
 
 =back
 
@@ -164,7 +146,7 @@ sub _init {
 
     $self->{testItems} = [];
     $self->{data} = [];
-    $self->{outcome} = [];
+    $self->{exemplar_outcomes} = [];
     $self->{spec} = [];
     return;
 }
@@ -239,7 +221,7 @@ Returns the outcome of the exemplar at the given index.
 =cut
 sub get_exemplar_outcome {
     my ($self, $index) = @_;
-    return $self->{outcome}->[$index];
+    return $self->{exemplar_outcomes}->[$index];
 }
 
 =head2 C<num_test_items>
@@ -276,8 +258,7 @@ sub num_outcomes {
 
 =head2 C<get_outcome>
 
-Returns the "long" outcome string contained at a given index in
-outcomelist.
+Returns the outcome string contained at a given index in outcomelist.
 
 =cut
 sub get_outcome {
@@ -320,7 +301,7 @@ sub spec_format {
 
 =head2 C<outcome_format>
 
-Returns (and/or sets) a format string for printing a "long" outcome.
+Returns (and/or sets) a format string for printing an outcome.
 
 =cut
 sub outcome_format {
@@ -350,9 +331,9 @@ sub data_format {
     return '%' . $self->num_exemplars . '.0u';
 }
 
-=head2 C<short_outcome_index>
+=head2 C<outcome_index>
 
-Returns the index of the given "short" outcome in outcomelist, or
+Returns the index of the given outcome in outcomelist, or
 -1 if it is not in the list.
 
 This is obviously not very transparent, as outcomelist is only
@@ -360,19 +341,19 @@ accessible via a private method. In the future this will be
 done away with.
 
 =cut
-sub short_outcome_index {
+sub outcome_index {
     my ($self, $outcome) = @_;
-    if(exists $self->{octonum}{$outcome}){
-        return $self->{octonum}{$outcome};
+    if(exists $self->{outcomes}{$outcome}){
+        return $self->{outcomes}{$outcome};
     }
     return -1;
 }
 
-# Used by AM.pm to retrieve the arrayref containing all of the "short"
+# Used by AM.pm to retrieve the arrayref containing all of the
 # outcomes for the data set (ordered the same as the data set).
 sub _outcomes {
     my ($self) = @_;
-    return $self->{outcome};
+    return $self->{exemplar_outcomes};
 }
 
 # Used by AM.pm to retrieve the arrayref containing all of the
@@ -389,44 +370,30 @@ sub _data {
     return $self->{data};
 }
 
-# Used by AM.pm to retrieve the 1-indexed list of all "long" outcomes
-# (or "short" if there was no data file)
+# Used by AM.pm to retrieve the 1-indexed list of all outcomes
 sub _outcome_list {
     my ($self) = @_;
     return $self->{outcomelist};
 }
 
-# Used by AM.pm to retrieve the hashref mapping "long" outcome names to
+# Used by AM.pm to retrieve the hashref mapping outcome names to
 # their index in outcomelist
 # Hopefully won't need someday (but for now it is required for hook
 # variables)
 sub _outcome_to_num {
     my ($self) = @_;
-    return $self->{outcometonum};
+    return $self->{outcomes};
 }
 
-#read data set, calling add_data for each item found in the data file.
-#Also set spec_format, data_format and var_format.
-# Sets octonum, outcomelist, and outcometonum
+# read data set, calling add_data for each item found in the data file.
 sub _read_data_set {
     my ($self) = @_;
 
     my $data_path = path($self->{project_path}, 'data');
-    $log->info('checking for outcome file');
-    my $outcome_path = path($self->{project_path}, 'outcome');
-    # $data_sub will either read data file or data file and outcome file
-    my $data_sub;
-    if ( $outcome_path->exists ) {
-        $data_sub = $self->_read_data_outcome_sub(
-            $data_path->openr_utf8, $outcome_path->openr_utf8);
-    }
-    else {
-        $log->info('...will use data file');
-        $data_sub = $self->_read_data_sub($data_path->openr_utf8);
-    }
 
-    while (my ($data, $spec, $short, $long) = $data_sub->()) {
-        $self->add_data($data, $spec, $short, $long);
+    my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
+    while(my ($data, $spec, $outcome) = $data_sub->()){
+        $self->add_data($data, $spec, $outcome);
     }
     $log->debug( 'Data file: ' . $self->num_exemplars );
 
@@ -435,7 +402,7 @@ sub _read_data_set {
 
 # return a sub that returns one data vector per call from the given FH,
 # and returns undef once the data file is done being read. Throws errors
-# on bad file contents. Long outcomes will be identical to short ones.
+# on bad file contents.
 sub _read_data_sub {
     my ($self, $data_fh) = @_;
     return sub {
@@ -443,73 +410,36 @@ sub _read_data_sub {
         return unless $line;
         # cross-platform chomp
         $line =~ s/\R$//;
-        my ( $outcome, $data, $spec ) = split /$self->{bigsep}/, $line, 3;
+        my ($outcome, $data, $spec) = split /$self->{bigsep}/, $line, 3;
         # use data string directly as the spec string;
         # makes it easier for the user to search their file
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
-        # return $outcome twice for "short" and "long" versions
         return (\@data_vars, $spec, $outcome);
-    };
-}
-
-# return a sub that reads one line of the input outcome file FH
-# per call. Dies on bad file contents.
-sub _read_outcome_sub {
-    my ($self, $outcome_fh) = @_;
-    return sub {
-        my $line = <$outcome_fh>;
-        return unless $line;
-        #cross-platform chomp
-        $line =~ s/\R$//;
-        my ( $short, $long ) = split /\s+/, $line, 2;
-        return ($short, $long);
-    };
-}
-
-# return a sub that returns one data vector at a time, and returns
-# undef once the data and outcome file are done being read. Throws
-# errors on bad file contents or different file sizes.
-sub _read_data_outcome_sub {
-    my ($self, $data_fh, $outcome_fh) = @_;
-    my $data_sub = $self->_read_data_sub($data_fh);
-    my $outcome_sub = $self->_read_outcome_sub($outcome_fh);
-    return sub {
-        # becomes obvious here that data file and outcome file have
-        # redundant information
-        my ($short, $long) = $outcome_sub->();
-        my ($data, $spec) = $data_sub->();
-        if($short xor $data){
-            croak 'Number of items in data and outcome file do not match';
-        }
-        if($short){
-            return ($data, $spec, $short, $long);
-        }
-        return;
     };
 }
 
 =head2 C<add_data>
 
 Adds the arguments as a new data exemplar. There are four required
-arguments: an array ref containing the data variables, the spec, the
-short outcome string, and the long outcome string.
+arguments: an array ref containing the data variables, the spec, and
+the outcome string.
 
 =cut
 # $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
 sub add_data {
-    my ($self, $data, $spec, $short, $long) = @_;
+    my ($self, $data, $spec, $outcome) = @_;
     $spec ||= _serialize_data($data);
 
     $self->_check_variables($data, $spec);
-    $self->_update_format_vars($data, $spec, $short, $long);
-    $self->_update_outcome_vars($short, $long);
+    $self->_update_format_vars($data, $spec, $outcome);
+    $self->_update_outcome_vars($outcome);
 
     # store the new data item
     push @{$self->{spec}}, $spec;
     push @{$self->{data}}, $data;
-    push @{$self->{outcome}}, $self->{octonum}{$short};
+    push @{$self->{exemplar_outcomes}}, $self->{outcomes}{$outcome};
     return;
 }
 
@@ -538,8 +468,7 @@ sub _check_variables {
 # update format variables used for printing;
 # needs updating every data item.
 sub _update_format_vars {
-    my ($self, $data, $spec, $short, $long) = @_;
-    defined($long) or $long = $short;
+    my ($self, $data, $spec, $outcome) = @_;
 
     if((my $l = length $spec) > $self->{longest_spec}){
         $self->{longest_spec} = $l;
@@ -557,7 +486,7 @@ sub _update_format_vars {
             if $l > $self->{longest_variables}[$i];
     }
 
-    if( (my $l = length $long) > $self->{longest_outcome}) {
+    if( (my $l = length $outcome) > $self->{longest_outcome}) {
         $self->{longest_outcome} = $l;
     }
     return;
@@ -566,32 +495,26 @@ sub _update_format_vars {
 
 # keep track of outcomes; needs updating for every data/test item.
 # Variables:
-#   outcomes is a hash of the outcomes used for tracking unique
-#     values
+#   outcomes maps outcomes to their index in outcomelist
 #   outcome_num is the total number of outcomes so far
-#   outcometonum is the index of a "long" outcome in outcomelist
-#   octonum is the index of a "short" outcome in outcomelist
 #   outcomelist is a list of the unique outcomes
+# TODO: We don't need so many of these structures, do we?
 sub _update_outcome_vars {
-    my ($self, $short, $long) = @_;
+    my ($self, $outcome) = @_;
 
-    defined($long) or $long = $short;
-
-    if(!$self->{outcomes}->{$long}){
+    if(!$self->{outcomes}->{$outcome}){
         $self->{outcome_num}++;
-        $self->{outcomes}->{$long} = $self->{outcome_num};
-        $self->{outcometonum}{$long} ||= $self->{outcome_num};
-        push @{$self->{outcomelist}}, $long;
+        $self->{outcomes}->{$outcome} = $self->{outcome_num};
+        push @{$self->{outcomelist}}, $outcome;
     }
-    $self->{octonum}{$short}   ||= $self->{outcome_num};
     return;
 }
 
 # Sets the testItems to an arrayref of [outcome, [data], spec] for each
 # item in the test file (or data file if there is none). outcome is
 # the index in outcomelist.
-# The test file, like the data file, should have "short" outcome,
-# data vector, and a spec.
+# The test file, like the data file, should have an outcome,
+# a data vector, and a spec.
 sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->{project_path}, 'test');
@@ -606,7 +529,7 @@ sub _read_test_set {
             q{will run data file against itself});
         # we don't need the extra processing of add_test
         @{$self->{testItems}} = map {[
-            $self->{outcome}->[$_],
+            $self->{exemplar_outcomes}->[$_],
             $self->{data}->[$_],
             $self->{spec}->[$_]
         ]} (0 .. $self->num_exemplars);
@@ -621,16 +544,16 @@ c<add_data>.
 
 =cut
 sub add_test {
-    my ($self, $data, $spec, $short, $long) = @_;
+    my ($self, $data, $spec, $outcome) = @_;
     # TODO: make sure outcome exists in index
 
     $self->_check_variables($data, $spec);
     # if it's a new outcome, add it to the list
-    if($self->short_outcome_index($short) == -1){
-        $self->_update_outcome_vars($short, $long);
+    if($self->outcome_index($outcome) == -1){
+        $self->_update_outcome_vars($outcome);
     }
     push @{$self->{testItems}}, [
-        $self->short_outcome_index($short),
+        $self->outcome_index($outcome),
         $data,
         $spec || _serialize_data($data)
         ];

@@ -922,10 +922,8 @@ B<really sure> what you're doing.
 
 =item @outcomelist
 
-This array lists all possible outcomes.  It is generated either from
-the F<outcome> file, if it exists, or from the outcomes that appear in
-the F<data> file.  If there is a "short" version and a "long" version
-of each outcome, C<@outcomelist> contains the "long" version.
+This array lists all possible outcomes.  It is generated from
+the outcomes that appear in the F<data> file.
 
 Outcomes are assigned positive integer values; outcome 0 is reserved
 for internal use of C<Algorithm::AM>.  (You'll have to look at the
@@ -945,7 +943,7 @@ equivalent to the following:
 
 =item %outcometonum
 
-This hash maps outcome strings (the "long" ones that appear in
+This hash maps outcome strings (which appear in
 C<@outcomelist>) to their respective positions in C<@outcomelist>.
 
 =item @outcome
@@ -1146,7 +1144,7 @@ Leaves enough space to hold any of the specifiers in the data set.  Justifies le
 
 =item $oformat
 
-Leaves enough space to hold a "long" outcome.  Justifies left.
+Leaves enough space to hold any outcome.  Justifies left.
 
 =item $vformat
 

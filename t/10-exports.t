@@ -8,7 +8,6 @@ use t::TestAM qw(
 	chapter_3_data
 	chapter_3_project
 	chapter_3_test
-	chapter_3_data_outcomes
 );
 use Algorithm::AM;
 
@@ -16,14 +15,12 @@ use Algorithm::AM;
 #test_item_vars contains three tests and is run for most handlers (32 times)
 #test_iter_vars contains three tests and is run for most handlers (28 times)
 #test_end_vars contains three tests and is run by two handlers (total 6 times)
-#beginhook_outcome has two more
 #1 more for Test::NoWarnings
-plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 2 + 1;
+plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 1;
 
 my $project = chapter_3_project();
 $project->add_test([qw(3 1 3)], 'second test item', 'e');
 
-# first test without an outcome file
 my $am = Algorithm::AM->new(
 	$project,
 	repeat => 2,
@@ -39,37 +36,8 @@ $am->classify(
 	endhook => \&endhook,
 );
 
-# then test just @outcomelist and %outcometonum with "long" outcomes
-# specified in the data
-$project = Algorithm::AM::Project->new();
-my @data = chapter_3_data_outcomes();
-for my $datum(@data){
-    $project->add_data(@$datum);
-}
-$project->add_test( @{chapter_3_test()} );
-$am = Algorithm::AM->new(
-	$project,
-	probability => 1,
-);
-
-$am->classify(
-	beginhook => \&beginhook_outcome,
-);
-
 sub beginhook {
 	test_beginning_vars('beginhook', @_);
-}
-
-sub beginhook_outcome {
-	my ($self, $data) = @_;
-	#TODO: should this just be ['', 'ee', 'are']?
-	is_deeply($am->{outcomelist}, ['','ee','are'],
-		'beginhook: @outcomelist (with outcome file)')
-		or note explain $am->{outcomelist};
-	#why should we need this?
-	is_deeply($am->{outcometonum}, {'ee' => 1, 'are' => 2},
-		'beginhook: %outcometonum (with outcome file)')
-		or note explain $am->{outcometonum};
 }
 
 sub begintesthook {

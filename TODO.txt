@@ -33,10 +33,9 @@ change commas to be either 1 or 0
 
 test properly that classification arguments can be given with either the constructor or the classify() method. Might be easier after we have results objects that can report that properly.
 
-check that data and test and outcome lines are formatted properly, don't just assume that they are (above change will make it easier).
+check that data and test lines are formatted properly, don't just assume that they are (above change will make it easier).
 
-Change Project::add_data and add_test so that 1) you don't input the long outcome name and 2) the spec is last (since it's optional; this way you don't have to input undef).
-The whole long/short thing is broken. You should not be allowed to have more than one short/long outcome combination. Add a separate Project method for registering a long name for a short name. Or maybe better yet, get rid of the idea of short and long outcome names. Shouldn't the client handle that themselves? They should know their own labels.
+Change Project::add_data and add_test so that the spec is last (since it's optional; this way you don't have to input undef).
 
 perhaps require/allow user to input number of variables in their vectors in the constructor?
 
@@ -69,10 +68,6 @@ Change the POD to use Pod::Weaver properly (=method, etc.).
 Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
 change activeVars to be accepted at classification time
-
-ask someone about expected outcome file format
-	- finnverb outcome file does not have unique long outcomes to match unique short ones
-	- short outcome column seems redundant with data file
 
 work on types of input to AM dataset
 

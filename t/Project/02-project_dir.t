@@ -3,14 +3,13 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 15;
+plan tests => 12;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
 use t::TestAM qw(
     chapter_3_data
-    chapter_3_data_outcomes
     chapter_3_test
 );
 use FindBin '$Bin';
@@ -68,13 +67,6 @@ sub test_project_errors {
             commas => 'no');
     } {carped => qr/Couldn't open .*test at .*/},
     'dies when no test file in project';
-
-    throws_ok {
-        Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_too_few_outcomes'),
-            commas => 'no');
-    } qr/Number of items in data and outcome file do not match/,
-    'project creation dies with too few outcomes in file';
     return;
 }
 
@@ -127,19 +119,5 @@ sub test_data {
         "correct exemplar data (commas project)");
     is_deeply(\@test, \@test_expected,
         "correct test data (commas project)");
-
-    # test project containing outcomes file
-    @data = @test = ();
-    @data_expected = chapter_3_data_outcomes();
-    # slightly change data because we leave one spec blank to test
-    # that it is filled in
-    $data_expected[1][1] = '210';
-    my $outcome_project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_outcomes'), commas => 'no');
-    is_deeply(\@data, \@data_expected,
-        "correct exemplar data (commas project)");
-    is_deeply(\@test, \@test_expected,
-        "correct test data (commas project)");
-    # note explain \@data;
     return;
 }
