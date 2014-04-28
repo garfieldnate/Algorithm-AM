@@ -108,7 +108,7 @@ sub test_given {
         my ($result) = $am->classify();
         is($result->total_pointers, 13, 'total pointers')
             or note $result->total_pointers;
-        ok($result->exclude_given, 'exclude given is true');
+        ok($result->given_excluded, 'given item was excluded');
         is_deeply($result->scores, {'e' => 4, 'r' => 9}, 'outcome scores')
             or note explain $result->scores;
     };
@@ -118,7 +118,7 @@ sub test_given {
         my ($result) = $am->classify(exclude_given => 0);
         is($result->total_pointers, 15, 'total pointers')
             or note $result->total_pointers;
-        ok(!$result->exclude_given, 'exclude given is false');
+        ok(!$result->given_excluded, 'given was not excluded');
         is_deeply($result->scores, {'r' => 15}, 'outcome scores')
             or note explain $result->scores;
     };

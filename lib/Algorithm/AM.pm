@@ -322,7 +322,6 @@ sub classify {
                 test_item => $data->{curTestItem},
                 test_spec => $data->{curTestSpec},
                 test_outcome => $data->{curTestOutcome},
-                exclude_given => $self->{exclude_given},
                 exclude_nulls => $self->{exclude_nulls},
                 probability => $self->{probability},
                 count_method => $self->{linear} ? 'linear' : 'squared',

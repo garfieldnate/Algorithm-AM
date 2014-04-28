@@ -1,10 +1,6 @@
 Algorithm::AM
 
-Next: try to get rid of giant eval!
-
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
-
-Don't print out both exclude_given and given_excluded. exclude_given only matters if given_excluded is true, and then exclude_given has to be true.
 
 Add tests for logging
 
@@ -100,10 +96,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 
 -Eliminate outcometonum
 	- using an accessor of some kind
-
--get rid of difficult (but extremely cool) __DATA__ hack
-	At first, put __DATA__ in a separate file for easier browsing
-	Maybe use Text::Template or Template toolkit instead of hand markings
 
 #Eventual refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.

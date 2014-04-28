@@ -23,7 +23,6 @@ sub test_config_info {
             test_item => [qw(a b c)],
             test_spec => 'comment',
             test_outcome => 2,
-            exclude_given => 1,
             exclude_nulls => 1,
             probability => 1,
             count_method => 'linear',
@@ -31,9 +30,8 @@ sub test_config_info {
             test_in_data => 1,
         );
         my $info = ${$result->config_info};
-        is_string_nows($info, <<'END_INFO') or note $info;
+        my $expected = <<'END_INFO';
 Given Context:  a b c, comment
-If context is in data file then exclude
 Number of data items: 50
 Probability of including any one data item: 1
 Total Excluded: 3  + test item
@@ -42,6 +40,8 @@ Gang: linear
 Number of active variables: 3
 Test item is in the data.
 END_INFO
+        is_string_nows($info, $expected,
+            'given/nulls excluded, linear, item in data') or note $info;
         $result = Algorithm::AM::Result->new(
             excluded_data => [],
             given_excluded => 0,
@@ -49,7 +49,6 @@ END_INFO
             test_item => [qw(a b c)],
             test_spec => 'comment',
             test_outcome => 2,
-            exclude_given => 0,
             exclude_nulls => 0,
             probability => .5,
             count_method => 'squared',
@@ -58,9 +57,8 @@ END_INFO
         );
 
         $info = ${$result->config_info};
-        is_string_nows($info, <<'END_INFO') or note $info;
+        $expected = <<'END_INFO';
 Given Context:  a b c, comment
-Include context even if it is in the data file
 Number of data items: 40
 Probability of including any one data item: 0.5
 Total Excluded: 0
@@ -68,6 +66,9 @@ Nulls: include
 Gang: squared
 Number of active variables: 3
 END_INFO
+        is_string_nows($info, $expected,
+            'given/nulls included, linear, item not in data') or
+            note $info;
     };
     return;
 }
@@ -82,7 +83,8 @@ sub test_result_info {
         my $am = Algorithm::AM->new($project);
         my ($result) = $am->classify();
         my $stats = ${$result->statistical_summary};
-        is_string_nows($stats, <<'END_STATS') or note $stats;
+        is_string_nows($stats,
+            <<'END_STATS', 'statistical summary') or note $stats;
 Statistical Summary
 e   4   30.769%
 r   9   69.231%
@@ -92,7 +94,8 @@ Expected outcome: r
 Correct outcome predicted.
 END_STATS
         my $set = ${$result->analogical_set_summary};
-        is_string_nows($set, <<'END_SET') or note $set;
+        is_string_nows($set,
+            <<'END_SET', 'analogical set') or note $set;
 Analogical Set
 Total Frequency = 13
 e  myFirstCommentHere    4   30.769%
@@ -101,7 +104,8 @@ r  myFourthCommentHere   3   23.077%
 r  myFifthCommentHere    4   30.769%
 END_SET
         my $gang = ${$result->gang_summary(0)};
-        is_string_nows($gang, <<'END_GANG') or note $gang;
+        is_string_nows($gang,
+            <<'END_GANG', 'gang summary without items') or note $gang;
 Gang effects             3 1 2
  61.538%   8             3 1
 ------------
@@ -115,7 +119,8 @@ Gang effects             3 1 2
  15.385%   2 x     1  r
 END_GANG
         $gang = ${$result->gang_summary(1)};
-        is_string_nows($gang, <<'END_GANG') or note $gang;
+        is_string_nows($gang,
+            <<'END_GANG', 'gang summary with items') or note $gang;
 Gang effects             3 1 2
  61.538%   8             3 1
 ------------

@@ -8,7 +8,6 @@ use Class::Tiny qw(
     exclude_nulls
     excluded_data
     given_excluded
-    exclude_given
     num_variables
     test_in_data
     test_item
@@ -42,7 +41,6 @@ following accessors is included:
     exclude_nulls
     excluded_data
     given_excluded
-    exclude_given
     num_variables
     test_in_data
     test_item
@@ -57,11 +55,6 @@ sub config_info {
     my $info = '';
     $info .=
         "Given Context:  @{ $self->{test_item} }, $self->{test_spec}\n";
-    if($self->{exclude_given}){
-        $info .= "If context is in data file then exclude\n";
-    }else{
-        $info .= "Include context even if it is in the data file\n";
-    }
     $info .= "Number of data items: $self->{datacap}\n";
     if (defined $self->{probability}){
         $info .= 'Probability of including any one data item: ' .
