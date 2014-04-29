@@ -61,8 +61,8 @@ sub test_data {
 # test correct value for base_path
 sub test_paths {
     my $project = Algorithm::AM::Project->new();
-    is($project->base_path, Path::Tiny->cwd,
-        'correct base_path');
+    is($project->base_path, undef,
+        'base_path is undef when no directory is provided');
     return;
 }
 

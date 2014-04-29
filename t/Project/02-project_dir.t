@@ -25,13 +25,13 @@ test_data();
 sub test_param_checking {
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'));
+            path => path($data_dir, 'chapter3'));
     } qr/Failed to provide 'commas' parameter/,
     q<dies without 'commas' parameter>;
 
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'),
+            path => path($data_dir, 'chapter3'),
             commas => 'whatever',
         );
     } qr/Failed to specify comma formatting correctly/,
@@ -39,7 +39,7 @@ sub test_param_checking {
 
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3'),
+            path => path($data_dir, 'chapter3'),
             commas => 'no', foo => 'bar', baz => 'buff');
     } qr/Unknown parameters in Project constructor: baz, foo/,
     'dies with unknown parameters';
@@ -50,31 +50,32 @@ sub test_param_checking {
 # test that problems are detected in project data files
 sub test_project_errors {
     throws_ok {
-        Algorithm::AM::Project->new(path($data_dir, 'nonexistent'));
+        Algorithm::AM::Project->new(
+            path => path($data_dir, 'nonexistent'));
     } qr/Could not find project/,
     'dies with non-existent project path';
 
     throws_ok {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_no_data'),
+            path => path($data_dir, 'chapter3_no_data'),
             commas => 'yes');
     } qr/Project has no data file/,
     'dies when no data file in project';
 
     warning_like {
         Algorithm::AM::Project->new(
-            path($data_dir, 'chapter3_no_test'),
+            path => path($data_dir, 'chapter3_no_test'),
             commas => 'no');
     } {carped => qr/Couldn't open .*test at .*/},
-    'dies when no test file in project';
+    'warns when no test file in project';
     return;
 }
 
 sub test_paths {
     my $project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3'), commas => 'no');
+        path => path($data_dir, 'chapter3'), commas => 'no');
     is($project->base_path, path($data_dir, 'chapter3'),
-        'correct base_path');
+        'project path');
     return;
 }
 
@@ -104,7 +105,7 @@ sub test_data {
     $data_expected[1][2] = '210';
     my @test_expected = chapter_3_test();
     $project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3'), commas => 'no');
+        path => path($data_dir, 'chapter3'), commas => 'no');
     is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)");
     is_deeply(\@test, \@test_expected, "correct test data (plain project)");
 
@@ -114,7 +115,7 @@ sub test_data {
     # that it is filled in
     $data_expected[1][2] = '2 1 0';
     $project = Algorithm::AM::Project->new(
-        path($data_dir, 'chapter3_commas'), commas => 'yes');
+        path => path($data_dir, 'chapter3_commas'), commas => 'yes');
     is_deeply(\@data, \@data_expected,
         "correct exemplar data (commas project)");
     is_deeply(\@test, \@test_expected,

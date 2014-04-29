@@ -74,7 +74,7 @@ sub new {
     # the path to a project directory.
     if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
         $project = Algorithm::AM::Project->new(
-            $project, commas => $commas);
+            path => $project, commas => $commas);
     }
     # TODO: these lines are necessary for now because each of these variables
     # is assumed to be provided to the hook methods through $self. Once we

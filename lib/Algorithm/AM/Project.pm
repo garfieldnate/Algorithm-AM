@@ -9,9 +9,13 @@ use Log::Any '$log';
 
 =head2 C<new>
 
-Creates a new Project object. You may optionally pass in the path to
-the project directory, followed by any named arguments (currently only
-the required C<commas> parameter is accepted).
+Creates a new Project object. You may provide a C<path> argument
+indicating the location of a project directory. If this is specified,
+you must also specify a C<commas> parameter to indicate the file
+format:
+
+ my $project = Algorithm::AM::Project->new(
+     'path/to/project', commas => 'no');
 
 A project directory should contain the data set, the test set, and the
 outcome file (named, not surprisingly, F<data>, F<test>, and F<outcome>).
@@ -61,19 +65,17 @@ TODO: A line from your data or test could not be parsed.
 
 =cut
 sub new {
-    my ($class, $path, %opts) = @_;
+    my ($class, %opts) = @_;
 
     # without a path, no option processing is needed
-    my $new_opts = $path ?
-        _check_opts($path, %opts) :
-        {project_path => Path::Tiny->cwd};
+    my $new_opts = _check_opts(%opts);
 
     my $self = bless $new_opts, $class;
 
     $self->_init;
 
     # read project files if they exist
-    if($path){
+    if($self->base_path){
         $log->info('Reading data file...');
         $self->_read_data_set();
 
@@ -92,34 +94,37 @@ sub new {
 # project path object and bigsep and smallsep, which are used to
 # parse data lines
 sub _check_opts {
-    my ($path, %opts) = @_;
+    my (%opts) = @_;
 
-    croak 'Must specify project'
-        unless $path;
-    $path = path($path);
+    my %proj_opts;
+    # process path to data project if provided
+    # if project path is given, check its validity and check commas
+    # parameter
+    if(exists $opts{path}){
+        my $path = path($opts{path});
+        croak "Could not find project $path"
+            unless $path->exists;
+        croak 'Project has no data file'
+            unless path($path, 'data')->exists;
+        delete $opts{path};
+        %proj_opts = (path => $path);
 
-    croak "Could not find project $path"
-        unless $path->exists;
+        croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
+            unless exists $opts{commas};
 
-    croak 'Project has no data file'
-        unless path($path, 'data')->exists;
-
-    croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
-        unless exists $opts{commas};
-
-    my %proj_opts = (project_path => $path);
-    if($opts{commas} eq 'yes'){
-        $proj_opts{bigsep}   = qr{\s*,\s*};
-        $proj_opts{smallsep} = qr{\s+};
-    }elsif($opts{commas} eq 'no'){
-        $proj_opts{bigsep}   = qr{\s+};
-        $proj_opts{smallsep} = qr{};
-    }else{
-        croak "Failed to specify comma formatting correctly;\n" .
-            q{(must specify commas => 'yes' or commas => 'no')};
+        if($opts{commas} eq 'yes'){
+            $proj_opts{bigsep}   = qr{\s*,\s*};
+            $proj_opts{smallsep} = qr{\s+};
+        }elsif($opts{commas} eq 'no'){
+            $proj_opts{bigsep}   = qr{\s+};
+            $proj_opts{smallsep} = qr{};
+        }else{
+            croak "Failed to specify comma formatting correctly;\n" .
+                q{(must specify commas => 'yes' or commas => 'no')};
+        }
+        delete $opts{commas};
     }
 
-    delete $opts{commas};
     if(keys %opts){
         # sort the keys in the error message to make testing possible
         croak 'Unknown parameters in Project constructor: ' .
@@ -153,14 +158,13 @@ sub _init {
 
 =head2 C<base_path>
 
-Returns the path of the directory containing the project files,
-or the current working directory at the time of project creation
-if no project directory was specified.
+Returns the path of the directory containing the project files, or
+undef if no such directory was used.
 
 =cut
 sub base_path {
     my ($self) = @_;
-    return $self->{project_path};
+    return $self->{path};
 }
 
 =head2 C<num_variables>
@@ -389,7 +393,7 @@ sub _outcome_to_num {
 sub _read_data_set {
     my ($self) = @_;
 
-    my $data_path = path($self->{project_path}, 'data');
+    my $data_path = path($self->base_path, 'data');
 
     my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
     while(my ($data, $spec, $outcome) = $data_sub->()){
@@ -411,7 +415,7 @@ sub _read_data_sub {
         # cross-platform chomp
         $line =~ s/\R$//;
         my ($outcome, $data, $spec) = split /$self->{bigsep}/, $line, 3;
-        # use data string directly as the spec string;
+        # use data string directly as the default spec string;
         # makes it easier for the user to search their file
         $spec ||= $data;
         my @data_vars = split /$self->{smallsep}/, $data;
@@ -517,7 +521,7 @@ sub _update_outcome_vars {
 # a data vector, and a spec.
 sub _read_test_set {
     my ($self) = @_;
-    my $test_file = path($self->{project_path}, 'test');
+    my $test_file = path($self->base_path, 'test');
     if($test_file->exists){
         my $test_sub = $self->_read_data_sub($test_file->openr_utf8);
         while(my ($data, $spec, $outcome) = $test_sub->()){
