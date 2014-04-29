@@ -124,8 +124,10 @@ sub test_data {
     $project = Algorithm::AM::Project->new(
         variables => 3, path => path($data_dir, 'chapter3'),
         commas => 'no');
-    is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)");
-    is_deeply(\@test, \@test_expected, "correct test data (plain project)");
+    is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)")
+        or note explain \@data;
+    is_deeply(\@test, \@test_expected, "correct test data (plain project)")
+        or note explain \@test;
 
     # test comma-formatted project
     @data = @test = ();

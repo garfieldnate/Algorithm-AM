@@ -416,10 +416,15 @@ sub _read_data_set {
 sub _read_data_sub {
     my ($self, $data_fh) = @_;
     return sub {
-        my $line = <$data_fh>;
+        my $line;
+        # grab the next non-blank line from the file
+        while($line = <$data_fh>){
+            # cross-platform chomp
+            $line =~ s/\R$//;
+            $line =~ s/^\s+|\s+$//g;
+            last if $line;
+        }
         return unless $line;
-        # cross-platform chomp
-        $line =~ s/\R$//;
         my ($outcome, $data, $spec) = split /$self->{bigsep}/, $line, 3;
         # use data string directly as the default spec string;
         # makes it easier for the user to search their file
