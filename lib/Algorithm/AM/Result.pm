@@ -93,7 +93,7 @@ sub total_pointers {
 # total_pointers.
 sub _process_stats {
     my ($self, $total_pointers, $sum, $expected, $pointers,
-        $itemcontextchainhead, $itemcontextchain, $subtooutcome,
+        $itemcontextchainhead, $itemcontextchain, $context_to_outcome,
         $gang, $active_vars, $contextsize) = @_;
     my $max = '';
     my @winners;
@@ -150,7 +150,7 @@ sub _process_stats {
     $self->{pointers} = $pointers;
     $self->{itemcontextchainhead} = $itemcontextchainhead;
     $self->{itemcontextchain} = $itemcontextchain;
-    $self->{subtooutcome} = $subtooutcome;
+    $self->{context_to_outcome} = $context_to_outcome;
     $self->{gang} = $gang;
     $self->{active_vars} = $active_vars;
     $self->{contextsize} = $contextsize;
@@ -393,7 +393,7 @@ sub _calculate_gangs {
 
         my $p = $self->{pointers}->{$context};
         # if the supracontext is homogenous
-        if ( my $outcome = $self->{subtooutcome}->{$context} ) {
+        if ( my $outcome = $self->{context_to_outcome}->{$context} ) {
             # store a 'homogenous' key that indicates this, besides
             # indicating the unanimous outcome.
             $outcome = $project->get_outcome($outcome);

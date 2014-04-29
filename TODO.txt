@@ -23,8 +23,6 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
-Rename subtooutcome. Should be contexttooutcome to be consistent with everything else.
-
 require user to create and pass in the Project object?
 	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
 

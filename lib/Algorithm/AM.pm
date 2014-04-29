@@ -31,7 +31,7 @@ my %import;
 ## @itemcontextchain
 ## @datatocontext
 ## %itemcontextchainhead
-## %subtooutcome
+## %context_to_outcome
 ## %contextsize
 ## %pointers
 ## %gang
@@ -105,7 +105,7 @@ sub new {
     $self->{$_} = {} for (
         qw(
             itemcontextchainhead
-            subtooutcome
+            context_to_outcome
             contextsize
             pointers
             gang
@@ -118,7 +118,7 @@ sub new {
         $project->_exemplar_outcomes,
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
-        $self->{subtooutcome},
+        $self->{context_to_outcome},
         $self->{contextsize},
         $self->{pointers},
         $self->{gang},
@@ -249,7 +249,7 @@ sub classify {
             # change it.
             %{$self->{contextsize}}             = ();
             %{$self->{itemcontextchainhead}}    = ();
-            %{$self->{subtooutcome}}            = ();
+            %{$self->{context_to_outcome}}            = ();
             %{$self->{pointers}}                = ();
             %{$self->{gang}}                    = ();
             @{$self->{datatocontext}}           = ();
@@ -294,21 +294,21 @@ sub classify {
                 # is already a different outcome for this subcontext,
                 # then store 0, signifying heterogeneity.
                 my $outcome = $project->get_exemplar_outcome($data_index);
-                if ( defined $self->{subtooutcome}->{$context} ) {
-                    $self->{subtooutcome}->{$context} = 0
-                      if $self->{subtooutcome}->{$context} != $outcome;
+                if ( defined $self->{context_to_outcome}->{$context} ) {
+                    $self->{context_to_outcome}->{$context} = 0
+                      if $self->{context_to_outcome}->{$context} != $outcome;
                 }
                 else {
-                    $self->{subtooutcome}->{$context} = $outcome;
+                    $self->{context_to_outcome}->{$context} = $outcome;
                 }
             }
     # line 1400 "given"
             # $nullcontext is all 0's, which is a context label only
             # to a data item that exactly matches the test item.
-            if ( exists $self->{subtooutcome}->{$nullcontext} ) {
+            if ( exists $self->{context_to_outcome}->{$nullcontext} ) {
                 $testindata = 1;
                 if($self->{exclude_given}){
-                   delete $self->{subtooutcome}->{$nullcontext};
+                   delete $self->{context_to_outcome}->{$nullcontext};
                    $given_excluded = 1;
                 }
             }
@@ -368,7 +368,7 @@ sub classify {
                 $self->{pointers},
                 $self->{itemcontextchainhead},
                 $self->{itemcontextchain},
-                $self->{subtooutcome},
+                $self->{context_to_outcome},
                 $self->{gang},
                 $self->{activeVars},
                 $self->{contextsize}

@@ -177,7 +177,7 @@ typedef struct AM_guts {
   /* ??? */
   HV *itemcontextchainhead;
   /* Maps subcontext binary labels to outcome indices */
-  HV *subtooutcome;
+  HV *context_to_outcome;
   /* Maps binary context labels to the number of exemplars contained
    * in that subcontext
    */
@@ -363,7 +363,7 @@ _initialize(...)
   guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
-  guts.subtooutcome = (HV *) SvRV(ST(5));
+  guts.context_to_outcome = (HV *) SvRV(ST(5));
   guts.contextsize = (HV *) SvRV(ST(6));
   guts.pointers = (HV *) SvRV(ST(7));
   guts.gang = (HV *) SvRV(ST(8));
@@ -408,7 +408,7 @@ _fillandcount(...)
   AM_SHORT *subcontext;
   AM_SHORT *suboutcome;
   SV **outcome, **itemcontextchain, **sum;
-  HV *itemcontextchainhead, *subtooutcome, *contextsize, *pointers, *gang;
+  HV *itemcontextchainhead, *context_to_outcome, *contextsize, *pointers, *gang;
   IV numoutcomes;
   HE *he;
   AM_BIG_INT grandtotal = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -453,8 +453,8 @@ _fillandcount(...)
    *
    */
 
-  subtooutcome = guts->subtooutcome;
-  subcontextnumber = (AM_SHORT) HvUSEDKEYS(subtooutcome);
+  context_to_outcome = guts->context_to_outcome;
+  subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_outcome);
   Newz(0, subcontext, 4 * (subcontextnumber + 1), AM_SHORT);
   subcontext += 4 * subcontextnumber;
   Newz(0, suboutcome, subcontextnumber + 1, AM_SHORT);
@@ -465,8 +465,8 @@ _fillandcount(...)
   Newz(0, intersectlist3, subcontextnumber + 1, AM_SHORT);
   ilist3top = intersectlist3 + subcontextnumber;
 
-  hv_iterinit(subtooutcome);
-  while (he = hv_iternext(subtooutcome)) {
+  hv_iterinit(context_to_outcome);
+  while (he = hv_iternext(context_to_outcome)) {
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
     AM_SHORT outcome = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < 4; ++chunk, ++contextptr) {
@@ -1093,7 +1093,7 @@ _fillandcount(...)
     normalize(tempsv);
     normalize(HeVAL(he));
 
-    tempsv = *hv_fetch(subtooutcome, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
+    tempsv = *hv_fetch(context_to_outcome, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
     thisoutcome = (AM_SHORT) SvUVX(tempsv);
     if (thisoutcome) {
       AM_LONG *s = (AM_LONG *) SvPVX(sum[thisoutcome]);
