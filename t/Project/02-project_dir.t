@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 14;
+plan tests => 11;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
@@ -17,27 +17,12 @@ use Path::Tiny;
 
 my $data_dir = path($Bin, '..', 'data');
 
-test_param_checking();
+test_file_validity_checking();
 test_project_errors();
 test_paths();
 test_data();
 
-sub test_param_checking {
-    throws_ok {
-        Algorithm::AM::Project->new(
-            path => path($data_dir, 'chapter3'),
-            commas => 'no'
-        );
-    } qr/Failed to provide 'variables' parameter/,
-    q<dies without 'variables' parameter>;
-
-    throws_ok {
-        Algorithm::AM::Project->new(
-            variables => 3,
-            path => path($data_dir, 'chapter3'));
-    } qr/Failed to provide 'commas' parameter/,
-    q<dies without 'commas' parameter>;
-
+sub test_file_validity_checking {
     throws_ok {
         Algorithm::AM::Project->new(
             variables => 3,
@@ -54,14 +39,6 @@ sub test_param_checking {
         );
     } qr/Failed to specify comma formatting correctly/,
     q<dies with incorrect 'commas' parameter>;
-
-    throws_ok {
-        Algorithm::AM::Project->new(
-            variables => 3,
-            path => path($data_dir, 'chapter3'),
-            commas => 'no', foo => 'bar', baz => 'buff');
-    } qr/Unknown parameters in Project constructor: baz, foo/,
-    'dies with unknown parameters';
 
     return;
 }

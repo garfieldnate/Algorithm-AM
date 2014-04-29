@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 36;
+plan tests => 41;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -14,11 +14,54 @@ use Path::Tiny;
 
 my $data_dir = path($Bin, '..', 'data');
 
+test_constructor();
 test_data();
 test_paths();
 test_test_items();
 test_private_data();
 test_format_vars();
+
+# test that the constructor lives/dies when given valid/invalid
+# parameters
+sub test_constructor {
+    lives_ok {
+        Algorithm::AM::Project->new(
+            variables => 3,
+            path => path($data_dir, 'chapter3'),
+            commas => 'no'
+        )
+    } 'constructor with project directory';
+
+    lives_ok {
+        Algorithm::AM::Project->new(
+            variables => 3
+        )
+    } 'constructor without project directory';
+
+    throws_ok {
+        Algorithm::AM::Project->new(
+            path => path($data_dir, 'chapter3'),
+            commas => 'no'
+        );
+    } qr/Failed to provide 'variables' parameter/,
+    q<dies without 'variables' parameter>;
+
+    throws_ok {
+        Algorithm::AM::Project->new(
+            variables => 3,
+            path => path($data_dir, 'chapter3'));
+    } qr/Failed to provide 'commas' parameter/,
+    q<dies without 'commas' parameter>;
+
+    throws_ok {
+        Algorithm::AM::Project->new(
+            variables => 3,
+            path => path($data_dir, 'chapter3'),
+            commas => 'no', foo => 'bar', baz => 'buff');
+    } qr/Unknown parameters in Project constructor: baz, foo/,
+    'dies with unknown parameters';
+    return;
+}
 
 # test that add_data correctly adds data to the set, sets num_variables,
 # and validates input
