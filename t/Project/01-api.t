@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 37;
+plan tests => 36;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -24,9 +24,9 @@ test_format_vars();
 # and validates input
 sub test_data {
     # first check empty project
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     is($project->num_exemplars, 0, 'new project has 0 exemplars');
-    is($project->num_variables, 0, 'new project has 0 variables');
+    is($project->num_variables, 3, 'new project has 0 variables');
     is($project->num_outcomes, 0, 'new project has 0 outcomes');
 
     $project->add_data(['a','b','c'],'b','stuff');
@@ -49,18 +49,12 @@ sub test_data {
         $project->add_data(['3','1'], 'c', 'comment');
     } qr/Expected 3 variables, but found 2 in 3 1 \(comment\)/,
     'add_data fails with wrong number of variables';
-
-    $project = Algorithm::AM::Project->new();
-    throws_ok {
-        $project->add_data([], 'c', 'comment');
-    } qr/Found 0 data variables in input \(comment\)/,
-    'add_data fails with 0 variables';
     return;
 }
 
 # test correct value for base_path
 sub test_paths {
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     is($project->base_path, undef,
         'base_path is undef when no directory is provided');
     return;
@@ -69,7 +63,7 @@ sub test_paths {
 sub test_format_vars {
     # format variables don't make sense without data, so errors
     # are thrown here
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     throws_ok {
         $project->var_format;
     } qr/must add data before calling var_format/,
@@ -117,7 +111,7 @@ sub test_format_vars {
 
 # test the project test data
 sub test_test_items {
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     is($project->num_test_items, 0, 'no test items in empty project');
 
     $project->add_test([qw(a b c)], 'foo', 'abc');
@@ -142,7 +136,7 @@ sub test_test_items {
 # hopefully this can be eliminated in the future, as private
 # data should not have to be exposed
 sub test_private_data {
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     is_deeply($project->_outcome_list, [''],
         "empty project has empty outcome list");
     is_deeply($project->_exemplar_outcomes, [],

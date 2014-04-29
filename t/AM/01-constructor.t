@@ -40,6 +40,7 @@ sub test_project {
         my $am = Algorithm::AM->new(
             $project_path,
             commas => 'no',
+            variables => 3
         );
         isa_ok($am->get_project, 'Algorithm::AM::Project',
             'get_project returns correct object type');
@@ -48,7 +49,7 @@ sub test_project {
     };
     subtest 'AM constructor is given project path' => sub {
         plan tests => 2;
-        my $project = Algorithm::AM::Project->new();
+        my $project = Algorithm::AM::Project->new(variables => 3);
         my $am = Algorithm::AM->new($project);
         isa_ok($am->get_project, 'Algorithm::AM::Project',
             'get_project returns correct object type');

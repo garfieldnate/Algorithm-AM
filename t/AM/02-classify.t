@@ -62,7 +62,7 @@ sub test_linear_classification {
 # and include_nulls
 # TODO: test for the correct number of active variables
 sub test_nulls {
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     for my $datum( chapter_3_data() ){
         $project->add_data(@$datum);
     }
@@ -212,6 +212,7 @@ sub test_gang_effects {
 sub test_finnverb {
     my $p = Algorithm::AM->new(
         path($Bin, '..', 'data', 'finnverb'),
+        variables => 10,
         commas => 'no',
         exclude_given => 1,
     );

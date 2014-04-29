@@ -9,13 +9,15 @@ use Log::Any '$log';
 
 =head2 C<new>
 
-Creates a new Project object. You may provide a C<path> argument
+Creates a new Project object. You must provide a C<variables> argument
+indicating the number of variables in a given data vector.
+You may provide a C<path> argument
 indicating the location of a project directory. If this is specified,
 you must also specify a C<commas> parameter to indicate the file
 format:
 
  my $project = Algorithm::AM::Project->new(
-     'path/to/project', commas => 'no');
+     variables => 4, 'path/to/project', commas => 'no');
 
 A project directory should contain the data set, the test set, and the
 outcome file (named, not surprisingly, F<data>, F<test>, and F<outcome>).
@@ -125,6 +127,12 @@ sub _check_opts {
         delete $opts{commas};
     }
 
+    if(!defined $opts{variables}){
+        croak q{Failed to provide 'variables' parameter};
+    }
+    $proj_opts{num_feats} = $opts{variables};
+    delete $opts{variables};
+
     if(keys %opts){
         # sort the keys in the error message to make testing possible
         croak 'Unknown parameters in Project constructor: ' .
@@ -146,8 +154,6 @@ sub _init {
     $self->{outcome_num} = 0;
     # index 0 of outcomelist is reserved for the AM algorithm
     $self->{outcomelist} = [''];
-    # 0 means number of data columns has not been determined
-    $self->{num_feats} = 0;
 
     $self->{testItems} = [];
     $self->{data} = [];
@@ -279,7 +285,7 @@ a data item.
 sub var_format {
     my ($self) = @_;
 
-    if(!$self->num_variables){
+    if(!$self->num_exemplars){
         croak "must add data before calling var_format";
     }
 
@@ -295,7 +301,7 @@ Returns a format string for printing a spec string from the data set.
 sub spec_format {
     my ($self) = @_;
 
-    if(!$self->num_variables){
+    if(!$self->num_exemplars){
         croak "must add data before calling spec_format";
     }
 
@@ -311,7 +317,7 @@ Returns (and/or sets) a format string for printing an outcome.
 sub outcome_format {
     my ($self) = @_;
 
-    if(!$self->num_variables){
+    if(!$self->num_exemplars){
         croak "must add data before calling outcome_format";
     }
 
@@ -328,7 +334,7 @@ Returns the format string for printing the number of data items.
 sub data_format {
     my ($self) = @_;
 
-    if(!$self->num_variables){
+    if(!$self->num_exemplars){
         croak "must add data before calling data_format";
     }
 
@@ -452,19 +458,10 @@ sub add_data {
 sub _check_variables {
     my ($self, $data, $spec) = @_;
     # check that the number of variables in @$data is correct
-    # if num_variables is 0, it means it hasn't been set yet
-    if(my $num = $self->num_variables){
-        $num == @$data or
-            croak "Expected $num variables, but found " . (scalar @$data) .
-                " in @$data" . ($spec ? " ($spec)" : '');
-    }else{
-        # if not 0, store number of variables and expect all future
-        # data vectors to be the same length
-        if(@$data == 0){
-            croak "Found 0 data variables in input" .
-                ($spec ? " ($spec)" : '');
-        }
-        $self->{num_feats} = scalar @$data;
+    if($self->num_variables != @$data){
+        croak 'Expected ' . $self->num_variables .
+            ' variables, but found ' . (scalar @$data) .
+            " in @$data" . ($spec ? " ($spec)" : '');
     }
     return;
 }

@@ -13,7 +13,7 @@ use Exporter::Easy (
 
 # return a project pre-loaded with chapter 3 data
 sub chapter_3_project {
-    my $project = Algorithm::AM::Project->new();
+    my $project = Algorithm::AM::Project->new(variables => 3);
     for my $datum(chapter_3_data()){
         $project->add_data(@$datum);
     }

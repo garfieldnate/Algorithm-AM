@@ -74,6 +74,7 @@ sub new {
     # the path to a project directory.
     if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
         $project = Algorithm::AM::Project->new(
+            variables => $opts{variables},
             path => $project, commas => $commas);
     }
     # TODO: these lines are necessary for now because each of these variables
@@ -428,6 +429,7 @@ sub _check_classify_opts {
 
     state $valid_args =
     [qw(
+        variables
         exclude_nulls
         exclude_given
         linear

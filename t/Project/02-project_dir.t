@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 12;
+plan tests => 13;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
@@ -25,12 +25,22 @@ test_data();
 sub test_param_checking {
     throws_ok {
         Algorithm::AM::Project->new(
+            path => path($data_dir, 'chapter3'),
+            commas => 'no'
+        );
+    } qr/Failed to provide 'variables' parameter/,
+    q<dies without 'variables' parameter>;
+
+    throws_ok {
+        Algorithm::AM::Project->new(
+            variables => 3,
             path => path($data_dir, 'chapter3'));
     } qr/Failed to provide 'commas' parameter/,
     q<dies without 'commas' parameter>;
 
     throws_ok {
         Algorithm::AM::Project->new(
+            variables => 3,
             path => path($data_dir, 'chapter3'),
             commas => 'whatever',
         );
@@ -39,6 +49,7 @@ sub test_param_checking {
 
     throws_ok {
         Algorithm::AM::Project->new(
+            variables => 3,
             path => path($data_dir, 'chapter3'),
             commas => 'no', foo => 'bar', baz => 'buff');
     } qr/Unknown parameters in Project constructor: baz, foo/,
@@ -51,12 +62,15 @@ sub test_param_checking {
 sub test_project_errors {
     throws_ok {
         Algorithm::AM::Project->new(
-            path => path($data_dir, 'nonexistent'));
+            variables => 3,
+            path => path($data_dir, 'nonexistent'),
+            commas => 'no');
     } qr/Could not find project/,
     'dies with non-existent project path';
 
     throws_ok {
         Algorithm::AM::Project->new(
+            variables => 3,
             path => path($data_dir, 'chapter3_no_data'),
             commas => 'yes');
     } qr/Project has no data file/,
@@ -64,6 +78,7 @@ sub test_project_errors {
 
     warning_like {
         Algorithm::AM::Project->new(
+            variables => 3,
             path => path($data_dir, 'chapter3_no_test'),
             commas => 'no');
     } {carped => qr/Couldn't open .*test at .*/},
@@ -73,7 +88,9 @@ sub test_project_errors {
 
 sub test_paths {
     my $project = Algorithm::AM::Project->new(
-        path => path($data_dir, 'chapter3'), commas => 'no');
+        variables => 3, path => path($data_dir, 'chapter3'),
+        commas => 'no'
+    );
     is($project->base_path, path($data_dir, 'chapter3'),
         'project path');
     return;
@@ -105,7 +122,8 @@ sub test_data {
     $data_expected[1][2] = '210';
     my @test_expected = chapter_3_test();
     $project = Algorithm::AM::Project->new(
-        path => path($data_dir, 'chapter3'), commas => 'no');
+        variables => 3, path => path($data_dir, 'chapter3'),
+        commas => 'no');
     is_deeply(\@data, \@data_expected, "correct exemplar data (plain project)");
     is_deeply(\@test, \@test_expected, "correct test data (plain project)");
 
@@ -115,7 +133,8 @@ sub test_data {
     # that it is filled in
     $data_expected[1][2] = '2 1 0';
     $project = Algorithm::AM::Project->new(
-        path => path($data_dir, 'chapter3_commas'), commas => 'yes');
+        variables => 3, path => path($data_dir, 'chapter3_commas'),
+        commas => 'yes');
     is_deeply(\@data, \@data_expected,
         "correct exemplar data (commas project)");
     is_deeply(\@test, \@test_expected,
