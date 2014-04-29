@@ -405,7 +405,7 @@ sub _read_data_set {
 
     my $data_path = path($self->base_path, 'data');
 
-    my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
+    my $data_sub = $self->_read_data_sub($data_path);
     while(my ($data, $spec, $outcome) = $data_sub->()){
         $self->add_data($data, $outcome, $spec);
     }
@@ -418,13 +418,16 @@ sub _read_data_set {
 # and returns undef once the data file is done being read. Throws errors
 # on bad file contents.
 sub _read_data_sub {
-    my ($self, $data_fh) = @_;
+    my ($self, $data_file) = @_;
+    my $data_fh = $data_file->openr_utf8;
     my $column_sep = $self->{field_sep};
     my $variable_separator = $self->{var_sep};
+    my $line_num = 0;
     return sub {
         my $line;
         # grab the next non-blank line from the file
         while($line = <$data_fh>){
+            $line_num++;
             # cross-platform chomp
             $line =~ s/\R$//;
             $line =~ s/^\s+|\s+$//g;
@@ -432,6 +435,11 @@ sub _read_data_sub {
         }
         return unless $line;
         my ($outcome, $data, $spec) = split /$column_sep/, $line, 3;
+        # the line has to have at least outcome and data
+        if(!defined $data){
+            croak "Couldn't read data at line $line_num in $data_file";
+        }
+
         # use data string directly as the default spec string;
         # makes it easier for the user to search their file
         $spec ||= $data;
@@ -531,7 +539,7 @@ sub _read_test_set {
     my ($self) = @_;
     my $test_file = path($self->base_path, 'test');
     if($test_file->exists){
-        my $test_sub = $self->_read_data_sub($test_file->openr_utf8);
+        my $test_sub = $self->_read_data_sub($test_file);
         while(my ($data, $spec, $outcome) = $test_sub->()){
             $self->add_test($data, $outcome, $spec);
         }

@@ -2,8 +2,6 @@ Algorithm::AM
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
-check that data and test lines are formatted properly, don't just assume that they are (above change will make it easier).
-
 Add tests for logging
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.

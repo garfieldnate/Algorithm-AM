@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 13;
+plan tests => 14;
 use Test::Exception;
 use Test::Warn;
 use Test::NoWarnings;
@@ -37,6 +37,14 @@ sub test_param_checking {
             path => path($data_dir, 'chapter3'));
     } qr/Failed to provide 'commas' parameter/,
     q<dies without 'commas' parameter>;
+
+    throws_ok {
+        Algorithm::AM::Project->new(
+            variables => 3,
+            commas => 'no',
+            path => path($data_dir, 'chapter3_bad_data_line'));
+    } qr/Couldn't read data at line 2 in .*_bad_data_line/,
+    q<dies bad line in data file>;
 
     throws_ok {
         Algorithm::AM::Project->new(
