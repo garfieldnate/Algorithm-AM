@@ -93,7 +93,7 @@ sub new {
 # check the project path and the options for validity
 # currently "commas" is the only accepted option
 # Return an option hash to initialize $self with, containing the
-# project path object and bigsep and smallsep, which are used to
+# project path object and field_sep and var_sep, which are used to
 # parse data lines
 sub _check_opts {
     my (%opts) = @_;
@@ -115,11 +115,15 @@ sub _check_opts {
             unless exists $opts{commas};
 
         if($opts{commas} eq 'yes'){
-            $proj_opts{bigsep}   = qr{\s*,\s*};
-            $proj_opts{smallsep} = qr{\s+};
+            # outcome/data/spec separate by a comma
+            $proj_opts{field_sep}   = qr{\s*,\s*};
+            # variables separated by space
+            $proj_opts{var_sep} = qr{\s+};
         }elsif($opts{commas} eq 'no'){
-            $proj_opts{bigsep}   = qr{\s+};
-            $proj_opts{smallsep} = qr{};
+            # outcome/data/spec separated by space
+            $proj_opts{field_sep}   = qr{\s+};
+            # no seps for variables; each is a single character
+            $proj_opts{var_sep} = qr{};
         }else{
             croak "Failed to specify comma formatting correctly;\n" .
                 q{(must specify commas => 'yes' or commas => 'no')};
@@ -415,6 +419,8 @@ sub _read_data_set {
 # on bad file contents.
 sub _read_data_sub {
     my ($self, $data_fh) = @_;
+    my $column_sep = $self->{field_sep};
+    my $variable_separator = $self->{var_sep};
     return sub {
         my $line;
         # grab the next non-blank line from the file
@@ -425,11 +431,11 @@ sub _read_data_sub {
             last if $line;
         }
         return unless $line;
-        my ($outcome, $data, $spec) = split /$self->{bigsep}/, $line, 3;
+        my ($outcome, $data, $spec) = split /$column_sep/, $line, 3;
         # use data string directly as the default spec string;
         # makes it easier for the user to search their file
         $spec ||= $data;
-        my @data_vars = split /$self->{smallsep}/, $data;
+        my @data_vars = split /$variable_separator/, $data;
         return (\@data_vars, $spec, $outcome);
     };
 }
