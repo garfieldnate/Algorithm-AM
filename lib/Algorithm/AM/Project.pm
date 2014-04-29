@@ -19,8 +19,8 @@ format:
  my $project = Algorithm::AM::Project->new(
      variables => 4, 'path/to/project', commas => 'no');
 
-A project directory should contain the data set, the test set, and the
-outcome file (named, not surprisingly, F<data>, F<test>, and F<outcome>).
+A project directory should contain the data set and the test set
+(named, not surprisingly, F<data> and F<test>).
 Each line of the data and test files should represent a single
 exemplar. The required format of each line depends on the value of the
 C<commas> parameter. C<< commas => 'yes' >> indicates the following
