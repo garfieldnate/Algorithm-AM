@@ -393,7 +393,7 @@ sub _read_data_set {
 
     my $data_sub = $self->_read_data_sub($data_path->openr_utf8);
     while(my ($data, $spec, $outcome) = $data_sub->()){
-        $self->add_data($data, $spec, $outcome);
+        $self->add_data($data, $outcome, $spec);
     }
     $log->debug( 'Data file: ' . $self->num_exemplars );
 
@@ -429,7 +429,7 @@ the outcome string.
 # $data should be an arrayref of variables
 # adds data item to three internal arrays: outcome, data, and spec
 sub add_data {
-    my ($self, $data, $spec, $outcome) = @_;
+    my ($self, $data, $outcome, $spec) = @_;
     $spec ||= _serialize_data($data);
 
     $self->_check_variables($data, $spec);
@@ -521,7 +521,7 @@ sub _read_test_set {
     if($test_file->exists){
         my $test_sub = $self->_read_data_sub($test_file->openr_utf8);
         while(my ($data, $spec, $outcome) = $test_sub->()){
-            $self->add_test($data, $spec, $outcome);
+            $self->add_test($data, $outcome, $spec);
         }
     }else{
         carp "Couldn't open $test_file";
@@ -544,7 +544,7 @@ c<add_data>.
 
 =cut
 sub add_test {
-    my ($self, $data, $spec, $outcome) = @_;
+    my ($self, $data, $outcome, $spec) = @_;
     # TODO: make sure outcome exists in index
 
     $self->_check_variables($data, $spec);

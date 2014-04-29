@@ -97,7 +97,7 @@ sub test_nulls {
 sub test_given {
     my $project = chapter_3_project();
     $project->add_data(
-      [qw(3 1 2)], 'same as the test exemplar', 'r', undef);
+      [qw(3 1 2)], 'r', 'same as the test exemplar');
     my $am = Algorithm::AM->new(
         $project,
         exclude_given => 1

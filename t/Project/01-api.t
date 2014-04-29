@@ -29,13 +29,13 @@ sub test_data {
     is($project->num_variables, 0, 'new project has 0 variables');
     is($project->num_outcomes, 0, 'new project has 0 outcomes');
 
-    $project->add_data(['a','b','c'],'stuff','b', 'beta');
+    $project->add_data(['a','b','c'],'b','stuff');
     is($project->num_exemplars, 1,
         'add_data adds 1 exemplar to project');
     is($project->num_variables, 3, 'project data set to three variables');
     is($project->num_outcomes, 1, 'project has 1 outcome');
 
-    $project->add_data(['a','b','d'],'stuff','c', 'chi');
+    $project->add_data(['a','b','d'],'c','stuff');
     is($project->num_outcomes, 2, 'project has 2 outcomes');
 
     is_deeply($project->get_exemplar_data(1),[qw(a b d)],
@@ -46,13 +46,13 @@ sub test_data {
         'data outcome correctly set');
 
     throws_ok {
-        $project->add_data(['3','1'],'comment','c', 'chi');
+        $project->add_data(['3','1'], 'c', 'comment');
     } qr/Expected 3 variables, but found 2 in 3 1 \(comment\)/,
     'add_data fails with wrong number of variables';
 
     $project = Algorithm::AM::Project->new();
     throws_ok {
-        $project->add_data([],'comment','c', 'chi');
+        $project->add_data([], 'c', 'comment');
     } qr/Found 0 data variables in input \(comment\)/,
     'add_data fails with 0 variables';
     return;
@@ -89,21 +89,20 @@ sub test_format_vars {
 
     # test with data made specially for testing format variables
     $project->add_data([qw(aaaaa bbb bbb)],
-        'myCommentHere', 'exception');
+        'exception', 'myCommentHere');
     $project->add_data([qw(dd bbb bbb)],
-        'myCommentHere blah blah blah blah',
-        'regular');
-    $project->add_data([qw(aaaaa cccc dd)],
-        'myCommentHere', 'regular');
-    $project->add_data([qw(dd bbb dd)],
-        'myCommentHere', 'regular');
-    $project->add_data([qw(aaaaa bbb bbb)],
-        'myCommentHere', 'regular');
-    $project->add_data([qw(aaaaa bbb dd)],
-        'myCommentHere', 'exception');
-    $project->add_data([qw(dd bbb bbb)],
-        'myCommentHere blah blah blah blah longest!',
-        'regular');
+        'regular',
+        'myCommentHere blah blah blah blah');
+    $project->add_data([qw(aaaaa cccc dd)], 'regular',
+        'myCommentHere');
+    $project->add_data([qw(dd bbb dd)], 'regular',
+        'myCommentHere');
+    $project->add_data([qw(aaaaa bbb bbb)], 'regular',
+        'myCommentHere');
+    $project->add_data([qw(aaaaa bbb dd)], 'exception',
+        'myCommentHere');
+    $project->add_data([qw(dd bbb bbb)],'regular',
+        'myCommentHere blah blah blah blah longest!');
 
     is($project->var_format, '%-5.5s %-4.4s %-3.3s',
         'correct var_format');
@@ -121,7 +120,7 @@ sub test_test_items {
     my $project = Algorithm::AM::Project->new();
     is($project->num_test_items, 0, 'no test items in empty project');
 
-    $project->add_test([qw(a b c)], 'abc', 'foo', 'foo bar');
+    $project->add_test([qw(a b c)], 'foo', 'abc');
     is($project->num_test_items, 1, 'test item added');
     is($project->num_outcomes, 1, '1 outcome added via test item');
     is($project->get_outcome(1), 'foo',
@@ -131,7 +130,7 @@ sub test_test_items {
         q<correct index of 'foo' outcome>);
 
     # empty spec should be set to data string
-    $project->add_test([qw(a b c)], '', 'foo', 'foo bar');
+    $project->add_test([qw(a b c)], 'foo');
     is_deeply($project->get_test_item(1),
         [1, [qw(a b c)], 'a b c',],
         'get_test_item returns correct test data');
@@ -155,7 +154,7 @@ sub test_private_data {
 
     my @data = chapter_3_data();
     # get rid of one of the specs to test that it is filled in
-    $data[1][1] = '';
+    $data[1][2] = '';
     for my $datum(@data){
         $project->add_data(@$datum);
     }
@@ -168,8 +167,8 @@ sub test_private_data {
     is_deeply($project->_outcome_list, ['', 'e', 'r'],
         "correct project outcome list");
 
-    # index 1 of each data entry contains the specs
-    my $specs = [$data[0][1], '2 1 0', map {$_->[1]} @data[2..4]];
+    # index 2 of each data entry contains the specs
+    my $specs = [$data[0][2], '2 1 0', map {$_->[2]} @data[2..4]];
 
     is_deeply($project->_exemplar_specs, $specs,
         'correct project specs (commas)');

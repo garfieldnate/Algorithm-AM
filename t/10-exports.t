@@ -19,7 +19,7 @@ use Algorithm::AM;
 plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 1;
 
 my $project = chapter_3_project();
-$project->add_test([qw(3 1 3)], 'second test item', 'e');
+$project->add_test([qw(3 1 3)], 'e', 'second test item');
 
 my $am = Algorithm::AM->new(
 	$project,

@@ -5,6 +5,7 @@ Revision history for AM-Algorithm
     Switched to Log::Any
     Added Algorithm::AM::Result module
     Removed separate support for "short" and "long" outcomes
+    Changed add_test and add_data to accept spec last
 2.45      2014-02-11 21:27:02 America/Los_Angeles
     Fixed gang/grandtotal calculation bugs
     removed debug print statements!

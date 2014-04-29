@@ -101,7 +101,7 @@ sub test_data {
     my @data_expected = chapter_3_data();
     # slightly change data because we leave one spec blank to test
     # that it is filled in
-    $data_expected[1][1] = '210';
+    $data_expected[1][2] = '210';
     my @test_expected = chapter_3_test();
     $project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3'), commas => 'no');
@@ -112,7 +112,7 @@ sub test_data {
     @data = @test = ();
     # slightly change data because we leave one spec blank to test
     # that it is filled in
-    $data_expected[1][1] = '2 1 0';
+    $data_expected[1][2] = '2 1 0';
     $project = Algorithm::AM::Project->new(
         path($data_dir, 'chapter3_commas'), commas => 'yes');
     is_deeply(\@data, \@data_expected,

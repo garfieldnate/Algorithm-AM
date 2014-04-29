@@ -17,24 +17,24 @@ sub chapter_3_project {
     for my $datum(chapter_3_data()){
         $project->add_data(@$datum);
     }
-    $project->add_test([qw(3 1 2)], 'test item spec', 'r');
+    $project->add_test([qw(3 1 2)], 'r', 'test item spec');
     return $project;
 }
 
 # return a list of array refs containing the data from chapter 3
 sub chapter_3_data {
     return (
-        [[qw(3 1 0)], 'myFirstCommentHere', 'e'],
-        [[qw(2 1 0)], 'mySecondCommentHere', 'r'],
-        [[qw(0 3 2)], 'myThirdCommentHere', 'r'],
-        [[qw(2 1 2)], 'myFourthCommentHere', 'r'],
-        [[qw(3 1 1)], 'myFifthCommentHere', 'r']
+        [[qw(3 1 0)], 'e', 'myFirstCommentHere'],
+        [[qw(2 1 0)], 'r', 'mySecondCommentHere'],
+        [[qw(0 3 2)], 'r', 'myThirdCommentHere'],
+        [[qw(2 1 2)], 'r', 'myFourthCommentHere'],
+        [[qw(3 1 1)], 'r', 'myFifthCommentHere']
     );
 }
 
 # return an array ref containing the test item used in chapter 3
 sub chapter_3_test {
-    return [[qw(3 1 2)], 'myCommentHere', 'r'];
+    return [[qw(3 1 2)], 'r', 'myCommentHere'];
 }
 
 1;
