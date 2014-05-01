@@ -210,15 +210,17 @@ sub test_gang_effects {
 # test the finnverb data set; just check how many exemplars
 # were correctly classified
 sub test_finnverb {
-    my $p = Algorithm::AM->new(
-        path($Bin, '..', 'data', 'finnverb'),
-        variables => 10,
-        commas => 'no',
+    my $am = Algorithm::AM->new(
+        Algorithm::AM::Project->new(
+            path => path($Bin, '..', 'data', 'finnverb'),
+            variables => 10,
+            commas => 'no'
+        ),
         exclude_given => 1,
     );
 
     my $count = 0;
-    $p->classify(
+    $am->classify(
         endtesthook   => sub {
             my ($am, $data) = @_;
             my $sum = $am->{sum};

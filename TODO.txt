@@ -23,9 +23,6 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
-require user to create and pass in the Project object?
-	- this would allow us to change commas to boolean and still check for non-existence (more gracefully than otherwise).
-
 change commas to be either 1 or 0
 	maybe it would be even better to create a "formatting" flag that can be given the name of a class that reads and returns project data.
 

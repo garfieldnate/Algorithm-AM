@@ -39,16 +39,9 @@ my %import;
 sub new {
     my ($class, $project, %opts) = @_;
 
-    if(!$project){
-        croak 'Must specify project';
+    if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
+        croak 'Missing required input Algorithm::AM::Project object.'
     }
-
-    # all of the options except commas are for the Project object,
-    # but creating the Project first could use a lot of time, and
-    # incorrect classification options is a fatal error. So put this
-    # aside for the Project constructor.
-    my $commas = $opts{commas};
-    delete $opts{commas};
 
     my $opts = _check_classify_opts(
         #classification defaults
@@ -70,13 +63,6 @@ sub new {
         $log->debug($debug);
     }
 
-    # if $project is not a Project object, then it should be
-    # the path to a project directory.
-    if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
-        $project = Algorithm::AM::Project->new(
-            variables => $opts{variables},
-            path => $project, commas => $commas);
-    }
     # TODO: these lines are necessary for now because each of these variables
     # is assumed to be provided to the hook methods through $self. Once we
     # have data objects, and we can provide proper accessors (and remove

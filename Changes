@@ -6,6 +6,7 @@ Revision history for AM-Algorithm
     Added Algorithm::AM::Result module
     Removed separate support for "short" and "long" outcomes
     Changed add_test and add_data to accept spec last
+    Required user to input Project objection to AM constructor
 2.45      2014-02-11 21:27:02 America/Los_Angeles
     Fixed gang/grandtotal calculation bugs
     removed debug print statements!
