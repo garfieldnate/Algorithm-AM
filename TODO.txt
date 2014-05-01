@@ -4,13 +4,13 @@ Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Add tests for logging
 
+Add some logging in Project to notify user of, for example, the format being used to parse the data file.
+
+error checking for getting data data at a specific index; make sure it's a legal index.
+
+Add logic for classifying items whose correct classification is unknown.
+
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
-
-Move format variables into Result. Perhaps only save information important for making these in Project, and make them accessible.
-
-Document which strings are allowed for outcomes, data, etc. Definitely not '0'.
-
-Get rid of all of that formatting stuff and just use some other module to print pretty rows. The complication is unnecessary.
 
 Add timing accessors to Result.
 Do better time handling in Result; something that will allow checking how long classification took would be nice.
@@ -23,22 +23,13 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
-change commas to be either 1 or 0
-	maybe it would be even better to create a "formatting" flag that can be given the name of a class that reads and returns project data.
-
 test properly that classification arguments can be given with either the constructor or the classify() method. Might be easier after we have results objects that can report that properly.
 
 perhaps require/allow user to input number of variables in their vectors in the constructor?
 
-May be helpful to add little readme files explaining each of the test data projects.
-
 do something better than just calling rand() for the probability/skip function.
 
 Projects normally contain separate datasets for training/testing/evaluating. Create another module to hold a dataset. Project can manage 2 datasets (data and test). This would be much more flexible.
-
-error checking for getting data data at a specific index; make sure it's a legal index.
-
-possibly create a DataSet class to pass to new Projects.
 
 change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
 
@@ -46,58 +37,48 @@ Move the XS code to a different package so all of those variables can be stored 
 
 Use undef instead of increment for making unique string lists using hashes.
 
-It seems Theron expected no more than 60 data columns. Maybe warn somewhere if more than that are used.
-
-factor out data line parsing into a single routine
-
-Create Algorithm::AM::Datum object to pass to hooks. Add accessors that make the use of outcometonum, outcomelist, etc. obsolete. They are gross.
-
-Make a single method for reading a data/test file, and move the creation of the format variables to their own loop. Or decide not to.
+It seems Theron expected no more than 60 data columns. Find out why, and if some warnings are needed for datasets that exceed that.
 
 Change the POD to use Pod::Weaver properly (=method, etc.).
-
-Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
 
 change activeVars to be accepted at classification time
 
 work on types of input to AM dataset
-
--allow user to specify input format
-	specify bigsep, littlesep
-	specify comment character
-
--allow user to pass in actual data instead of using project file.
+	Right now we have commas and no commas;
+	- how about allowing user to specify input separators bigsep and littlesep?
+	- how about taking the name of a class that can read and return a data set?
+	- how about allowing users to pass in an extraction sub that will be given lines and returns data?
 
 properly destroy project or AM object on error so that illegal state is not possible even if someone catches an error and tries to continue.
 
-##Printing TODOs:
--Make printing clearer (label gangs, etc.)
--output something about the number of features in the vectors contained in a data file (I think this is done. Just make it clearer?)
-
 ## Other TODOs:
 
-- update HISTORY pod section in AM.pm
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
-
--Eliminate outcometonum
-	- using an accessor of some kind
 
 #Eventual refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
 		classify() method should classify a single vector
+			- that might mean more refactoring of project
 		Should move iteration, and iter vars, into a separate class.
 	I think beginning vars should just be in the AM object;
-	format vars should also be in the AM object
-		actually these should just die
-	usage of outcometonum should be replaced with a method
-	@sum should be replaced with something with index starting at 0
-		possibly rename to "subtotals"
-	I think endvars should be a return value besides being available in the hook.
+	format vars should die, and some other module should be used for printing
+		- once those are gone, we can safely implement remove_data and remove_test in Project
+	Variable access via $data in hooks should be replaced with method access via objects passed to hooks
+		these should simplify basic operations for the user; for example:
+			outcome strings should be given, instead of numbers (no more outcometonum)
+			The user shouldn't be required access arrays starting from index 1, like with @sum
+			possibly rename to "subtotals"
+			envars should just be given the Result object
 
 ## Documentation TODOs:
--Read through documentation, update/clean if necessary
-	Include Wikipedia pictures
--Define "specifier" early on in the documentation. Give the anatomy of a data file.
--Mention that the specifier is the data unless otherwise specified
--remove references to 'the red book'; put all documentation in the code!
+- Documentation on how to use AM will need to be almost completely re-written, as the API has completely changed.
+- Include Wikipedia pictures
+- Define all terms early in the documentation and use them consistently. Try to be consistent with machine learning literature. Provide a glossary of terms including usage from ML and AM literature.
+	- specifier/comment (set to data unless otherwise specified)
+	- outcome/prediction/oracle/label
+	- data/exemplar/train/item
+	- test, labeled test item
+	- classify
+- Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
+- Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.
