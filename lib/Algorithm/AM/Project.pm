@@ -17,20 +17,20 @@ you must also specify a C<commas> parameter to indicate the file
 format:
 
  my $project = Algorithm::AM::Project->new(
-     variables => 4, 'path/to/project', commas => 'no');
+     variables => 4, 'path/to/project', commas => 0);
 
 A project directory should contain the data set and the test set
 (named, not surprisingly, F<data> and F<test>).
 Each line of the data and test files should represent a single
 exemplar. The required format of each line depends on the value of the
-C<commas> parameter. C<< commas => 'yes' >> indicates the following
+C<commas> parameter. C<< commas => 1 >> indicates the following
 style:
 
     outcome   ,   v a r i a b l e s   ,   spec
 
 where commas are used to separate the outcome, exemplar variables
 and spec (or comment), and spaces are used to separate the exemplar
-variables. C<< commas => 'no' >> indicates the following style:
+variables. C<< commas => 0 >> indicates the following style:
 
     outcome variables spec
 
@@ -91,10 +91,9 @@ sub new {
 }
 
 # check the project path and the options for validity
-# currently "commas" is the only accepted option
 # Return an option hash to initialize $self with, containing the
-# project path object and field_sep and var_sep, which are used to
-# parse data lines
+# project path object, number of variables, and field_sep and var_sep,
+# which are used to parse data lines
 sub _check_opts {
     my (%opts) = @_;
 
@@ -111,22 +110,19 @@ sub _check_opts {
         delete $opts{path};
         %proj_opts = (path => $path);
 
-        croak "Failed to provide 'commas' parameter (should be 'yes' or 'no')"
+        croak "Failed to provide 'commas' parameter"
             unless exists $opts{commas};
 
-        if($opts{commas} eq 'yes'){
+        if($opts{commas}){
             # outcome/data/spec separate by a comma
             $proj_opts{field_sep}   = qr{\s*,\s*};
             # variables separated by space
             $proj_opts{var_sep} = qr{\s+};
-        }elsif($opts{commas} eq 'no'){
+        }else{
             # outcome/data/spec separated by space
             $proj_opts{field_sep}   = qr{\s+};
             # no seps for variables; each is a single character
             $proj_opts{var_sep} = qr{};
-        }else{
-            croak "Failed to specify comma formatting correctly;\n" .
-                q{(must specify commas => 'yes' or commas => 'no')};
         }
         delete $opts{commas};
     }

@@ -40,7 +40,7 @@ sub test_project {
             Algorithm::AM::Project->new(
                 path => $project_path,
                 variables => 3,
-                commas => 'no'
+                commas => 0
             )
         );
         isa_ok($am->get_project, 'Algorithm::AM::Project',

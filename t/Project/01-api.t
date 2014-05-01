@@ -28,7 +28,7 @@ sub test_constructor {
         Algorithm::AM::Project->new(
             variables => 3,
             path => path($data_dir, 'chapter3'),
-            commas => 'no'
+            commas => 0
         )
     } 'constructor with project directory';
 
@@ -41,7 +41,7 @@ sub test_constructor {
     throws_ok {
         Algorithm::AM::Project->new(
             path => path($data_dir, 'chapter3'),
-            commas => 'no'
+            commas => 0
         );
     } qr/Failed to provide 'variables' parameter/,
     q<dies without 'variables' parameter>;
@@ -57,7 +57,7 @@ sub test_constructor {
         Algorithm::AM::Project->new(
             variables => 3,
             path => path($data_dir, 'chapter3'),
-            commas => 'no', foo => 'bar', baz => 'buff');
+            commas => 0, foo => 'bar', baz => 'buff');
     } qr/Unknown parameters in Project constructor: baz, foo/,
     'dies with unknown parameters';
     return;

@@ -214,7 +214,7 @@ sub test_finnverb {
         Algorithm::AM::Project->new(
             path => path($Bin, '..', 'data', 'finnverb'),
             variables => 10,
-            commas => 'no'
+            commas => 0
         ),
         exclude_given => 1,
     );
