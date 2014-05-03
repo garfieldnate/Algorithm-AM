@@ -114,11 +114,15 @@ sub _check_opts {
             unless exists $opts{commas};
 
         if($opts{commas}){
+            $log->info('Parsing data with commas file format')
+                if $log->is_info;
             # outcome/data/spec separate by a comma
             $proj_opts{field_sep}   = qr{\s*,\s*};
             # variables separated by space
             $proj_opts{var_sep} = qr{\s+};
         }else{
+            $log->info('Parsing data with no-commas file format')
+                if $log->is_info;
             # outcome/data/spec separated by space
             $proj_opts{field_sep}   = qr{\s+};
             # no seps for variables; each is a single character

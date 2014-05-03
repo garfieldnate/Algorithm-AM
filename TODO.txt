@@ -4,8 +4,6 @@ Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Add tests for logging
 
-Add some logging in Project to notify user of, for example, the format being used to parse the data file.
-
 error checking for getting data data at a specific index; make sure it's a legal index.
 
 Add logic for classifying items whose correct classification is unknown.
@@ -23,9 +21,7 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
-test properly that classification arguments can be given with either the constructor or the classify() method. Might be easier after we have results objects that can report that properly.
-
-perhaps require/allow user to input number of variables in their vectors in the constructor?
+test properly that classification arguments can be given with either the constructor or the classify() method.
 
 do something better than just calling rand() for the probability/skip function.
 
@@ -46,7 +42,7 @@ change activeVars to be accepted at classification time
 work on types of input to AM dataset
 	Right now we have commas and no commas;
 	- how about allowing user to specify input separators bigsep and littlesep?
-	- how about taking the name of a class that can read and return a data set?
+	- how about taking the name of a class that can read and return a data set? It would be nice to then be able to log messages like "Comma Formatter found bad line", which would tell the user which formatter was used, which may have been a mistake.
 	- how about allowing users to pass in an extraction sub that will be given lines and returns data?
 
 properly destroy project or AM object on error so that illegal state is not possible even if someone catches an error and tries to continue.
@@ -55,6 +51,7 @@ properly destroy project or AM object on error so that illegal state is not poss
 
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
+-Think about possibilities of other types of lattices (non-boolean)
 
 #Eventual refactoring plan:
 	Algorithm::AM object should be a single classifier, not a batch runner.
