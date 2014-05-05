@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Right now: Change spaces to asterisks or some such in supracontext printing. Reorder columns in gang printing. Just make sure everything is easy to read.
-
 Find all "grandtotal"s and change them to "total_pointers"
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?

@@ -361,7 +361,8 @@ sub gang_summary {
             $gang->{score},
             undef,
             undef,
-            @$variables
+            # print undefined variable slots as asterisks
+            map {$_ || '*'} @$variables
         ];
         # add each outcome in the gang, along with the total number
         # and effect of the gang items supporting it
