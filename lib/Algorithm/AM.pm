@@ -25,8 +25,6 @@ XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Any qw($log);
 
-my %import;
-
 ## TODO: variables to be exported some day
 ## @itemcontextchain
 ## @datatocontext
@@ -117,7 +115,7 @@ sub new {
 
 Using the analogical modeling algorithm, this method classifies
 the test items in the project and returns a list of
-L<Algorithm::AM::Result|Result> objects. Information about the current
+L<Result|Algorithm::AM::Result> objects. Information about the current
 progress, configuration and timing is logged at the debug level.
 The statistical summary, analogical set, and gang summary (without
 items listed) are logged at the info level, and the full gang summary
@@ -337,13 +335,6 @@ sub classify {
                 next;
             }
 
-            my $longest = length $grandtotal;
-            my $gang_format = "%$longest.${longest}s";
-            my $var_format = $project->var_format;
-            my $spec_format = $project->spec_format;
-            my $outcome_format = $project->outcome_format;
-            my $data_format = $project->data_format;
-
     # line 1700 "calculate results"
             $result->_process_stats(
                 # TODO: after refactoring to a "guts" object,
@@ -405,8 +396,13 @@ sub classify {
     return @results;
 }
 
+=head2 C<get_project>
+
+Returns the Project object used as the source of data by this instance.
+
+=cut
 sub get_project {
-    my ($self, @args) = @_;
+    my ($self) = @_;
     return $self->{project};
 }
 

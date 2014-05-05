@@ -341,7 +341,6 @@ sub gang_summary {
     foreach my $gang (
             sort {bigcmp($b->{score}, $a->{score})} values $gangs){
         my $variables = $gang->{vars};
-        my $score = $gang->{score};
         # print the gang supracontext, effect and number of pointers
         $info .= sprintf(
             "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
@@ -351,8 +350,7 @@ sub gang_summary {
         $info .= "$dashes\n";
         # print each outcome, along with the total number and effect of
         # the gang items supporting it
-        my $outcome;
-        for $outcome (keys %{ $gang->{outcome} }){
+        for my $outcome (keys %{ $gang->{outcome} }){
             $info .= sprintf(
                 "%7.3f%%  $gang_format x $data_format  $outcome_format",
                 100 * $gang->{outcome}->{$outcome}->{effect},
@@ -376,7 +374,6 @@ sub gang_summary {
 
 sub _calculate_gangs {
     my ($self) = @_;
-    my $test_item = $self->test_item;
     my $project = $self->project;
     my $total_pointers = $self->total_pointers;
     my $raw_gang = $self->{gang};
