@@ -190,8 +190,7 @@ sub test_gang_summary {
     subtest 'gang printing' => sub {
         plan tests => 2;
         my $gang = ${$result->gang_summary(0)};
-        is_string_nows($gang,
-            <<'END_GANG', 'gang summary without items') or note $gang;
+        my $expected = <<'END_GANG';
 +------------+----------+-----------+---------+-------+
 | Percentage | Pointers | Num Items | Outcome |       |
 | Context    |          |           |         | 3 1 2 |
@@ -211,9 +210,11 @@ sub test_gang_summary {
 |  15.385%   | 2        | 1         | r       |       |
 +------------+----------+-----------+---------+-------+
 END_GANG
+        is_string_nows($gang, $expected,
+            'gang summary without items') or note $gang;
         $gang = ${$result->gang_summary(1)};
-        is_string_nows($gang,
-            <<'END_GANG', 'gang summary with items') or note $gang;
+
+        $expected = <<'END_GANG';
 +------------+----------+-----------+---------+-------+---------------------+
 | Percentage | Pointers | Num Items | Outcome |       | Item Comment        |
 | Context    |          |           |         | 3 1 2 |                     |
@@ -237,6 +238,8 @@ END_GANG
 |            |          |           |         | 0 3 2 | myThirdCommentHere  |
 +------------+----------+-----------+---------+-------+---------------------+
 END_GANG
+        is_string_nows($gang, $expected,
+            'gang summary with items') or note $gang;
     };
     return;
 }
