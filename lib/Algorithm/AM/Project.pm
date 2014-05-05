@@ -280,71 +280,6 @@ sub get_outcome {
     return $self->{outcomelist}->[$index];
 }
 
-=head2 C<var_format>
-
-Returns a format string for printing the variables of
-a data item.
-
-=cut
-sub var_format {
-    my ($self) = @_;
-
-    if(!$self->num_exemplars){
-        croak "must add data before calling var_format";
-    }
-
-    return join " ", map { "%-$_.${_}s" }
-        @{ $self->{longest_variables} };
-}
-
-=head2 C<spec_format>
-
-Returns a format string for printing a spec string from the data set.
-
-=cut
-sub spec_format {
-    my ($self) = @_;
-
-    if(!$self->num_exemplars){
-        croak "must add data before calling spec_format";
-    }
-
-    my $length = $self->{longest_spec};
-    return "%-$length.${length}s";
-}
-
-=head2 C<outcome_format>
-
-Returns (and/or sets) a format string for printing an outcome.
-
-=cut
-sub outcome_format {
-    my ($self) = @_;
-
-    if(!$self->num_exemplars){
-        croak "must add data before calling outcome_format";
-    }
-
-    my $length = $self->{longest_outcome};
-    return "%-$length.${length}s";
-}
-
-
-=head2 C<data_format>
-
-Returns the format string for printing the number of data items.
-
-=cut
-sub data_format {
-    my ($self) = @_;
-
-    if(!$self->num_exemplars){
-        croak "must add data before calling data_format";
-    }
-
-    return '%' . $self->num_exemplars . '.0u';
-}
-
 =head2 C<outcome_index>
 
 Returns the index of the given outcome in outcomelist, or
@@ -462,7 +397,6 @@ sub add_data {
     $spec ||= _serialize_data($data);
 
     $self->_check_variables($data, $spec);
-    $self->_update_format_vars($data, $spec, $outcome);
     $self->_update_outcome_vars($outcome);
 
     # store the new data item
@@ -484,34 +418,6 @@ sub _check_variables {
     }
     return;
 }
-
-# update format variables used for printing;
-# needs updating every data item.
-sub _update_format_vars {
-    my ($self, $data, $spec, $outcome) = @_;
-
-    if((my $l = length $spec) > $self->{longest_spec}){
-        $self->{longest_spec} = $l;
-    }
-
-    # longest_variables is an arrayref, each index holding the
-    # length of the longest variable in that column.
-    # Initialize it on addition of first data item.
-    if(!$self->{longest_variables}[0]){
-        $self->{longest_variables} = [((0) x scalar @$data)]
-    }
-    for my $i (0 .. $#$data ) {
-        my $l = length $data->[$i];
-        $self->{longest_variables}[$i] = $l
-            if $l > $self->{longest_variables}[$i];
-    }
-
-    if( (my $l = length $outcome) > $self->{longest_outcome}) {
-        $self->{longest_outcome} = $l;
-    }
-    return;
-}
-
 
 # keep track of outcomes; needs updating for every data/test item.
 # Variables:

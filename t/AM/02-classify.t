@@ -153,7 +153,7 @@ sub test_analogical_set {
 sub test_gang_effects {
     my ($result) = @_;
     my $expected_effects = {
-      '    2' => {
+      '- - 2' => {
         'data' => {'r' => [2]},
         'effect' => '0.153846153846154',
         'homogenous' => 'r',
@@ -167,7 +167,7 @@ sub test_gang_effects {
         'size' => 1,
         'vars' => ['','','2']
       },
-      '  1 2' => {
+      '- 1 2' => {
         'data' => {'r' => [3]},
         'effect' => '0.230769230769231',
         'homogenous' => 'r',
@@ -181,7 +181,7 @@ sub test_gang_effects {
         'size' => 1,
         'vars' => ['','1','2']
       },
-      '3 1  ' => {
+      '3 1 -' => {
         'data' => {'e' => [0], 'r' => [4]},
         'effect' => '0.615384615384615',
         'homogenous' => 0,

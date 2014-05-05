@@ -79,5 +79,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- data/exemplar/train/item
 	- test, labeled test item, given
 	- classify
+	- grandtotal/total_pointers/total_score
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
 - Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.

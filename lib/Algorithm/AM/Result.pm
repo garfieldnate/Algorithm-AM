@@ -36,6 +36,7 @@ use Class::Tiny qw(
     probability
     count_method
     datacap
+    total_pointers
 
     start_time
     end_time
@@ -45,8 +46,6 @@ use Class::Tiny qw(
     winners
     is_tie
     result
-
-    gang_format
 
     scores
 );
@@ -95,18 +94,6 @@ sub config_info {
     my @table = _make_table(\@headers, \@rows);
     my $info = join '', @table;
     return \$info;
-}
-
-# given the total number of pointers, create a format for printing gangs
-# then return the current total number of pointers
-sub total_pointers {
-    my ($self, $total_pointers) = @_;
-    if($total_pointers){
-        my $length = length $total_pointers;
-        $self->{gang_format} = "%$length.${length}s";
-        $self->{total_pointers} = $total_pointers;
-    }
-    return $self->{total_pointers};
 }
 
 # input several variables from AM's guts (grandtotal, sum,
@@ -455,7 +442,7 @@ sub _calculate_gangs {
     {
         my @variables = $self->_unpack_supracontext($context);
         # for now, store gangs by the supracontext printout
-        my $key = sprintf($project->var_format, @variables);
+        my $key = join ' ', map {$_ || '-'} @variables;
         $gangs->{$key}->{score} = $raw_gang->{$context};
         $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_pointers;
         $gangs->{$key}->{vars} = \@variables;
@@ -662,12 +649,12 @@ highest score.
 Returns "tie", "correct", or "incorrect", depending on the outcome of
 the classification.
 
-=head2 C<gang_format>
-
-Returns a format string that can be used for printing the number of
-pointers in a gang.
-
 =head2 C<scores>
 
 Returns a hash mapping all predicted outcomes to their scores, or
 the number of pointers associated with them.
+
+=head2 C<total_pointers>
+
+The total number of pointers between all of the data items and the test
+item.

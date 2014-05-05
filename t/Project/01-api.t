@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 41;
+plan tests => 33;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -19,7 +19,6 @@ test_data();
 test_paths();
 test_test_items();
 test_private_data();
-test_format_vars();
 
 # test that the constructor lives/dies when given valid/invalid
 # parameters
@@ -100,55 +99,6 @@ sub test_paths {
     my $project = Algorithm::AM::Project->new(variables => 3);
     is($project->base_path, undef,
         'base_path is undef when no directory is provided');
-    return;
-}
-
-sub test_format_vars {
-    # format variables don't make sense without data, so errors
-    # are thrown here
-    my $project = Algorithm::AM::Project->new(variables => 3);
-    throws_ok {
-        $project->var_format;
-    } qr/must add data before calling var_format/,
-        'error getting var_format before adding data';
-    throws_ok {
-        $project->spec_format;
-    } qr/must add data before calling spec_format/,
-        'error getting spec_format before adding data';
-    throws_ok {
-        $project->outcome_format;
-    } qr/must add data before calling outcome_format/,
-        'error getting outcome_format before adding data';
-    throws_ok {
-        $project->data_format;
-    } qr/must add data before calling data_format/,
-        'error getting data_format before adding data';
-
-    # test with data made specially for testing format variables
-    $project->add_data([qw(aaaaa bbb bbb)],
-        'exception', 'myCommentHere');
-    $project->add_data([qw(dd bbb bbb)],
-        'regular',
-        'myCommentHere blah blah blah blah');
-    $project->add_data([qw(aaaaa cccc dd)], 'regular',
-        'myCommentHere');
-    $project->add_data([qw(dd bbb dd)], 'regular',
-        'myCommentHere');
-    $project->add_data([qw(aaaaa bbb bbb)], 'regular',
-        'myCommentHere');
-    $project->add_data([qw(aaaaa bbb dd)], 'exception',
-        'myCommentHere');
-    $project->add_data([qw(dd bbb bbb)],'regular',
-        'myCommentHere blah blah blah blah longest!');
-
-    is($project->var_format, '%-5.5s %-4.4s %-3.3s',
-        'correct var_format');
-    is($project->spec_format, '%-42.42s',
-        'correct spec_format');
-    is($project->outcome_format, '%-9.9s',
-        'correct outcome_format');
-    is($project->data_format, '%7.0u',
-        'correct data_format');
     return;
 }
 
