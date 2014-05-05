@@ -24,21 +24,24 @@ sub test_config_info {
             test_spec => 'comment',
             test_outcome => 2,
             exclude_nulls => 1,
-            probability => 1,
             count_method => 'linear',
             datacap => 50,
             test_in_data => 1,
         );
         my $info = ${$result->config_info};
         my $expected = <<'END_INFO';
-Given Context:  a b c, comment
-Number of data items: 50
-Probability of including any one data item: 1
-Total Excluded: 3  + test item
-Nulls: exclude
-Gang: linear
-Number of active variables: 3
-Test item is in the data.
++----------------------------+----------------+
+| Option                     | Setting        |
++----------------------------+----------------+
+| Given Context              | a b c, comment |
+| Number of data items       | 50             |
+| Test Item Excluded         | yes            |
+| Total Excluded             |  4             |
+| Nulls                      | exclude        |
+| Gang                       | linear         |
+| Number of active variables |  3             |
+| Test item in data          | yes            |
++----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
             'given/nulls excluded, linear, item in data') or note $info;
@@ -58,17 +61,23 @@ END_INFO
 
         $info = ${$result->config_info};
         $expected = <<'END_INFO';
-Given Context:  a b c, comment
-Number of data items: 40
-Probability of including any one data item: 0.5
-Total Excluded: 0
-Nulls: include
-Gang: squared
-Number of active variables: 3
++----------------------------+----------------+
+| Option                     | Setting        |
++----------------------------+----------------+
+| Given Context              | a b c, comment |
+| Number of data items       | 40             |
+| Data Inclusion Probability |  0.5           |
+| Test Item Excluded         | no             |
+| Total Excluded             |  0             |
+| Nulls                      | include        |
+| Gang                       | squared        |
+| Number of active variables |  3             |
+| Test item in data          | no             |
++----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
-            'given/nulls included, linear, item not in data') or
-            note $info;
+            'given/nulls included, linear, item not in data, probability')
+            or note $info;
     };
     return;
 }
@@ -86,10 +95,14 @@ sub test_result_info {
         is_string_nows($stats,
             <<'END_STATS', 'statistical summary') or note $stats;
 Statistical Summary
-e   4   30.769%
-r   9   69.231%
-   --
-   13
++---------+----------+------------+
+| Outcome | Pointers | Percentage |
++---------+----------+------------+
+| e       |  4       |  30.769%   |
+| r       |  9       |  69.231%   |
++---------+----------+------------+
+| Total   | 13       |            |
++---------+----------+------------+
 Expected outcome: r
 Correct outcome predicted.
 END_STATS
@@ -98,44 +111,62 @@ END_STATS
             <<'END_SET', 'analogical set') or note $set;
 Analogical Set
 Total Frequency = 13
-e  myFirstCommentHere    4   30.769%
-r  myThirdCommentHere    2   15.385%
-r  myFourthCommentHere   3   23.077%
-r  myFifthCommentHere    4   30.769%
++---------+---------------------+----------+------------+
+| Outcome | Exemplar            | Pointers | Percentage |
++---------+---------------------+----------+------------+
+| e       | myFirstCommentHere  | 4        |  30.769%   |
+| r       | myThirdCommentHere  | 2        |  15.385%   |
+| r       | myFourthCommentHere | 3        |  23.077%   |
+| r       | myFifthCommentHere  | 4        |  30.769%   |
++---------+---------------------+----------+------------+
 END_SET
         my $gang = ${$result->gang_summary(0)};
         is_string_nows($gang,
             <<'END_GANG', 'gang summary without items') or note $gang;
-Gang effects             3 1 2
- 61.538%   8             3 1
-------------
- 30.769%   4 x     1  e
- 30.769%   4 x     1  r
- 23.077%   3               1 2
-------------
- 23.077%   3 x     1  r
- 15.385%   2                 2
-------------
- 15.385%   2 x     1  r
++------------+----------+-----------+---------+-------+
+| Percentage | Pointers | Num Items | Outcome |       |
+| Context    |          |           |         | 3 1 2 |
++------------+----------+-----------+---------+-------+
+*******************************************************
+|  61.538%   | 8        |           |         | 3 1   |
++------------+----------+-----------+---------+-------+
+|  30.769%   | 4        | 1         | e       |       |
+|  30.769%   | 4        | 1         | r       |       |
+*******************************************************
+|  23.077%   | 3        |           |         |   1 2 |
++------------+----------+-----------+---------+-------+
+|  23.077%   | 3        | 1         | r       |       |
+*******************************************************
+|  15.385%   | 2        |           |         |     2 |
++------------+----------+-----------+---------+-------+
+|  15.385%   | 2        | 1         | r       |       |
++------------+----------+-----------+---------+-------+
 END_GANG
         $gang = ${$result->gang_summary(1)};
         is_string_nows($gang,
             <<'END_GANG', 'gang summary with items') or note $gang;
-Gang effects             3 1 2
- 61.538%   8             3 1
-------------
- 30.769%   4 x     1  e
-                         3 1 0  myFirstCommentHere
- 30.769%   4 x     1  r
-                         3 1 1  myFifthCommentHere
- 23.077%   3               1 2
-------------
- 23.077%   3 x     1  r
-                         2 1 2  myFourthCommentHere
- 15.385%   2                 2
-------------
- 15.385%   2 x     1  r
-                         0 3 2  myThirdCommentHere
++------------+----------+-----------+---------+-------+---------------------+
+| Percentage | Pointers | Num Items | Outcome |       | Item Comment        |
+| Context    |          |           |         | 3 1 2 |                     |
++------------+----------+-----------+---------+-------+---------------------+
+*****************************************************************************
+|  61.538%   | 8        |           |         | 3 1   |                     |
++------------+----------+-----------+---------+-------+---------------------+
+|  30.769%   | 4        | 1         | e       |       |                     |
+|            |          |           |         | 3 1 0 | myFirstCommentHere  |
+|  30.769%   | 4        | 1         | r       |       |                     |
+|            |          |           |         | 3 1 1 | myFifthCommentHere  |
+*****************************************************************************
+|  23.077%   | 3        |           |         |   1 2 |                     |
++------------+----------+-----------+---------+-------+---------------------+
+|  23.077%   | 3        | 1         | r       |       |                     |
+|            |          |           |         | 2 1 2 | myFourthCommentHere |
+*****************************************************************************
+|  15.385%   | 2        |           |         |     2 |                     |
++------------+----------+-----------+---------+-------+---------------------+
+|  15.385%   | 2        | 1         | r       |       |                     |
+|            |          |           |         | 0 3 2 | myThirdCommentHere  |
++------------+----------+-----------+---------+-------+---------------------+
 END_GANG
     };
     return;

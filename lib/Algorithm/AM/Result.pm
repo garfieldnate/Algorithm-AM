@@ -2,6 +2,7 @@
 package Algorithm::AM::Result;
 use strict;
 use warnings;
+use Text::Table;
 # ABSTRACT: Store results of an AM classification
 # VERSION;
 
@@ -49,7 +50,11 @@ use Class::Tiny qw(
 
     scores
 );
+use Carp 'croak';
 use Algorithm::AM::BigInt 'bigcmp';
+
+# For printing percentages in reports
+my $percentage_format = '%7.3f%%';
 
 =head2 C<config_info>
 
@@ -71,23 +76,24 @@ following accessors is included:
 =cut
 sub config_info {
     my ($self) = @_;
-    my $info = '';
-    $info .=
-        "Given Context:  @{ $self->{test_item} }, $self->{test_spec}\n";
-    $info .= "Number of data items: $self->{datacap}\n";
-    if (defined $self->{probability}){
-        $info .= 'Probability of including any one data item: ' .
-            $self->{probability} . "\n";
-    }
-    $info .= 'Total Excluded: ' . scalar @{$self->excluded_data} .
-        ($self->{given_excluded} ? " + test item\n" : "\n");
-    $info .= 'Nulls: ' . ($self->{exclude_nulls} ? 'exclude' : 'include')
-        . "\n";
-    $info .= "Gang: $self->{count_method}\n";
-    $info .= "Number of active variables: $self->{num_variables}\n";
-    if($self->{test_in_data}){
-        $info .= "Test item is in the data.\n";
-    }
+    my @headers = ('Option', 'Setting');
+    my @rows = (
+        [ "Given Context", "@{ $self->{test_item} }, $self->{test_spec}" ],
+        [ "Number of data items", "$self->{datacap}" ],
+        (defined $self->{probability} ?
+            [ "Data Inclusion Probability", $self->{probability} ] :
+            ()
+        ),
+        [ "Test Item Excluded", ($self->{given_excluded} ? 'yes' : 'no')],
+        [ "Total Excluded", scalar @{$self->excluded_data} +
+            ($self->{given_excluded} ? 1 : 0)],
+        [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
+        [ "Gang",  $self->{count_method}],
+        [ "Number of active variables", $self->{num_variables} ],
+        [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
+    );
+    my @table = _make_table(\@headers, \@rows);
+    my $info = join '', @table;
     return \$info;
 }
 
@@ -182,37 +188,35 @@ Returns a scalar reference (string) containing a statistical summary
 of the classification results. The summary includes all possible
 predicted outcomes with their numbers of pointers and percentage
 scores and the total number of pointers. Whether the predicted outcome
-is correct/incorrect/a tie of some sort is also printed, if the
+is correct/incorrect/a tie of some sort is also included, if the
 expected outcome has been provided.
 
 =cut
 sub statistical_summary {
     my ($self) = @_;
     my %scores = %{$self->scores};
-    my $outcome_format = $self->project->outcome_format;
     my $grand_total = $self->total_pointers;
-    my $gang_format = $self->{gang_format};
+
+    # Make a table with information about predictions for different
+    # outcomes. Each row contains an outcome name, the number of
+    # pointers, and the percentage predicted.
+    my @rows;
+    for my $outcome(sort keys %scores){
+        push @rows, [ $outcome, $scores{$outcome},
+            sprintf($percentage_format,
+                100 * $scores{$outcome} / $grand_total) ];
+    }
+    # add a Total row
+    push @rows, [ 'Total', $grand_total ];
+
+    my @table = _make_table(['Outcome', 'Pointers', 'Percentage'],
+        \@rows);
+    # copy the rule from the first row into the second to last row
+    # to separate the Total row
+    splice(@table, $#table - 1, 0, $table[0]);
 
     my $info = "Statistical Summary\n";
-    for my $outcome(sort keys %scores){
-        $info .=
-            # outcome name, number of pointers,
-            # and percentage predicted
-            sprintf(
-                "$outcome_format  $gang_format  %7.3f%%\n",
-                $outcome,
-                $scores{$outcome},
-                100 * $scores{$outcome} / $grand_total
-            );
-    }
-    # separator row of dashes (-) followed by the total_pointers in
-    # the same column as the other pointer numbers were printed
-    $info .= sprintf(
-        "$outcome_format  $gang_format\n",
-        '', '-' x length $grand_total );
-    $info .= sprintf(
-        "$outcome_format  $gang_format\n",
-        '', $grand_total );
+    $info .= join '', @table;
     # the predicted outcome (the one with the highest number
     # of pointers) and whether or not the prediction was correct.
     # TODO: should note if there's a tie
@@ -261,24 +265,25 @@ sub analogical_set_summary {
     my $set = $self->analogical_set;
     my $project = $self->project;
     my $total_pointers = $self->total_pointers;
-    my $outcome_format = $project->outcome_format;
-    my $spec_format = $project->spec_format;
-    my $gang_format = $self->{gang_format};
 
-    my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
-    # print each item that contributed pointers to the
-    # outcome, ordered by appearance in the dataset
+    # Make a table for the analogical set. Each row contains an
+    # exemplar with its outcome, spec, pointers, and the percentage
+    # of total pointers contributed.
+    my @rows;
     foreach my $data_index (sort keys %$set){
         my $score = $set->{$data_index};
-        $info .=
-            sprintf(
-                "$outcome_format  $spec_format  $gang_format  %7.3f%%",
-                $project->get_outcome(
+        push @rows, [
+            $project->get_outcome(
                     $project->get_exemplar_outcome($data_index) ),
-                $project->get_exemplar_spec($data_index),
-                $score, 100 * $score / $total_pointers
-            ) . "\n";
+            $project->get_exemplar_spec($data_index),
+            $score,
+            sprintf($percentage_format, 100 * $score / $total_pointers)
+        ];
     }
+    my @table = _make_table(
+        ['Outcome', 'Exemplar', 'Pointers', 'Percentage'], \@rows);
+    my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
+    $info .= join '', @table;
     return \$info;
 }
 
@@ -327,68 +332,116 @@ A single boolean parameter can be provided to turn on list printing,
 meaning gang items items are printed. This is false (off) by default.
 
 =cut
-# $print_list means print everything, not just the summary
 sub gang_summary {
     my ($self, $print_list) = @_;
     my $project = $self->project;
-    my $gang_format = $self->{gang_format};
-    my $outcome_format = $project->outcome_format;
-    my $data_format = $project->data_format;
-    my $var_format = $project->var_format;
     my $test_item = $self->test_item;
 
-    if(!$self->{_gang_effects}){
-        $self->_calculate_gangs;
-    }
     my $gangs = $self->gang_effects;
 
-    # TODO: use a module to print pretty columns instead of
-    # doing it by hand
-    my $dashes = '-' x ( (length $self->total_pointers)  + 10 );
-    my $pad = ' ' x length
-        sprintf("%7.3f%%  $gang_format x $data_format  $outcome_format",
-            0, '0', 0, '');
+    # Make a table for the gangs with these rows:
+    #   Percentage
+    #   Pointers
+    #   Num
+    #   Outcome
+    #   Data variables
+    #   (if $print_list is true) Data comment
+    my @rows;
+    # first row is a header with test item for easy reference
+    push @rows, [
+        'Context',
+        undef,
+        undef,
+        undef,
+        @$test_item,
+    ];
 
-    #first print a header with test item for easy reference
-    my $info = sprintf(
-        "Gang effects $gang_format $data_format $outcome_format  $var_format\n",
-        '', '0', '', @$test_item
-    );
-
-    # print information for each gang; sort by order of highest to
+    # store the number of rows added for each gang
+    # will help with printing later
+    my @gang_rows;
+    my $current_row = -1;
+    # add information for each gang; sort by order of highest to
     # lowest effect
     foreach my $gang (
             sort {bigcmp($b->{score}, $a->{score})} values $gangs){
+        $current_row++;
+        $gang_rows[$current_row]++;
         my $variables = $gang->{vars};
-        # print the gang supracontext, effect and number of pointers
-        $info .= sprintf(
-            "%7.3f%%  $gang_format   $data_format  $outcome_format  $var_format\n",
-            100 * $gang->{effect}, $gang->{score}, '0', '', @$variables
-        );
-        # print dashes to separate the gang header
-        $info .= "$dashes\n";
-        # print each outcome, along with the total number and effect of
-        # the gang items supporting it
+        # add the gang supracontext, effect and number of pointers
+        push @rows, [
+            sprintf($percentage_format, 100 * $gang->{effect}),
+            $gang->{score},
+            undef,
+            undef,
+            @$variables
+        ];
+        # add each outcome in the gang, along with the total number
+        # and effect of the gang items supporting it
         for my $outcome (keys %{ $gang->{outcome} }){
-            $info .= sprintf(
-                "%7.3f%%  $gang_format x $data_format  $outcome_format",
-                100 * $gang->{outcome}->{$outcome}->{effect},
+            $gang_rows[$current_row]++;
+            push @rows, [
+                sprintf($percentage_format,
+                    100 * $gang->{outcome}->{$outcome}->{effect}),
                 $gang->{outcome}->{$outcome}->{score},
                 scalar @{ $gang->{data}->{$outcome} },
-                $outcome
-            ) . "\n";
+                $outcome,
+                undef
+            ];
             if($print_list){
-                # print the list of items in the given context
+                # add the list of items in the given context
                 for my $data_index (@{ $gang->{data}->{$outcome} }){
-                    $info .= sprintf(
-                        "$pad  $var_format  " .
-                        $project->get_exemplar_spec($data_index) . "\n",
-                        @{ $project->get_exemplar_data($data_index) } );
+                    $gang_rows[$current_row]++;
+                    push @rows, [
+                        undef,
+                        undef,
+                        undef,
+                        undef,
+                        @{ $project->get_exemplar_data($data_index) },
+                        $project->get_exemplar_spec($data_index),
+                    ];
                 }
             }
         }
     }
-    return \$info;
+
+    # construct the table from the rows
+    my @headers = (
+        \'| ',
+        'Percentage' => \' | ',
+        'Pointers' => \' | ',
+        'Num Items' => \' | ',
+        'Outcome' => \' | ',
+        ('' => \' ') x @$test_item
+    );
+    pop @headers;
+    if($print_list){
+        push @headers, \' | ', 'Item Comment';
+    }
+    push @headers, \' |';
+    my @rule = qw(- +);
+    my $table = Text::Table->new(@headers);
+    $table->load(@rows);
+    # main header
+    $current_row = 0;
+    my $return = $table->rule(@rule) .
+        $table->title .
+        $table->body($current_row) .
+        $table->rule(@rule);
+    $current_row++;
+    # add info with a header for each gang
+    for my $num (@gang_rows){
+        # a row of '*' separates each gang
+        $return .= $table->rule('*','*') .
+            $table->body($current_row) .
+            $table->rule(@rule);
+        $current_row++;
+        for(1 .. $num - 1){
+            $return .= $table->body($current_row);
+            $current_row++;
+        }
+    }
+    $return .= $table->rule(@rule);
+    return \$return;
 }
 
 sub _calculate_gangs {
@@ -486,6 +539,37 @@ sub _unpack_supracontext {
         }
     }
     return @variables;
+}
+
+# mostly by Ovid:
+# http://use.perl.org/use.perl.org/_Ovid/journal/36762.html
+# Return table rows with a nice header and column separators
+sub _make_table {
+    my ( $headers, $rows ) = @_;
+
+    my @rule      = qw(- +);
+    my @headers   = \'| ';
+    push @headers => map { $_ => \' | ' } @$headers;
+    pop  @headers;
+    push @headers => \' |';
+
+    unless ('ARRAY' eq ref $rows
+        && 'ARRAY' eq ref $rows->[0]
+        && @$headers == @{ $rows->[0] }) {
+        croak(
+            "make_table() rows must be an AoA with rows being same size as headers"
+        );
+    }
+    my $table = Text::Table->new(@headers);
+    $table->rule(@rule);
+    $table->body_rule(@rule);
+    $table->load(@$rows);
+
+    return $table->rule(@rule),
+        $table->title,
+        $table->rule(@rule),
+        map({ $table->body($_) } 0 .. @$rows),
+        $table->rule(@rule);
 }
 
 1;
