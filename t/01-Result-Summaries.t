@@ -37,14 +37,14 @@ sub test_config_info {
 +----------------------------+----------------+
 | Option                     | Setting        |
 +----------------------------+----------------+
-| Given Context              | a b c, comment |
-| Number of data items       | 50             |
-| Test Item Excluded         | yes            |
-| Total Excluded             |  4             |
+| Given context              | a b c, comment |
 | Nulls                      | exclude        |
 | Gang                       | linear         |
-| Number of active variables |  3             |
 | Test item in data          | yes            |
+| Test item excluded         | yes            |
+| Total excluded items       |  4             |
+| Number of data items       | 50             |
+| Number of active variables |  3             |
 +----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
@@ -68,15 +68,15 @@ END_INFO
 +----------------------------+----------------+
 | Option                     | Setting        |
 +----------------------------+----------------+
-| Given Context              | a b c, comment |
-| Number of data items       | 40             |
-| Data Inclusion Probability |  0.5           |
-| Test Item Excluded         | no             |
-| Total Excluded             |  0             |
+| Given context              | a b c, comment |
 | Nulls                      | include        |
 | Gang                       | squared        |
-| Number of active variables |  3             |
 | Test item in data          | no             |
+| Test item excluded         | no             |
+| Total excluded items       |  0             |
+| Number of data items       | 40             |
+| Number of active variables |  3             |
+| Data Inclusion Probability |  0.5           |
 +----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,

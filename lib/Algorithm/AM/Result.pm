@@ -77,19 +77,19 @@ sub config_info {
     my ($self) = @_;
     my @headers = ('Option', 'Setting');
     my @rows = (
-        [ "Given Context", "@{ $self->{test_item} }, $self->{test_spec}" ],
+        [ "Given context", "@{ $self->{test_item} }, $self->{test_spec}" ],
+        [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
+        [ "Gang",  $self->{count_method}],
+        [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
+        [ "Test item excluded", ($self->{given_excluded} ? 'yes' : 'no')],
+        [ "Total excluded items", scalar @{$self->excluded_data} +
+            ($self->{given_excluded} ? 1 : 0)],
         [ "Number of data items", "$self->{datacap}" ],
+        [ "Number of active variables", $self->{num_variables} ],
         (defined $self->{probability} ?
             [ "Data Inclusion Probability", $self->{probability} ] :
             ()
         ),
-        [ "Test Item Excluded", ($self->{given_excluded} ? 'yes' : 'no')],
-        [ "Total Excluded", scalar @{$self->excluded_data} +
-            ($self->{given_excluded} ? 1 : 0)],
-        [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
-        [ "Gang",  $self->{count_method}],
-        [ "Number of active variables", $self->{num_variables} ],
-        [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
     );
     my @table = _make_table(\@headers, \@rows);
     my $info = join '', @table;
