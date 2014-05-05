@@ -205,15 +205,16 @@ sub statistical_summary {
     my $info = "Statistical Summary\n";
     $info .= join '', @table;
     # the predicted outcome (the one with the highest number
-    # of pointers) and whether or not the prediction was correct.
-    # TODO: should note if there's a tie
+    # of pointers) and the result (correct/incorrect/tie).
     if ( defined (my $outcome = $self->test_outcome) ) {
         $info .= "Expected outcome: $outcome\n";
-        if ( $self->result() =~ /^tie$|^correct$/) {
+        my $result = $self->result;
+        if ( $result eq 'correct') {
             $info .= "Correct outcome predicted.\n";
-        }
-        else {
-            $info .= "Incorrect outcome predicted\n";
+        }elsif($result eq 'tie'){
+            $info .= "Outcome is a tie.\n";
+        }else {
+            $info .= "Incorrect outcome predicted.\n";
         }
     }
     return \$info;

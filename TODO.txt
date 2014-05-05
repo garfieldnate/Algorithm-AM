@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Right now: change Result to show ties and the number of variables. Put all numeric rows together so that alignment won't be so awkward in statistical_summary. Change spaces to asterisks or some such in supracontext printing. Reorder columns in gang printing. Just make sure everything is easy to read.
+Right now: change Result to show the number of variables. Put all numeric rows together so that alignment won't be so awkward in statistical_summary. Change spaces to asterisks or some such in supracontext printing. Reorder columns in gang printing. Just make sure everything is easy to read.
 
 Find all "grandtotal"s and change them to "total_pointers"
 

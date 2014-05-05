@@ -1,14 +1,18 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 2;
+plan tests => 4;
 use Test::LongString;
 use Algorithm::AM;
 use t::TestAM 'chapter_3_project';
 
-my $project = chapter_3_project();
 test_config_info();
-test_result_info();
+
+my $am = Algorithm::AM->new(chapter_3_project());
+my ($result) = $am->classify();
+test_statistical_summary($result);
+test_aset_summary($result);
+test_gang_summary($result);
 
 # test that the configuration information is correctly printed by
 # the config_info method after setting internal state through
@@ -82,18 +86,14 @@ END_INFO
     return;
 }
 
-# This tests all of the untestable AM-guts logic by running a single
-# classification and checking the printed results.
-# TODO: refactor so we can test individual aspects of a result, e.g.
-# items in the analogical set, individual gang effects, etc.
-sub test_result_info {
-    subtest 'classification info printing' => sub {
-        plan tests => 4;
-        my $am = Algorithm::AM->new($project);
-        my ($result) = $am->classify();
+# test the statistical_summary method; mock the result method
+# and see if the printout uses the returned info correctly.
+sub test_statistical_summary{
+    my ($result) = @_;
+    subtest 'statistical summary' => sub {
+        plan tests => 3;
         my $stats = ${$result->statistical_summary};
-        is_string_nows($stats,
-            <<'END_STATS', 'statistical summary') or note $stats;
+        my $expected = <<'END_STATS';
 Statistical Summary
 +---------+----------+------------+
 | Outcome | Pointers | Percentage |
@@ -106,9 +106,68 @@ Statistical Summary
 Expected outcome: r
 Correct outcome predicted.
 END_STATS
-        my $set = ${$result->analogical_set_summary};
-        is_string_nows($set,
-            <<'END_SET', 'analogical set') or note $set;
+
+        is_string_nows($stats, $expected, 'statistical summary')
+            or note $stats;
+
+        # check that statistical_summary correctly prints out the
+        # incorrect and tie results.
+        {
+            no warnings 'redefine';
+            local *Algorithm::AM::Result::result = sub {
+                return 'incorrect';
+            };
+            $stats = ${$result->statistical_summary};
+            $expected = <<'END_STATS';
+Statistical Summary
++---------+----------+------------+
+| Outcome | Pointers | Percentage |
++---------+----------+------------+
+| e       |  4       |  30.769%   |
+| r       |  9       |  69.231%   |
++---------+----------+------------+
+| Total   | 13       |            |
++---------+----------+------------+
+Expected outcome: r
+Incorrect outcome predicted.
+END_STATS
+            is_string_nows($stats, $expected,
+                'statistical summary (incorrect outcome)') or
+                note $stats;
+
+        }
+        {
+            no warnings 'redefine';
+            local *Algorithm::AM::Result::result = sub {
+                return 'tie';
+            };
+            $stats = ${$result->statistical_summary};
+            $expected = <<'END_STATS';
+Statistical Summary
++---------+----------+------------+
+| Outcome | Pointers | Percentage |
++---------+----------+------------+
+| e       |  4       |  30.769%   |
+| r       |  9       |  69.231%   |
++---------+----------+------------+
+| Total   | 13       |            |
++---------+----------+------------+
+Expected outcome: r
+Outcome is a tie.
+END_STATS
+            is_string_nows($stats, $expected,
+                'statistical summary (tie)') or
+                note $stats;
+        }
+    };
+    return;
+}
+
+# test the analogical set summary
+sub test_aset_summary {
+    my ($result) = @_;
+    my $set = ${$result->analogical_set_summary};
+    my $expected = <<'END_SET';
 Analogical Set
 Total Frequency = 13
 +---------+---------------------+----------+------------+
@@ -120,6 +179,16 @@ Total Frequency = 13
 | r       | myFifthCommentHere  | 4        |  30.769%   |
 +---------+---------------------+----------+------------+
 END_SET
+    is_string_nows($set, $expected, 'analogical set printout') or
+        note $set;
+    return;
+}
+
+# Test the gang summary, with and without individual items included
+sub test_gang_summary {
+    my ($result) = @_;
+    subtest 'gang printing' => sub {
+        plan tests => 2;
         my $gang = ${$result->gang_summary(0)};
         is_string_nows($gang,
             <<'END_GANG', 'gang summary without items') or note $gang;
