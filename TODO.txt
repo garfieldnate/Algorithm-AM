@@ -1,10 +1,12 @@
 Algorithm::AM
 
+Right now: change Result to show ties and the number of variables. Put all numeric rows together so that alignment won't be so awkward in statistical_summary. Change spaces to asterisks or some such in supracontext printing. Reorder columns in gang printing. Just make sure everything is easy to read.
+
+Find all "grandtotal"s and change them to "total_pointers"
+
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Add tests for logging
-
-error checking for getting data data at a specific index; make sure it's a legal index.
 
 Add logic for classifying items whose correct classification is unknown.
 
@@ -75,7 +77,7 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- specifier/comment (set to data unless otherwise specified)
 	- outcome/prediction/oracle/label
 	- data/exemplar/train/item
-	- test, labeled test item
+	- test, labeled test item, given
 	- classify
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
 - Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.

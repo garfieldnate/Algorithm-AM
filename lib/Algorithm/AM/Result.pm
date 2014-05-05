@@ -4,6 +4,25 @@ use strict;
 use warnings;
 # ABSTRACT: Store results of an AM classification
 # VERSION;
+
+=head2 SYNOPSIS
+
+  use Algorithm::AM;
+
+  my $am = Algorithm::AM->new('finnverb', -commas => 'no');
+  my ($result) = $am->classify;
+  print @{ $result->winners };
+  print $result->statistical_summary;
+
+=head2 DESCRIPTION
+
+This package encapsulates all of the classification information
+generated via analogical modeling, including the assigned class,
+number of pointers to each class, gang effects, analogical sets,
+and timing information. It also provides several methods for
+generating printable reports with this information.
+
+=cut
 use Class::Tiny qw(
     exclude_nulls
     excluded_data
@@ -470,3 +489,101 @@ sub _unpack_supracontext {
 }
 
 1;
+
+__END__
+=head2 Configuration Information
+
+The following methods provide information about the configuration
+of AM at the time of classification.
+
+=head2 C<exclude_nulls>
+
+True if null variables were ignored.
+
+=head2 C<excluded_data>
+
+An array ref containing the data indices of any items that were ignored
+during classification.
+
+=head2 C<given_excluded>
+
+True if the given item (the test item) was in the data set but was
+removed before classification.
+
+=head2 C<num_variables>
+
+The number of variables in the classification data.
+
+=head2 C<test_in_data>
+
+True if the test item was present among the data items.
+
+=head2 C<test_item>
+
+Returns an array ref containing the variables in the test item.
+
+=head2 C<test_spec>
+
+Returns the spec associated with the test item.
+
+=head2 C<test_outcome>
+
+Returns the outcome of the test item.
+
+=head2 C<probability>
+
+Returns the probabibility that any one data item would be included
+among the exemplars used during classification, or undef if that was
+never set.
+
+=head2 C<count_method>
+
+Returns either "linear" or "squared", indicating the setting used
+for counting pointers.
+
+=head2 C<datacap>
+
+Returns the number of data items used to classify the test item.
+
+=head2 C<start_time>
+
+Returns the start time of the classification.
+
+=head2 C<end_time>
+
+Returns the end time of the classification.
+
+=head2 C<project>
+
+Returns the project which was the source of classification data.
+
+=head2 C<high_score>
+
+Returns the highest number of pointers seen among any possible
+outcomes.
+
+=head2 C<winners>
+
+Returns an array ref containing the outcomes which had the highest
+score. There is more than one only if all of them received the same
+score.
+
+=head2 C<is_tie>
+
+Returns true if there is more than one winner, or outcome with the
+highest score.
+
+=head2 C<result>
+
+Returns "tie", "correct", or "incorrect", depending on the outcome of
+the classification.
+
+=head2 C<gang_format>
+
+Returns a format string that can be used for printing the number of
+pointers in a gang.
+
+=head2 C<scores>
+
+Returns a hash mapping all predicted outcomes to their scores, or
+the number of pointers associated with them.
