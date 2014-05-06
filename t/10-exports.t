@@ -34,13 +34,15 @@ my %tests_per_sub = (
 	test_beginning_vars => 2,
 	test_item_vars => 3,
 	test_iter_vars => 3,
-	test_end_vars => 1
+	test_end_iter_vars => 1,
+	test_end_vars => 4
 );
 # store methods for choosing to what run in make_hook
 my %test_subs = (
 	test_beginning_vars => \&test_beginning_vars,
 	test_item_vars => \&test_item_vars,
 	test_iter_vars => \&test_iter_vars,
+	test_end_iter_vars => \&test_end_iter_vars,
 	test_end_vars => \&test_end_vars
 );
 
@@ -71,13 +73,14 @@ $am->classify(
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
-		'test_end_vars'),
+		'test_end_iter_vars'),
 	endtesthook => make_hook('begintesthook',
 		'test_beginning_vars',
 		'test_item_vars',
+		'test_end_iter_vars'),
+	endhook => make_hook('endhook',
+		'test_beginning_vars',
 		'test_end_vars'),
-	endhook => make_hook('beginhook',
-		'test_beginning_vars'),
 );
 
 # make a hook which runs the given test subs in a single subtest.
@@ -150,8 +153,8 @@ sub test_iter_vars {
 	return;
 }
 
-# Test variables provided after classification is finished
-sub test_end_vars {
+# Test variables provided after an iteration is finished
+sub test_end_iter_vars {
 	my ($hook_name, $am, $test, $data, $result) = @_;
 	my ($outcome, $variables, $spc) = @$test;
 
@@ -162,5 +165,20 @@ sub test_end_vars {
 		is_deeply($result->scores, {e => '4', r => '9'},
 			$hook_name . ': outcomes scores');
 	}
+	return;
+}
+
+# Test variables provided after all iterations are finished
+sub test_end_vars {
+	my ($hook_name, $am, @results) = @_;
+
+	is_deeply($results[0]->scores, {e => '4', r => '9'},
+		$hook_name . ': scores for first result');
+	is_deeply($results[1]->scores, {e => '4', r => '9'},
+		$hook_name . ': scores for second result');
+	is_deeply($results[2]->scores, {e => '4', r => '4'},
+		$hook_name . ': scores for third result');
+	is_deeply($results[3]->scores, {e => '4', r => '4'},
+		$hook_name . ': scores for fourth result');
 	return;
 }

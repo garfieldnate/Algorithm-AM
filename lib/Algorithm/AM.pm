@@ -423,7 +423,7 @@ sub classify {
         if $log->is_info;
 
     if(exists $self->{endhook}){
-        $self->{endhook}->($self, $data);
+        $self->{endhook}->($self, @results);
     }
 
     return @results;
