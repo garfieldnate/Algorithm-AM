@@ -161,7 +161,7 @@ sub classify {
     my ( $sec, $min, $hour );
 
     if(exists $self->{beginhook}){
-        $self->{beginhook}->($self, $data);
+        $self->{beginhook}->($self);
     }
 
     my $left = scalar $project->num_test_items;

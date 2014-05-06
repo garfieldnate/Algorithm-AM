@@ -11,12 +11,12 @@ use t::TestAM qw(
 );
 use Algorithm::AM;
 
-#test_beginning_vars contains five tests and is run for every handler (34 times)
+#test_beginning_vars contains two tests and is run for every handler (34 times)
 #test_item_vars contains three tests and is run for most handlers (32 times)
 #test_iter_vars contains three tests and is run for most handlers (28 times)
 #test_end_vars contains three tests and is run by two handlers (total 6 times)
 #1 more for Test::NoWarnings
-plan tests => 5*34 + 3*32 + 3*28 + 3*6 + 1;
+plan tests => 2*34 + 3*32 + 3*28 + 3*6 + 1;
 
 my $project = chapter_3_project();
 $project->add_test([qw(3 1 3)], 'e', 'second test item');
@@ -78,37 +78,10 @@ sub endhook {
 
 #check vars available from beginning to end of classification
 sub test_beginning_vars {
-	my ($hook_name, $am, $data) = @_;
-	#TODO: export something better than this; why should we have to skip 0?
-	is_deeply($am->{outcomelist}, ['','e','r'], $hook_name . ': @outcomelist')
-		or note explain $am->{outcomelist};
-	#why should we need this?
-	is_deeply($am->{outcometonum}, {'e' => 1, 'r' => 2}, $hook_name . ': %outcometonum')
-		or note explain $am->{outcometonum};
-	#TODO: why not [e,r,r,r,r]?
-	is_deeply($am->{outcome}, [1,2,2,2,2], $hook_name . ': @outcome')
-		or note explain $am->{outcome};
-	is_deeply(
-		$am->{data},
-		[
-			['3', '1', '0'],
-			['2', '1', '0'],
-			['0', '3', '2'],
- 	     	['2', '1', '2'],
-          	['3', '1', '1']
-        ],
-        $hook_name . ': @data'
-    )
-		or note explain $am->{data};
-	is_deeply($am->{spec},
-		[
-			'myFirstCommentHere',
-			'mySecondCommentHere',
-			'myThirdCommentHere',
-			'myFourthCommentHere',
-			'myFifthCommentHere'
-		], $hook_name . ': @spec')
-		or note explain $data->{spec};
+	my ($hook_name, $am) = @_;
+	isa_ok($am, 'Algorithm::AM', '$am is correct type');
+	is($am->get_project->num_exemplars, 5, '$am has correct project');
+	return;
 }
 
 #check vars available per test

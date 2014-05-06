@@ -1,6 +1,8 @@
 Algorithm::AM
 
-Find all "grandtotal"s and change them to "total_pointers"
+Right now: get rid of all that export variable confusion.
+
+Next: Then try to split project into DataSet and ProjectReader classes.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
@@ -37,6 +39,8 @@ Use undef instead of increment for making unique string lists using hashes.
 
 It seems Theron expected no more than 60 data columns. Find out why, and if some warnings are needed for datasets that exceed that.
 
+Add method to remove data from a project.
+
 Change the POD to use Pod::Weaver properly (=method, etc.).
 
 change activeVars to be accepted at classification time
@@ -60,9 +64,7 @@ properly destroy project or AM object on error so that illegal state is not poss
 		classify() method should classify a single vector
 			- that might mean more refactoring of project
 		Should move iteration, and iter vars, into a separate class.
-	I think beginning vars should just be in the AM object;
-	format vars should die, and some other module should be used for printing
-		- once those are gone, we can safely implement remove_data and remove_test in Project
+	I think beginning vars should just be in the AM object
 	Variable access via $data in hooks should be replaced with method access via objects passed to hooks
 		these should simplify basic operations for the user; for example:
 			outcome strings should be given, instead of numbers (no more outcometonum)
