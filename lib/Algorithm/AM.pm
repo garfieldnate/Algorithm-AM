@@ -184,7 +184,13 @@ sub classify {
             $num_variables -= grep {$_ eq '='} @{ $data->{curTestItem} };
         }
         if(exists $self->{begintesthook}){
-            $self->{begintesthook}->($self, $data);
+            # pass in self and the test item
+            $self->{begintesthook}->($self,
+                [
+                    $project->get_outcome($curTestOutcome),
+                    $data->{curTestItem},
+                    $data->{curTestSpec}
+                ]);
         }
 
         # recalculate the lattice sizes with new number of active variables;
@@ -219,7 +225,13 @@ sub classify {
             my @excluded_data = ();
             my $given_excluded = 0;
             if(exists $self->{beginrepeathook}){
-                $self->{beginrepeathook}->($self, $data);
+                # pass in self, test item, and data
+                $self->{beginrepeathook}->($self,
+                    [
+                        $project->get_outcome($curTestOutcome),
+                        $data->{curTestItem},
+                        $data->{curTestSpec}
+                    ], $data);
             }
             $data->{datacap} = int($data->{datacap});
 
@@ -249,7 +261,14 @@ sub classify {
     # line 1300 "data hook"
                 # skip this data item if the datahook returns false
                 if(exists $self->{datahook} &&
-                        !$self->{datahook}->($self, $data, $data_index)){
+                        !$self->{datahook}->(
+                            # pass in self, test, data and data index
+                            $self,
+                            [
+                                $project->get_outcome($curTestOutcome),
+                                $data->{curTestItem},
+                                $data->{curTestSpec}
+                            ], $data, $data_index)){
                     push @excluded_data, $data_index;
                     next;
                 }
@@ -369,7 +388,14 @@ sub classify {
         }
         continue {
             if(exists $self->{endrepeathook}){
-                $self->{endrepeathook}->($self, $data);
+                # pass in self, test item, and data
+                $self->{endrepeathook}->(
+                    $self,
+                    [
+                        $project->get_outcome($curTestOutcome),
+                        $data->{curTestItem},
+                        $data->{curTestSpec}
+                    ], $data);
             }
             ++$pass;
             ( $sec, $min, $hour ) = localtime();
@@ -380,7 +406,14 @@ sub classify {
                 if $log->is_info;
         }
         if(exists $self->{endtesthook}){
-            $self->{endtesthook}->($self, $data);
+            # pass in self, test item, and data
+            $self->{endtesthook}->(
+                $self,
+                [
+                    $project->get_outcome($curTestOutcome),
+                    $data->{curTestItem},
+                    $data->{curTestSpec}
+                ], $data);
         }
     }
     # line 2100 "end eval"

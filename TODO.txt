@@ -2,7 +2,7 @@ Algorithm::AM
 
 Right now: get rid of all that export variable confusion.
 
-Next: Then try to split project into DataSet and ProjectReader classes.
+Next: Then try to split project into DataSet and ProjectReader classes. Then these sets can just store outcomes, and AM can give them an index at classification time. This will make it easier to pass the test item to hooks, and to use it many other places.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 

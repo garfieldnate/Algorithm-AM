@@ -88,33 +88,33 @@ sub test_beginning_vars {
 #there are two items, 312 and 313, marked with different specs and outcomes
 #check the spec, outcome, and feature variables
 sub test_item_vars {
-	my ($hook, $am, $data) = @_;
+	my ($hook, $am, $test_item) = @_;
+	my ($outcome, $variables, $spec) = @$test_item;
 
-	ok(${$data->{curTestOutcome}} == 2 || ${$data->{curTestOutcome}} == 1,
+	ok($outcome eq 'r' || $outcome eq 'e',
 		$hook . ': $curTestOutcome');
-	if(${$data->{curTestOutcome}} == 1){
+	if($outcome eq 'e'){
 		like(
-			$data->{curTestSpec},
+			$spec,
 			qr/second test item$/,
 			$hook . ': $curTestSpec'
 		);
-
-		is_deeply($data->{curTestItem}, [3,1,3], $hook . ': @{ $data->{curTestItem} }')
-			or note explain $data->{curTestItem};
+		is_deeply($variables, [3,1,3], $hook . ': @{ $data->{curTestItem} }')
+			or note explain $variables;
 	}else{
 		like(
-			$data->{curTestSpec},
+			$spec,
 			qr/test item spec$/,
 			$hook . ': $curTestSpec'
 		);
-		is_deeply($data->{curTestItem}, [3,1,2], $hook . ': @{ $data->{curTestItem} }')
-			or note explain $data->{curTestItem};
+		is_deeply($variables, [3,1,2], $hook . ': @{ $data->{curTestItem} }')
+			or note explain $variables;
 	}
 }
 
 #test variables available per iteration
 sub test_iter_vars {
-	my ($hook_name, $am, $data) = @_;
+	my ($hook_name, $am, $test, $data) = @_;
 	ok(
 		${$data->{pass}} == 0 || ${$data->{pass}} == 1,
 		$hook_name . ': $pass- only do 2 passes of the data');
@@ -124,9 +124,11 @@ sub test_iter_vars {
 
 #test setting of vars for classification results
 sub test_end_vars {
-	my ($hook_name, $am, $data) = @_;
+	my ($hook_name, $am, $test, $data) = @_;
+	my ($outcome, $variables, $spc) = @$test;
+
 	my $subtotals = [@{$am->{sum}}[1,2]];
-	if(${$data->{curTestOutcome}} == 1){
+	if($outcome eq 'e'){
 		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');
 		is(${$data->{pointertotal}}, '8', $hook_name . ': $pointertotal');
 		is($data->{pointermax}, '4', $hook_name . ': $pointermax');

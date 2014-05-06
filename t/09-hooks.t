@@ -61,7 +61,7 @@ is_deeply(\@record, \@expected, 'hooks called in expected order')
 #now check that the return value of datahook is correctly interpreted
 my ($result) = $am->classify(
 	datahook 	=> sub {
-		my ($am, $data, $index) = @_;
+		my ($am, $test, $data, $index) = @_;
 		#will be false for index 0, so index 0 will be removed
 		return $index;
 	},
