@@ -222,11 +222,9 @@ sub test_finnverb {
     my $count = 0;
     $am->classify(
         endtesthook   => sub {
-            my ($am, $data) = @_;
-            my $sum = $am->{sum};
-            my $pointermax = $data->{pointermax};
-            my $curTestOutcome = ${$data->{curTestOutcome}};
-            ++$count if $sum->[$curTestOutcome] eq $pointermax;
+            my ($am, $test, $data, $result) = @_;
+            my ($outcome, $variables, $spec) = @$test;
+            ++$count if grep {$_ eq $outcome} @{$result->winners()};
         }
     );
 

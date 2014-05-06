@@ -388,14 +388,14 @@ sub classify {
         }
         continue {
             if(exists $self->{endrepeathook}){
-                # pass in self, test item, and data
+                # pass in self, test item, data, and result
                 $self->{endrepeathook}->(
                     $self,
                     [
                         $project->get_outcome($curTestOutcome),
                         $data->{curTestItem},
                         $data->{curTestSpec}
-                    ], $data);
+                    ], $data, $results[-1]);
             }
             ++$pass;
             ( $sec, $min, $hour ) = localtime();
@@ -406,14 +406,14 @@ sub classify {
                 if $log->is_info;
         }
         if(exists $self->{endtesthook}){
-            # pass in self, test item, and data
+            # pass in self, test item, data, and result
             $self->{endtesthook}->(
                 $self,
                 [
                     $project->get_outcome($curTestOutcome),
                     $data->{curTestItem},
                     $data->{curTestSpec}
-                ], $data);
+                ], $data, $results[-1]);
         }
     }
     # line 2100 "end eval"

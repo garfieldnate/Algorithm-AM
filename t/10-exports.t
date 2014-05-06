@@ -124,17 +124,19 @@ sub test_iter_vars {
 
 #test setting of vars for classification results
 sub test_end_vars {
-	my ($hook_name, $am, $test, $data) = @_;
+	my ($hook_name, $am, $test, $data, $result) = @_;
 	my ($outcome, $variables, $spc) = @$test;
 
 	my $subtotals = [@{$am->{sum}}[1,2]];
 	if($outcome eq 'e'){
-		is_deeply($subtotals, ['4', '4'], $hook_name . ': @sum');
-		is(${$data->{pointertotal}}, '8', $hook_name . ': $pointertotal');
-		is($data->{pointermax}, '4', $hook_name . ': $pointermax');
+		is_deeply($result->scores, {e => '4', r => '4'},
+			$hook_name . ': @sum');
+		is($result->total_pointers, '8', $hook_name . ': $pointertotal');
+		is($result->high_score, '4', $hook_name . ': $pointermax');
 	}else{
-		is_deeply($subtotals, ['4', '9'], $hook_name . ': correct subtotals');
-		is(${$data->{pointertotal}}, '13', $hook_name . ': $pointertotal');
-		is($data->{pointermax}, '9', $hook_name . ': $pointermax');
+		is_deeply($result->scores, {e => '4', r => '9'},
+			$hook_name . ': correct subtotals');
+		is($result->total_pointers, '13', $hook_name . ': $pointertotal');
+		is($result->high_score, '9', $hook_name . ': $pointermax');
 	}
 }
