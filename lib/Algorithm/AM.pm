@@ -124,8 +124,6 @@ sub classify {
     my $datacap = $project->num_exemplars;
     my $pass;
 
-    # line 1000 "start eval"
-
     my ( $sec, $min, $hour );
 
     if(exists $self->{beginhook}){
@@ -134,7 +132,6 @@ sub classify {
 
     my $left = scalar $project->num_test_items;
     foreach my $item_number (0 .. $project->num_test_items - 1) {
-    # line 1100 "loop items"
         $log->debug("Test items left: $left")
             if $log->is_debug;
         --$left;
@@ -188,7 +185,6 @@ sub classify {
 
         $pass = 0;
         while ( $pass < $self->{repeat} ) {
-    # line 1200 "repeat"
             my @excluded_data = ();
             my $given_excluded = 0;
             if(exists $self->{beginrepeathook}){
@@ -225,7 +221,6 @@ sub classify {
 
             # determine the data set to be used for classification
             for my $data_index ( 0 .. $datacap - 1 ) {
-    # line 1300 "data hook"
                 # skip this data item if the datahook returns false
                 if(exists $self->{datahook} &&
                         !$self->{datahook}->(
@@ -275,7 +270,6 @@ sub classify {
                     $self->{context_to_outcome}->{$context} = $outcome;
                 }
             }
-    # line 1400 "given"
             # $nullcontext is all 0's, which is a context label only
             # to a data item that exactly matches the test item.
             if ( exists $self->{context_to_outcome}->{$nullcontext} ) {
@@ -285,7 +279,6 @@ sub classify {
                    $given_excluded = 1;
                 }
             }
-    # line 1500 "print summary"
 
             # initialize the results object to hold all of the configuration
             # info.
@@ -307,8 +300,6 @@ sub classify {
             $log->debug(${$result->config_info})
                 if($log->is_debug);
 
-    # line 1600 "call XS"
-
             $result->start_time([ (localtime)[0..2] ]);
             $self->_fillandcount($self->{linear} ? 0 : 1);
             $result->end_time([ (localtime)[0..2] ]);
@@ -324,7 +315,6 @@ sub classify {
                 next;
             }
 
-    # line 1700 "calculate results"
             $result->_process_stats(
                 # TODO: after refactoring to a "guts" object,
                 # just pass that in
@@ -342,11 +332,9 @@ sub classify {
             $log->info(${$result->statistical_summary})
                 if($log->is_info);
 
-    # line 1800 "analogical set"
             $log->info(${$result->analogical_set_summary()})
                 if($log->is_info);
 
-    # line 1900 "start gangs"
             if($log->is_debug){
                 $log->debug(${ $result->gang_summary(1) });
             }elsif($log->is_info){
@@ -391,7 +379,6 @@ sub classify {
             );
         }
     }
-    # line 2100 "end eval"
 
     ( $sec, $min, $hour ) = localtime();
     $log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
