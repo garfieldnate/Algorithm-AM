@@ -514,9 +514,6 @@ sub _context_label {
 }
 
 1;
-__DATA__
-
-
 __END__
 
 =head1 SYNOPSIS
