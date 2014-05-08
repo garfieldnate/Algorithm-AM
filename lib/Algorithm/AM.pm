@@ -513,13 +513,6 @@ sub _context_label {
     return $context;
 }
 
-#create the classification subroutine
-sub _create_classify_sub {
-    return sub {
-
-    };
-}
-
 1;
 __DATA__
 
