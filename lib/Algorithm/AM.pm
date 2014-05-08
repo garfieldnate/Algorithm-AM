@@ -52,25 +52,6 @@ sub new {
     );
     my $self = bless $opts, $class;
 
-    if ($log->is_debug){
-        my $debug = 'Initializing project';
-        # print the project path if a path was given
-        if(ref $project && $project->isa('Algorithm::AM::Project')){
-            $debug .= " $project";
-        }
-        $log->debug($debug);
-    }
-
-    # TODO: these lines are necessary for now because each of these variables
-    # is assumed to be provided to the hook methods through $self. Once we
-    # have data objects, and we can provide proper accessors (and remove
-    # the need for outcometonum, outcomelist, and outcome).
-    $self->{outcometonum} = $project->_outcome_to_num;
-    $self->{outcomelist} = $project->_outcome_list;
-    $self->{outcome} = $project->_exemplar_outcomes;
-    $self->{spec} = $project->_exemplar_specs;
-    $self->{data} = $project->_exemplar_vars;
-
     $self->{project} = $project;
 
     # compute activeVars here so that lattice space can be allocated in the
