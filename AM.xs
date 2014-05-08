@@ -116,30 +116,30 @@ typedef struct AM_supra {
 } AM_SUPRA;
 
 /*
- * There is quite a bit of data that must pass between Parallel.pm and
- * Parallel.xs.  Instead of repeatedly passing it back and forth on
- * the argument stack, Parallel.pm sends references to the variables
- * holding this shared data, by calling _initialize() (defined later
+ * There is quite a bit of data that must pass between AM.pm and
+ * AM.xs.  Instead of repeatedly passing it back and forth on
+ * the argument stack, AM.pm sends references to the variables
+ * holding this shared data, by calling _xs_initialize() (defined later
  * on).  These pointers are then stored in the following structure,
  * which is put into the magic part of $self (since $self is an HV,
  * it is perforce an SvPVMG as well).
  *
  * Note that for arrays, we store a pointer to the array data itself,
- * not the AV*.  That means that in Parallel.pm, we have to be careful
+ * not the AV*.  That means that in AM.pm, we have to be careful
  * how we make assignments to array variables; a reassignment such as
  *
  * @sum = (pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0) x @sum;
  *
  * breaks everything because the pointer stored here then won't point
  * to the actual data anymore.  That's why the appropriate line in
- * Parallel.pm is
+ * AM.pm is
  *
  * foreach (@sum) {
  *   $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
  * }
  *
  * Most of the identifiers in the struct have the same names as the
- * variables created in Parallel.pm and are documented there.  Those
+ * variables created in AM.pm and are documented there.  Those
  * that don't are documented below.
  *
  * This trick of storing pointers like this is borrowed from the
@@ -339,7 +339,7 @@ BOOT:
   }
 
   /*
-   * This function is called by from Parallel.pm right after creating
+   * This function is called by from AM.pm right after creating
    * a blessed reference to Algorithm::AM. It stores the necessary
    * pointers in the AM_GUTS structure and attaches it to the magic
    * part of thre reference.
@@ -347,7 +347,7 @@ BOOT:
    */
 
 void
-_initialize(...)
+_xs_initialize(...)
  PREINIT:
   HV *project;
   AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
@@ -355,7 +355,7 @@ _initialize(...)
   MAGIC *mg;
   int i;
  PPCODE:
-  /* 9 arguments are passed to the _initialize method: */
+  /* 9 arguments are passed to the _xs_initialize method: */
   /* $self, the AM object */
   project = (HV *) SvRV(ST(0));
   /* For explanations on these, see the comments on AM_guts */
@@ -1037,7 +1037,7 @@ _fillandcount(...)
    * will have the same number of pointers/occurrences.
    *
    * If the user wants the detailed analogical set, it will be created
-   * in Parallel.pm.
+   * in AM.pm.
    *
    */
 

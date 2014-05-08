@@ -52,6 +52,16 @@ sub new {
     );
     my $self = bless $opts, $class;
 
+    $self->_initialize($project);
+
+    return $self;
+}
+
+# do all of the classification data structure initialization here,
+# as well as calling the XS initialization method.
+sub _initialize {
+    my ($self, $project) = @_;
+
     $self->{project} = $project;
 
     # compute activeVars here so that lattice space can be allocated in the
@@ -77,8 +87,8 @@ sub new {
         )
     );
 
-    # calls XS code
-    $self->_initialize(
+    # Initialize XS data structures
+    $self->_xs_initialize(
         $self->{activeVars},
         $project->_exemplar_outcomes,
         $self->{itemcontextchain},
@@ -89,7 +99,7 @@ sub new {
         $self->{gang},
         $self->{sum}
     );
-    return $self;
+    return;
 }
 
 =head2 C<classify>
