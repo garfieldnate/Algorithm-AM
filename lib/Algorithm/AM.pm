@@ -25,15 +25,6 @@ XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Any qw($log);
 
-## TODO: variables to be exported some day
-## @itemcontextchain
-## @datatocontext
-## %itemcontextchainhead
-## %context_to_outcome
-## %contextsize
-## %pointers
-## %gang
-
 sub new {
     my ($class, $project, %opts) = @_;
 

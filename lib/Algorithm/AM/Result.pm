@@ -24,6 +24,13 @@ and timing information. It also provides several methods for
 generating printable reports with this information.
 
 =cut
+
+## TODO: variables consider exporting someday
+## @itemcontextchain
+## %itemcontextchainhead
+## @datatocontext
+## %context_to_outcome
+## %contextsize
 use Class::Tiny qw(
     exclude_nulls
     excluded_data
