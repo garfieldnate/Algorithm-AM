@@ -134,27 +134,13 @@ sub classify {
     my $project = $self->{project};
 
 ## stuff to be exported
-    my ($curTestOutcome);
-    my $data;
-    my $pass;
     my $grandtotal;
     # save the result objects from each run here
     my @results;
 
-    #beginning vars
-    $data->{datacap} = $project->num_exemplars;
-
-    #item vars
-    #TODO: stop using scalar pointers here. Should
-    #have some sort of an CurrentIteration object instead.
-    $data->{curTestOutcome} = \$curTestOutcome;
-
-    #iter vars
-    $data->{pass} = \$pass;
-
-    #end vars
-    $data->{pointertotal} = \$grandtotal;
-
+    #Kee track of iteration related information
+    my $datacap = $project->num_exemplars;
+    my $pass;
 
     # line 1000 "start eval"
 
@@ -171,8 +157,7 @@ sub classify {
             if $log->is_debug;
         --$left;
         my $t = $project->get_test_item($item_number);
-        ( $curTestOutcome, $data->{curTestItem}, $data->{curTestSpec} ) =
-            @$t;
+        my ( $curTestOutcome, $curTestItem, $curTestSpec ) = @$t;
 
         # num_variables is the number of active variables; if we
         # exclude nulls, then we need to minus the number of '=' found in
@@ -181,15 +166,15 @@ sub classify {
         my $num_variables = $project->num_variables;
 
         if($self->{exclude_nulls}){
-            $num_variables -= grep {$_ eq '='} @{ $data->{curTestItem} };
+            $num_variables -= grep {$_ eq '='} @{ $curTestItem };
         }
         if(exists $self->{begintesthook}){
             # pass in self and the test item
             $self->{begintesthook}->($self,
                 [
                     $project->get_outcome($curTestOutcome),
-                    $data->{curTestItem},
-                    $data->{curTestSpec}
+                    $curTestItem,
+                    $curTestSpec
                 ]);
         }
 
@@ -214,7 +199,7 @@ sub classify {
         if($log->is_debug){
             $log->info(
                 sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
-                "@{ $data->{curTestItem} }\n" .
+                "@{ $curTestItem }\n" .
                 sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
                     $hour, $min, $sec ) );
         }
@@ -229,11 +214,11 @@ sub classify {
                 $self->{beginrepeathook}->($self,
                     [
                         $project->get_outcome($curTestOutcome),
-                        $data->{curTestItem},
-                        $data->{curTestSpec}
-                    ], $data);
+                        $curTestItem,
+                        $curTestSpec
+                    ], {pass => $pass, datacap => $datacap});
             }
-            $data->{datacap} = int($data->{datacap});
+            $datacap = int($datacap);
 
             my $testindata   = 0;
 
@@ -257,7 +242,7 @@ sub classify {
             }
 
             # determine the data set to be used for classification
-            for my $data_index ( 0 .. $data->{datacap} - 1 ) {
+            for my $data_index ( 0 .. $datacap - 1 ) {
     # line 1300 "data hook"
                 # skip this data item if the datahook returns false
                 if(exists $self->{datahook} &&
@@ -266,9 +251,12 @@ sub classify {
                             $self,
                             [
                                 $project->get_outcome($curTestOutcome),
-                                $data->{curTestItem},
-                                $data->{curTestSpec}
-                            ], $data, $data_index)){
+                                $curTestItem,
+                                $curTestSpec
+                            ],
+                            {pass => $pass, datacap => $datacap},
+                             $data_index)
+                        ){
                     push @excluded_data, $data_index;
                     next;
                 }
@@ -283,7 +271,7 @@ sub classify {
                     # see todo note for _context_label
                     [@{$self->{activeVars}}],
                     $project->get_exemplar_data($data_index),
-                    $data->{curTestItem},
+                    $curTestItem,
                     $self->{exclude_nulls}
                 );
                 $self->{contextsize}->{$context}++;
@@ -323,13 +311,13 @@ sub classify {
                 excluded_data => \@excluded_data,
                 given_excluded => $given_excluded,
                 num_variables => $num_variables,
-                test_item => $data->{curTestItem},
-                test_spec => $data->{curTestSpec},
-                test_outcome => $data->{curTestOutcome},
+                test_item => $curTestItem,
+                test_spec => $curTestSpec,
+                test_outcome => $curTestOutcome,
                 exclude_nulls => $self->{exclude_nulls},
                 probability => $self->{probability},
                 count_method => $self->{linear} ? 'linear' : 'squared',
-                datacap => $data->{datacap},
+                datacap => $datacap,
                 test_in_data => $testindata,
                 project => $project
             );
@@ -369,7 +357,6 @@ sub classify {
                 $self->{activeVars},
                 $self->{contextsize}
             );
-            $data->{pointermax} = $result->high_score;
             $log->info(${$result->statistical_summary})
                 if($log->is_info);
 
@@ -393,9 +380,12 @@ sub classify {
                     $self,
                     [
                         $project->get_outcome($curTestOutcome),
-                        $data->{curTestItem},
-                        $data->{curTestSpec}
-                    ], $data, $results[-1]);
+                        $curTestItem,
+                        $curTestSpec
+                    ],
+                    {pass => $pass, datacap => $datacap},
+                    $results[-1]
+                );
             }
             ++$pass;
             ( $sec, $min, $hour ) = localtime();
@@ -411,9 +401,12 @@ sub classify {
                 $self,
                 [
                     $project->get_outcome($curTestOutcome),
-                    $data->{curTestItem},
-                    $data->{curTestSpec}
-                ], $data, $results[-1]);
+                    $curTestItem,
+                    $curTestSpec
+                ],
+                {pass => $pass, datacap => $datacap},
+                $results[-1]
+            );
         }
     }
     # line 2100 "end eval"

@@ -1,6 +1,8 @@
 Algorithm::AM
 
-Right now: Organize iter variables somehow.
+Right now: General cleanup.
+
+Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
 
 Next: Then try to split project into DataSet and ProjectReader classes. Then these sets can just store outcomes, and AM can give them an index at classification time. This will make it easier to pass the test item to hooks, and to use it many other places.
 
@@ -82,5 +84,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- test, labeled test item, given
 	- classify
 	- grandtotal/total_pointers/total_score
+	- datacap
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
 - Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.

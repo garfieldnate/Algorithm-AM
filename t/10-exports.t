@@ -142,20 +142,20 @@ sub test_item_vars {
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($hook_name, $am, $test, $data) = @_;
+	my ($hook_name, $am, $test, $iter_data) = @_;
 	ok(
-		${$data->{pass}} == 0 || ${$data->{pass}} == 1,
+		$iter_data->{pass} == 0 || $iter_data->{pass} == 1,
 		$hook_name . ': $pass- only do 2 passes of the data');
 	is($am->{probability}, 1,
 		$hook_name . ': $probability is 1 by default');
-	is($data->{datacap}, 5,
+	is($iter_data->{datacap}, 5,
 		$hook_name . ': $datacap is 5, the number of exemplars');
 	return;
 }
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($hook_name, $am, $test, $data, $result) = @_;
+	my ($hook_name, $am, $test, $iter_data, $result) = @_;
 	my ($outcome, $variables, $spc) = @$test;
 
 	if($outcome eq 'e'){
