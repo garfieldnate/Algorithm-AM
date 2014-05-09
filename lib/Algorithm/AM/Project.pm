@@ -149,10 +149,6 @@ sub _check_opts {
 # initialize internal state
 sub _init {
     my ($self) = @_;
-    # length of the longest spec string
-    $self->{longest_spec} = 0;
-    # length of the longest outcome string
-    $self->{longest_outcome} = 0;
     # used to keep track of unique outcomes
     $self->{outcomes} = {};
     $self->{outcome_num} = 0;
