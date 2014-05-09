@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
-plan tests => 33;
+plan tests => 27;
 use Test::Exception;
 use Test::NoWarnings;
 use Algorithm::AM::Project;
@@ -130,14 +130,8 @@ sub test_test_items {
 # data should not have to be exposed
 sub test_private_data {
     my $project = Algorithm::AM::Project->new(variables => 3);
-    is_deeply($project->_outcome_list, [''],
-        "empty project has empty outcome list");
     is_deeply($project->_exemplar_outcomes, [],
         "empty project has empty outcomes");
-    is_deeply($project->_exemplar_vars, [],
-        "empty project has empty data");
-    is_deeply($project->_exemplar_specs, [],
-        "empty project has empty specs");
 
     my @data = chapter_3_data();
     # get rid of one of the specs to test that it is filled in
@@ -148,16 +142,5 @@ sub test_private_data {
 
     is_deeply($project->_exemplar_outcomes, [qw(1 2 2 2 2)],
         "correct project outcomes");
-    # index 0 of each data entry contains the variables
-    is_deeply($project->_exemplar_vars, [map {$_->[0]} @data],
-        "correct project data");
-    is_deeply($project->_outcome_list, ['', 'e', 'r'],
-        "correct project outcome list");
-
-    # index 2 of each data entry contains the specs
-    my $specs = [$data[0][2], '2 1 0', map {$_->[2]} @data[2..4]];
-
-    is_deeply($project->_exemplar_specs, $specs,
-        'correct project specs (commas)');
     return;
 }

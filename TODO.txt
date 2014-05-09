@@ -1,8 +1,8 @@
 Algorithm::AM
 
-Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
+Next: Split project into DataSet and ProjectReader classes. Then these sets can just store outcomes, and AM can give them an index at classification time. This will make it easier to pass the test item to hooks, and to use it many other places.
 
-Next: Then try to split project into DataSet and ProjectReader classes. Then these sets can just store outcomes, and AM can give them an index at classification time. This will make it easier to pass the test item to hooks, and to use it many other places.
+Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
