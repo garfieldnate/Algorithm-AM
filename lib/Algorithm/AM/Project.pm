@@ -149,6 +149,10 @@ sub _check_opts {
 # initialize internal state
 sub _init {
     my ($self) = @_;
+    # length of the longest spec string
+    $self->{longest_spec} = 0;
+    # length of the longest outcome string
+    $self->{longest_outcome} = 0;
     # used to keep track of unique outcomes
     $self->{outcomes} = {};
     $self->{outcome_num} = 0;
@@ -299,6 +303,35 @@ sub outcome_index {
 sub _exemplar_outcomes {
     my ($self) = @_;
     return $self->{exemplar_outcomes};
+}
+
+# Used by AM.pm to retrieve the arrayref containing all of the
+# specs for the data set (ordered the same as the data set).
+sub _exemplar_specs {
+    my ($self) = @_;
+    return $self->{spec};
+}
+
+# Used by AM.pm to retrieve the arrayref containing all of the
+# data vectors for the data set (ordered the same as the data set).
+sub _exemplar_vars {
+    my ($self) = @_;
+    return $self->{data};
+}
+
+# Used by AM.pm to retrieve the 1-indexed list of all outcomes
+sub _outcome_list {
+    my ($self) = @_;
+    return $self->{outcomelist};
+}
+
+# Used by AM.pm to retrieve the hashref mapping outcome names to
+# their index in outcomelist
+# Hopefully won't need someday (but for now it is required for hook
+# variables)
+sub _outcome_to_num {
+    my ($self) = @_;
+    return $self->{outcomes};
 }
 
 # read data set, calling add_data for each item found in the data file.

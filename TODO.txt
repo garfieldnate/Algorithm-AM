@@ -4,6 +4,8 @@ Next: Split project into DataSet and ProjectReader classes. Then these sets can 
 
 Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
 
+As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in beginhook the user can add another data item which was classified via a previous run.
+
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
 Add tests for logging
