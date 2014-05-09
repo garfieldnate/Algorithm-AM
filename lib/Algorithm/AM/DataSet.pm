@@ -1,9 +1,8 @@
 package Algorithm::AM::DataSet;
 use strict;
 use warnings;
-use Path::Tiny;
 use Carp;
-use Log::Any '$log';
+use Algorithm::AM::DataSet::Item;
 # ABSTRACT: Manage data used by Algorithm::AM
 # VERSION;
 
@@ -61,6 +60,7 @@ sub _init {
     # index 0 of outcomelist is reserved for the AM algorithm
     $self->{outcomelist} = [''];
 
+    $self->{items} = [];
     $self->{data} = [];
     $self->{exemplar_outcomes} = [];
     $self->{spec} = [];
@@ -84,10 +84,10 @@ Returns the number of items in the data set.
 =cut
 sub size {
     my ($self) = @_;
-    return scalar @{$self->{data}};
+    return scalar @{$self->{items}};
 }
 
-=head2 C<add_data>
+=head2 C<add_item>
 
 Adds a new item to the data set. The only required argument is
 'features', which should be an array ref containing the feature
@@ -100,25 +100,22 @@ is unknown.
 
 =cut
 # adds data item to three internal arrays: outcome, data, and spec
-sub add_data {
+# TODO: be able to add item objects
+sub add_item {
     my ($self, %opts) = @_;
-    my ($features, $class, $comment) = (
-        $opts{features}, $opts{class}, $opts{comment});
 
-    if (!$features){
-        croak q[Missing required argument 'features'];
-    }
-    $self->_check_variables($features, $comment);
+    my $item = Algorithm::AM::DataSet::Item->new(%opts);
+    $self->_check_variables($item->features, $item->comment);
 
-    $comment ||= _serialize_data($features);
-    if(defined $class){
-        $self->_update_outcome_vars($class);
+    if(defined $item->class){
+        $self->_update_outcome_vars($item->class);
     }
     # store the new data item
-    push @{$self->{spec}}, $comment;
-    push @{$self->{data}}, $features;
-    push @{$self->{classes}}, $class;
-    push @{$self->{exemplar_outcomes}}, $self->{outcomes}{$class};
+    push @{$self->{spec}}, $item->comment;
+    push @{$self->{data}}, $item->features;
+    push @{$self->{classes}}, $item->class;
+    push @{$self->{exemplar_outcomes}}, $self->{outcomes}{$item->class};
+    push @{$self->{items}}, $item;
     return;
 }
 
@@ -152,44 +149,15 @@ sub _update_outcome_vars {
     return;
 }
 
-# TODO: create an Exemplar class to hold all of this info
+=head2 C<get_item>
 
-# TODO: For now, using an index might be
-# a little arbitrary. Might want to officially treat the index as the item's
-# id
-
-=head2 C<get_class>
-
-Returns the classification label for the item at the given index.
+Return the item at the given index. This will be a
+L<Algorithm::AM::DataSet::Item> object.
 
 =cut
-sub get_class {
+sub get_item {
     my ($self, $index) = @_;
-    return $self->{classes}->[$index];
-}
-
-=head2 C<get_features>
-
-Returns the feature vector for the item at the given index. The
-return value is an arrayref containing the string value for each
-feature.
-
-TODO: this should probably make a safe copy
-
-=cut
-sub get_features {
-    my ($self, $index) = @_;
-    return $self->{data}->[$index];
-}
-
-=head2 C<get_comment>
-
-Returns the comment for the item at the given index.
-
-=cut
-sub get_comment {
-    my ($self, $index) = @_;
-    return $self->{spec}->[$index];
+    return $self->{items}->[$index];
 }
 
 =head2 C<num_classes>
@@ -218,12 +186,6 @@ sub get_outcome {
 sub _exemplar_outcomes {
     my ($self) = @_;
     return $self->{exemplar_outcomes};
-}
-
-# return a simple string representation for data arrays
-sub _serialize_data {
-    my ($data) = @_;
-    return join ' ', @$data;
 }
 
 1;
