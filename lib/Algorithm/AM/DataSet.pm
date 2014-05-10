@@ -280,8 +280,8 @@ sub _read_data_sub {
         }
 
         my @data_vars = split /$feature_sep/, $feats;
-        # undefine all of the variables set to unknown
-        @data_vars = map {$_ eq $unknown ? undef : $_} @data_vars;
+        # set unknown variables to ''
+        @data_vars = map {$_ eq $unknown ? '' : $_} @data_vars;
 
         return Algorithm::AM::DataSet::Item->new(
             features=> \@data_vars,

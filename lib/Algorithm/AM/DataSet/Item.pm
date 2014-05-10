@@ -11,7 +11,7 @@ use Class::Tiny qw(
     comment => sub {
         # by default, the comment is just the data in a string, with
         # empty strings for unknown values
-        join ',', map {defined $_ ? $_ : ''} @{ $_[0]->{features} }
+        join ',', @{ $_[0]->{features} }
     },
 };
 # ABSTRACT: A single data item for classification
@@ -26,8 +26,8 @@ value of the feature at the given index. 'class' and 'comment'
 arguments are also accepted, where 'class' is the classification
 label and 'comment' can be any string to be associated with the item.
 A missing or undefined 'class' value is assumed to mean that the item
-classification is unknown. Similarly, undef entries in the feature
-vector are taken to indicate unknown values.
+classification is unknown. For the feature vector, empty strings are
+taken to indicate unknown values.
 
 =cut
 sub BUILD {
@@ -47,7 +47,7 @@ is unknown.
 =head2 C<features>
 
 Returns the feature vector for this item. This is an arrayref
-containing the string value for each feature. An undefined value
+containing the string value for each feature. An empty string
 indicates that the feature value is unknown.
 
 =head2 C<comment>

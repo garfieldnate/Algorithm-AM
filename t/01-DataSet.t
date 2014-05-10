@@ -145,7 +145,7 @@ sub test_dataset_from_file {
         is($dataset->size, 2, 'size');
         my $item = $dataset->get_item(0);
         is($item->class, undef, 'class is undefined');
-        is_deeply($item->features, ['3', '1', undef],
+        is_deeply($item->features, ['3', '1', ''],
             'third feature is undefined')
     };
 
@@ -159,7 +159,7 @@ sub test_dataset_from_file {
         is($dataset->size, 2, 'size');
         my $item = $dataset->get_item(0);
         is($item->class, undef, 'class is undefined');
-        is_deeply($item->features, ['3', '1', undef],
+        is_deeply($item->features, ['3', '1', ''],
             'third feature is undefined')
     };
     return;
