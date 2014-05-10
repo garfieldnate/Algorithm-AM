@@ -71,23 +71,23 @@ $am->classify(
 		'test_beginning_vars',
 		'test_item_vars'),
 	beginrepeathook => make_hook(
-		'begintesthook',
+		'beginrepeathook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
 	datahook => make_hook(
-		'begintesthook',
+		'datahook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
 	endrepeathook => make_hook(
-		'begintesthook',
+		'endrepeathook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
 		'test_end_iter_vars'),
 	endtesthook => make_hook(
-		'begintesthook',
+		'endtesthook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_end_iter_vars'),
@@ -99,8 +99,7 @@ $am->classify(
 );
 
 # make a hook which runs the given test subs in a single subtest.
-# Pass on the hook name to test subs (which print it) along with
-# the arguments passed to the hook at classification time.
+# Pass on the arguments passed to the hook at classification time.
 sub make_hook {
 	my ($name, @subs) = @_;
 	return sub {
@@ -109,7 +108,7 @@ sub make_hook {
 			my $plan = 0;
 			$plan += $tests_per_sub{$_} for @subs;
 			plan tests => $plan;
-			$test_subs{$_}->($name, @args) for @subs;
+			$test_subs{$_}->(@args) for @subs;
 		};
 		# true return value is needed by datahook to signal
 		# that data should be considered during classification
@@ -119,10 +118,10 @@ sub make_hook {
 
 #check vars available from beginning to end of classification
 sub test_beginning_vars {
-	my ($hook_name, $am) = @_;
-	isa_ok($am, 'Algorithm::AM', "$hook_name: \$am");
+	my ($am) = @_;
+	isa_ok($am, 'Algorithm::AM');
 	is($am->training_set->size, 5,
-		"$hook_name: \$am has correct project");
+		"training set in \$am");
 	return;
 }
 
@@ -130,26 +129,25 @@ sub test_beginning_vars {
 # There are two items, 312 and 313, marked with
 # different specs and outcomes. Check each one.
 sub test_item_vars {
-	my ($hook, $am, $test_item) = @_;
+	my ($am, $test_item) = @_;
 	my ($outcome, $variables, $spec) = @$test_item;
 
-	ok($outcome eq 'r' || $outcome eq 'e',
-		$hook . ': test outcome');
+	ok($outcome eq 'r' || $outcome eq 'e', 'test outcome');
 	if($outcome eq 'e'){
 		like(
 			$spec,
 			qr/second test item$/,
-			$hook . ': test spec'
+			'test spec'
 		);
-		is_deeply($variables, [3,1,3], $hook . ': test variables')
+		is_deeply($variables, [3,1,3], 'test variables')
 			or note explain $variables;
 	}else{
 		like(
 			$spec,
 			qr/test item spec$/,
-			$hook . ': test spec'
+			'test spec'
 		);
-		is_deeply($variables, [3,1,2], $hook . ': test variables')
+		is_deeply($variables, [3,1,2], 'test variables')
 			or note explain $variables;
 	}
 	return;
@@ -157,43 +155,43 @@ sub test_item_vars {
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($hook_name, $am, $test, $iter_data) = @_;
+	my ($am, $test, $iter_data) = @_;
 	ok(
 		$iter_data->{pass} == 0 || $iter_data->{pass} == 1,
-		$hook_name . ': $pass- only do 2 passes of the data');
+		'$pass- only do 2 passes of the data');
 	is($am->{probability}, 1,
-		$hook_name . ': $probability is 1 by default');
+		'$probability is 1 by default');
 	is($iter_data->{datacap}, 5,
-		$hook_name . ': $datacap is 5, the number of exemplars');
+		'$datacap is 5, the number of exemplars');
 	return;
 }
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($hook_name, $am, $test, $iter_data, $result) = @_;
+	my ($am, $test, $iter_data, $result) = @_;
 	my ($outcome, $variables, $spc) = @$test;
 
 	if($outcome eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},
-			$hook_name . ': outcome scores');
+			'outcome scores');
 	}else{
 		is_deeply($result->scores, {e => '4', r => '9'},
-			$hook_name . ': outcomes scores');
+			'outcomes scores');
 	}
 	return;
 }
 
 # Test variables provided after all iterations are finished
 sub test_end_vars {
-	my ($hook_name, $am, @results) = @_;
+	my ($am, @results) = @_;
 
 	is_deeply($results[0]->scores, {e => '4', r => '9'},
-		$hook_name . ': scores for first result');
+		'scores for first result');
 	is_deeply($results[1]->scores, {e => '4', r => '9'},
-		$hook_name . ': scores for second result');
+		'scores for second result');
 	is_deeply($results[2]->scores, {e => '4', r => '4'},
-		$hook_name . ': scores for third result');
+		'scores for third result');
 	is_deeply($results[3]->scores, {e => '4', r => '4'},
-		$hook_name . ': scores for fourth result');
+		'scores for fourth result');
 	return;
 }
