@@ -2,14 +2,18 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 15;
+plan tests => 21;
 use Test::NoWarnings;
 use Test::Exception;
-use Algorithm::AM::DataSet;
+use Algorithm::AM::DataSet 'dataset_from_file';
 use t::TestAM 'chapter_3_data';
+use Path::Tiny;
+use FindBin '$Bin';
+my $data_dir = path($Bin, 'data');
 
 test_constructor();
 test_data();
+test_dataset_from_file();
 test_private_data();
 
 # test that the constructor lives/dies when given valid/invalid
@@ -40,6 +44,7 @@ sub test_constructor {
 }
 
 # test that add_item correctly adds data to the set and validates input
+# TODO: rename this something more descriptive
 sub test_data {
     # first check empty project
     my $dataset = Algorithm::AM::DataSet->new(vector_length => 3);
@@ -79,6 +84,58 @@ sub test_data {
         $dataset->add_item();
     } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
     'add_item fails with missing features parameter';
+    return;
+}
+
+# test the dataset_from_file function
+sub test_dataset_from_file {
+    subtest 'read nocommas data set' => sub {
+        plan tests => 2;
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'chapter3', 'data'),
+            format => 'nocommas'
+        );
+        is($dataset->vector_length, 3, 'vector_length');
+        is($dataset->size, 5, 'size');
+    };
+    subtest 'read commas data set' => sub {
+        plan tests => 2;
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'chapter3_commas', 'data'),
+            format => 'commas'
+        );
+        is($dataset->vector_length, 3, 'vector_length');
+        is($dataset->size, 5, 'size');
+    };
+
+    throws_ok {
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'chapter3_commas', 'data'),
+        );
+    } qr/Failed to provide 'format' parameter/,
+    'fail with missing format parameter';
+    throws_ok {
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'chapter3_commas', 'data'),
+            format => 'buh'
+        );
+    } qr/Unknown value buh for format parameter \(should be 'commas' or 'nocommas'\)/,
+    'fail with incorrect format parameter';
+
+    throws_ok {
+        my $dataset = dataset_from_file(
+            format => 'commas'
+        );
+    } qr/Failed to provide 'path' parameter/,
+    'fail with missing path parameter';
+    throws_ok {
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'nonexistent'),
+            format => 'commas'
+        );
+    } qr/Could not find file .*nonexistent/,
+    'fail with non-existent Path';
+
     return;
 }
 

@@ -3,6 +3,10 @@ use strict;
 use warnings;
 use Carp;
 use Algorithm::AM::DataSet::Item;
+use Path::Tiny;
+use Exporter::Easy (
+    OK => ['dataset_from_file']
+);
 # ABSTRACT: Manage data used by Algorithm::AM
 # VERSION;
 
@@ -10,7 +14,7 @@ use Algorithm::AM::DataSet::Item;
 
 Creates a new DataSet object. You must provide a C<vector_length> argument
 indicating the number of features to be contained in each data vector.
-You can then add items via the add_data method. Each item will contain
+You can then add items via the add_item method. Each item will contain
 a feature vector, and also optionally a class label and a comment
 (also called a "spec").
 
@@ -89,23 +93,27 @@ sub size {
 
 =head2 C<add_item>
 
-Adds a new item to the data set. The only required argument is
-'features', which should be an array ref containing the feature
-vector. This method will croak if the length of this array does
-not match L</vector_length>. 'class' and 'comment' arguments are
-also accepted, where 'class' is the classification label and 'comment'
-can be any string to be associated with the item. A missing or
-undefined 'class' value is assumed to mean that the item classification
-is unknown.
+Adds a new item to the data set. The input may be either an
+L<Algorithm::AM::DataSet::Item> object, or the arguments to create
+one via its constructor (features, class, comment). This method will
+croak if the cardinality of the item does not match L</vector_length>.
 
 =cut
-# adds data item to three internal arrays: outcome, data, and spec
-# TODO: be able to add item objects
 sub add_item {
-    my ($self, %opts) = @_;
+    my ($self, @args) = @_;
+    my $item;
+    if('Algorithm::AM::DataSet::Item' eq ref $args[0]){
+        $item = $args[0];
+    }else{
+        $item = Algorithm::AM::DataSet::Item->new(@args);
+    }
 
-    my $item = Algorithm::AM::DataSet::Item->new(%opts);
-    $self->_check_variables($item->features, $item->comment);
+    if($self->vector_length != $item->cardinality){
+        croak 'Expected ' . $self->vector_length .
+            ' variables, but found ' . (scalar $item->cardinality) .
+            ' in ' . (join ' ', @{$item->features}) .
+            ' (' . $item->comment . ')';
+    }
 
     if(defined $item->class){
         $self->_update_outcome_vars($item->class);
@@ -116,19 +124,6 @@ sub add_item {
     push @{$self->{classes}}, $item->class;
     push @{$self->{exemplar_outcomes}}, $self->{outcomes}{$item->class};
     push @{$self->{items}}, $item;
-    return;
-}
-
-# check the input variable vector for size, and set the data vector
-# size for this project if it isn't set yet
-sub _check_variables {
-    my ($self, $data, $spec) = @_;
-    # check that the number of variables in @$data is correct
-    if($self->vector_length != @$data){
-        croak 'Expected ' . $self->vector_length .
-            ' variables, but found ' . (scalar @$data) .
-            " in @$data" . ($spec ? " ($spec)" : '');
-    }
     return;
 }
 
@@ -186,6 +181,91 @@ sub get_outcome {
 sub _exemplar_outcomes {
     my ($self) = @_;
     return $self->{exemplar_outcomes};
+}
+
+=head2 C<read_data>
+
+This function may be exported. Given 'path' and 'format' arguments,
+it reads a file containing a dataset and returns a new DataSet object
+with the given data. The 'path' argument should be the path to the
+file. The 'format' argument should be 'commas' or 'nocommas',
+indicating one of the following formats.
+
+=cut
+sub dataset_from_file {
+    my (%opts) = (
+        @_
+    );
+
+    croak q[Failed to provide 'path' parameter]
+        unless exists $opts{path};
+    croak q[Failed to provide 'format' parameter]
+        unless exists $opts{format};
+
+    my ($path, $format) = (path($opts{path}), $opts{format});
+
+    croak "Could not find file $path"
+        unless $path->exists;
+
+    my ($field_sep, $feature_sep);
+    if($format eq 'commas'){
+        # outcome/data/spec separate by a comma
+        $field_sep   = qr{\s*,\s*};
+        # variables separated by space
+        $feature_sep = qr{\s+};
+    }elsif($format eq 'nocommas'){
+        # outcome/data/spec separated by space
+        $field_sep   = qr{\s+};
+        # no seps for variables; each is a single character
+        $feature_sep = qr{};
+    }else{
+        croak "Unknown value $format for format parameter " .
+            q{(should be 'commas' or 'nocommas')};
+    }
+
+    my $reader = _read_data_sub($path, $field_sep, $feature_sep);
+    my $item = $reader->();
+    if(!$item){
+        croak "No data found in file $path";
+    }
+    my $dataset = __PACKAGE__->new(vector_length => $item->cardinality);
+    $dataset->add_item($item);
+    while($item = $reader->()){
+        $dataset->add_item($item);
+    }
+    return $dataset;
+}
+
+# return a sub that returns one data vector per call from the given FH,
+# and returns undef once the data file is done being read. Throws errors
+# on bad file contents.
+sub _read_data_sub {
+    my ($data_file, $field_sep, $feature_sep) = @_;
+    my $data_fh = $data_file->openr_utf8;
+    my $line_num = 0;
+    return sub {
+        my $line;
+        # grab the next non-blank line from the file
+        while($line = <$data_fh>){
+            $line_num++;
+            # cross-platform chomp
+            $line =~ s/\R$//;
+            $line =~ s/^\s+|\s+$//g;
+            last if $line;
+        }
+        return unless $line;
+        my ($class, $feats, $comment) = split /$field_sep/, $line, 3;
+        # the line has to have at least the class label and features
+        if(!defined $feats){
+            croak "Couldn't read data at line $line_num in $data_file";
+        }
+
+        my @data_vars = split /$feature_sep/, $feats;
+        return Algorithm::AM::DataSet::Item->new(
+            features=> \@data_vars,
+            class => $class
+        );
+    };
 }
 
 1;
