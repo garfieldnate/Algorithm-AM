@@ -39,7 +39,8 @@ sub test_accessors {
     is($item->comment, 'xyz', 'comment value');
     is($item->cardinality, 2, 'cardinality');
 
-    $item = Algorithm::AM::DataSet::Item->new(features => ['a', 'b']);
+    $item = Algorithm::AM::DataSet::Item->new(
+        features => ['a', 'b', undef]);
     is($item->class, undef, 'class default value');
-    is($item->comment, 'a b', 'comment default value');
+    is($item->comment, 'a,b,', 'comment default value');
 }

@@ -117,12 +117,15 @@ sub add_item {
 
     if(defined $item->class){
         $self->_update_outcome_vars($item->class);
+        push @{$self->{exemplar_outcomes}},
+            $self->{outcomes}{$item->class};
+    }else{
+        push @{$self->{exemplar_outcomes}}, undef;
     }
     # store the new data item
     push @{$self->{spec}}, $item->comment;
     push @{$self->{data}}, $item->features;
     push @{$self->{classes}}, $item->class;
-    push @{$self->{exemplar_outcomes}}, $self->{outcomes}{$item->class};
     push @{$self->{items}}, $item;
     return;
 }
@@ -189,11 +192,14 @@ This function may be exported. Given 'path' and 'format' arguments,
 it reads a file containing a dataset and returns a new DataSet object
 with the given data. The 'path' argument should be the path to the
 file. The 'format' argument should be 'commas' or 'nocommas',
-indicating one of the following formats.
+indicating one of the following formats. You may also specify an
+'unknown' argument to indicate the string meant to represent an unknown
+class value. By default this is 'UNK';
 
 =cut
 sub dataset_from_file {
     my (%opts) = (
+        unknown => 'UNK',
         @_
     );
 
@@ -202,7 +208,8 @@ sub dataset_from_file {
     croak q[Failed to provide 'format' parameter]
         unless exists $opts{format};
 
-    my ($path, $format) = (path($opts{path}), $opts{format});
+    my ($path, $format, $unknown) = (
+        path($opts{path}), $opts{format}, $opts{unknown});
 
     croak "Could not find file $path"
         unless $path->exists;
@@ -223,7 +230,12 @@ sub dataset_from_file {
             q{(should be 'commas' or 'nocommas')};
     }
 
-    my $reader = _read_data_sub($path, $field_sep, $feature_sep);
+    if(!defined $unknown){
+        croak q[Must provide a defined value for 'unknown' parameter];
+    }
+
+    my $reader = _read_data_sub(
+        $path, $unknown, $field_sep, $feature_sep);
     my $item = $reader->();
     if(!$item){
         croak "No data found in file $path";
@@ -239,8 +251,10 @@ sub dataset_from_file {
 # return a sub that returns one data vector per call from the given FH,
 # and returns undef once the data file is done being read. Throws errors
 # on bad file contents.
+# Input is file (Path::Tiny), string representing unknown class,
+# field separator (class, features, comment) and feature separator
 sub _read_data_sub {
-    my ($data_file, $field_sep, $feature_sep) = @_;
+    my ($data_file, $unknown, $field_sep, $feature_sep) = @_;
     my $data_fh = $data_file->openr_utf8;
     my $line_num = 0;
     return sub {
@@ -259,8 +273,16 @@ sub _read_data_sub {
         if(!defined $feats){
             croak "Couldn't read data at line $line_num in $data_file";
         }
+        # if the class is specified as unknown, set it to undef to
+        # indicate this to Item
+        if($class eq $unknown){
+            undef $class;
+        }
 
         my @data_vars = split /$feature_sep/, $feats;
+        # undefine all of the variables set to unknown
+        @data_vars = map {$_ eq $unknown ? undef : $_} @data_vars;
+
         return Algorithm::AM::DataSet::Item->new(
             features=> \@data_vars,
             class => $class

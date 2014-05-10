@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 21;
+plan tests => 23;
 use Test::NoWarnings;
 use Test::Exception;
 use Algorithm::AM::DataSet 'dataset_from_file';
@@ -136,6 +136,32 @@ sub test_dataset_from_file {
     } qr/Could not find file .*nonexistent/,
     'fail with non-existent Path';
 
+    subtest 'data set with default unknown labels' => sub {
+        plan tests => 3;
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'no_labels_unk'),
+            format => 'commas'
+        );
+        is($dataset->size, 2, 'size');
+        my $item = $dataset->get_item(0);
+        is($item->class, undef, 'class is undefined');
+        is_deeply($item->features, ['3', '1', undef],
+            'third feature is undefined')
+    };
+
+    subtest 'data set with = unknown labels' => sub {
+        plan tests => 3;
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'no_labels_eq'),
+            format => 'commas',
+            unknown => '='
+        );
+        is($dataset->size, 2, 'size');
+        my $item = $dataset->get_item(0);
+        is($item->class, undef, 'class is undefined');
+        is_deeply($item->features, ['3', '1', undef],
+            'third feature is undefined')
+    };
     return;
 }
 
