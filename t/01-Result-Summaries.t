@@ -4,11 +4,14 @@ use Test::More 0.88;
 plan tests => 4;
 use Test::LongString;
 use Algorithm::AM;
-use t::TestAM 'chapter_3_project';
+use t::TestAM qw(chapter_3_train chapter_3_test);
 
 test_config_info();
 
-my $am = Algorithm::AM->new(chapter_3_project());
+my $am = Algorithm::AM->new(
+    train => chapter_3_train(),
+    test => chapter_3_test
+);
 my ($result) = $am->classify();
 test_statistical_summary($result);
 test_aset_summary($result);

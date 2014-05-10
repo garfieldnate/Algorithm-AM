@@ -48,7 +48,9 @@ use Class::Tiny qw(
     start_time
     end_time
 
-    project
+    train
+    test
+
     high_score
     winners
     is_tie
@@ -122,12 +124,12 @@ sub _process_stats {
     # non-zero score. Store the high-scorers, as well.
     # 1) find which one(s) has the most pointers (is the prediction) and
     # 2) print out the ones with pointers (change of prediction)
-    for my $outcome_index (1 .. $self->project->num_outcomes) {
+    for my $outcome_index (1 .. $self->train->num_classes) {
         my $outcome_pointers;
         # skip outcomes with no pointers
         next unless $outcome_pointers = $sum->[$outcome_index];
 
-        my $outcome = $self->project->get_outcome($outcome_index);
+        my $outcome = $self->train->get_outcome($outcome_index);
         $scores{$outcome} = $outcome_pointers;
 
         # check if the outcome has the highest score, or ties for it
@@ -145,11 +147,9 @@ sub _process_stats {
     # set result to tie/correct/incorrect after comparing
     # expected/actual outcomes
     if($expected){
-        #set the expected outcome to the string representation
-        my $test_outcome = $self->project->get_outcome($expected);
-        $self->test_outcome($test_outcome);
-        if(exists $scores{$test_outcome} &&
-                bigcmp($scores{$test_outcome}, $max) == 0){
+        $self->test_outcome($expected);
+        if(exists $scores{$expected} &&
+                bigcmp($scores{$expected}, $max) == 0){
             if(@winners > 1){
                 $self->result('tie');
             }else{
@@ -258,7 +258,7 @@ set.
 sub analogical_set_summary {
     my ($self) = @_;
     my $set = $self->analogical_set;
-    my $project = $self->project;
+    my $train = $self->train;
     my $total_pointers = $self->total_pointers;
 
     # Make a table for the analogical set. Each row contains an
@@ -268,9 +268,8 @@ sub analogical_set_summary {
     foreach my $data_index (sort keys %$set){
         my $score = $set->{$data_index};
         push @rows, [
-            $project->get_outcome(
-                    $project->get_exemplar_outcome($data_index) ),
-            $project->get_exemplar_spec($data_index),
+            $train->get_item($data_index)->class,
+            $train->get_item($data_index)->comment,
             $score,
             sprintf($percentage_format, 100 * $score / $total_pointers)
         ];
@@ -329,7 +328,7 @@ meaning gang items items are printed. This is false (off) by default.
 =cut
 sub gang_summary {
     my ($self, $print_list) = @_;
-    my $project = $self->project;
+    my $train = $self->train;
     my $test_item = $self->test_item;
 
     my $gangs = $self->gang_effects;
@@ -392,8 +391,8 @@ sub gang_summary {
                         undef,
                         undef,
                         undef,
-                        @{ $project->get_exemplar_data($data_index) },
-                        $project->get_exemplar_spec($data_index),
+                        @{ $train->get_item($data_index)->features },
+                        $train->get_item($data_index)->comment,
                     ];
                 }
             }
@@ -442,7 +441,7 @@ sub gang_summary {
 
 sub _calculate_gangs {
     my ($self) = @_;
-    my $project = $self->project;
+    my $train = $self->train;
     my $total_pointers = $self->total_pointers;
     my $raw_gang = $self->{gang};
     my $gangs = {};
@@ -461,7 +460,7 @@ sub _calculate_gangs {
         if ( my $outcome = $self->{context_to_outcome}->{$context} ) {
             # store a 'homogenous' key that indicates this, besides
             # indicating the unanimous outcome.
-            $outcome = $project->get_outcome($outcome);
+            $outcome = $train->get_outcome($outcome);
             $gangs->{$key}->{homogenous} = $outcome;
             my @data;
             for (
@@ -492,9 +491,7 @@ sub _calculate_gangs {
                 $i = $self->{itemcontextchain}->[$i]
               )
             {
-                my $outcome = $project->get_outcome(
-                    $project->get_exemplar_outcome($i));
-                push @{ $data{$outcome} }, $i;
+                push @{ $data{$train->get_item($i)->class} }, $i;
                 $size++;
             }
             $gangs->{$key}->{data} = \%data;
@@ -527,7 +524,7 @@ sub _unpack_supracontext {
         my $partial_context = pop @context_list;
         for ( ; $a ; --$a ) {
             if($self->{exclude_nulls}){
-                ++$j while $variables[ -$j ] eq '=';
+                ++$j while !defined $variables[ -$j ];
             }
             $variables[ -$j ] = '' if $partial_context & 1;
             $partial_context >>= 1;

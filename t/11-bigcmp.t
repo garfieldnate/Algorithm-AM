@@ -5,14 +5,18 @@ use Test::More 0.88;
 plan tests => 6;
 use Test::NoWarnings;
 use Algorithm::AM;
-use t::TestAM qw(chapter_3_project);
+use t::TestAM qw(chapter_3_train chapter_3_test);
 
 use vars qw(@sum);
 use subs qw(bigcmp);
 
-my $project = chapter_3_project();
+my $train = chapter_3_train();
+my $test = chapter_3_test();
 
-my $am = Algorithm::AM->new($project);
+my $am = Algorithm::AM->new(
+    train => $train,
+    test => $test
+);
 $am->classify(
 	endhook => \&endhook,
 );

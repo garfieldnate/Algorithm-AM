@@ -5,7 +5,7 @@ use Algorithm::AM;
 use Test::More 0.88;
 use Test::Exception;
 use Test::NoWarnings;
-plan tests => 4;
+plan tests => 7;
 use FindBin qw($Bin);
 use Path::Tiny;
 
@@ -18,12 +18,36 @@ test_project();
 sub test_input_checking {
     throws_ok {
         Algorithm::AM->new();
-    } qr/Missing required input Algorithm::AM::Project object\./,
-    'dies when no project provided';
+    } qr/Missing required parameter 'train'/,
+    'dies when no training set provided';
 
     throws_ok {
         Algorithm::AM->new(
-            Algorithm::AM::Project->new(variables => 3),
+            train => Algorithm::AM::DataSet->new(vector_length => 3)
+        );
+    } qr/Missing required parameter 'test'/,
+    'dies when no test set provided';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => 'stuff',
+            test => Algorithm::AM::DataSet->new(vector_length => 3),
+        );
+    } qr/Parameter train should be an AlgorithM::AM::DataSet/,
+    'dies with bad training set';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            test => 'stuff',
+        );
+    } qr/Parameter test should be an AlgorithM::AM::DataSet/,
+    'dies with bad test set';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            test => Algorithm::AM::DataSet->new(vector_length => 3),
             foo => 'bar'
         );
     } qr/Unknown option foo/,
@@ -33,19 +57,21 @@ sub test_input_checking {
 
 # test that constructor sets project properly
 sub test_project {
-    subtest 'AM constructor is given Project object' => sub {
-        plan tests => 2;
+    subtest 'AM constructor saves data sets' => sub {
+        plan tests => 4;
         my $project_path = path($Bin, '..', 'data', 'chapter3');
         my $am = Algorithm::AM->new(
-            Algorithm::AM::Project->new(
-                path => $project_path,
-                variables => 3,
-                commas => 0
-            )
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            test => Algorithm::AM::DataSet->new(vector_length => 2),
         );
-        isa_ok($am->get_project, 'Algorithm::AM::Project',
-            'get_project returns correct object type');
-        is($am->get_project->base_path, $project_path,
-            'correct project base path (project dir)');
+        isa_ok($am->training_set, 'Algorithm::AM::DataSet',
+            'training_set returns correct object type');
+        isa_ok($am->test_set, 'Algorithm::AM::DataSet',
+            'test_set returns correct object type');
+
+        is($am->training_set->vector_length, 3,
+            'training set saved');
+        is($am->test_set->vector_length, 2,
+            'test set saved');
     };
 }

@@ -1,8 +1,13 @@
 Algorithm::AM
 
-Next: Replace Project with DataSet.
+Fix typos in hook tests. Then have AM check that train and test have vectors with the same cardinality
 
 Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
+
+
+Someday: should be able to ignore any variables
+
+Put a path-saving mechanism in DataSet
 
 As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in beginhook the user can add another data item which was classified via a previous run.
 

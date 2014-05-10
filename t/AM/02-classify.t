@@ -8,14 +8,18 @@ use Test::More 0.88;
 plan tests => 10;
 use Test::NoWarnings;
 use Test::LongString;
-use t::TestAM qw(chapter_3_project chapter_3_data);
+use t::TestAM qw(chapter_3_train chapter_3_test);
 
 use FindBin qw($Bin);
 use Path::Tiny;
 use File::Slurp;
 
-my $project = chapter_3_project();
-my $am = Algorithm::AM->new($project);
+my $train = chapter_3_train();
+my $test = chapter_3_test();
+my $am = Algorithm::AM->new(
+    train => $train,
+    test => $test
+);
 my ($result) = $am->classify();
 test_quadratic_classification($result);
 test_analogical_set($result);
@@ -31,7 +35,7 @@ sub test_quadratic_classification {
     subtest 'quadratic calculation' => sub {
         plan tests => 3;
         is($result->total_pointers, 13, 'total pointers')
-            or note $result->total_pointers;;
+            or note $result->total_pointers;
         is($result->count_method, 'squared',
             'counting configured to quadratic');
         is_deeply($result->scores, {'e' => 4, 'r' => 9},
@@ -45,8 +49,10 @@ sub test_quadratic_classification {
 sub test_linear_classification {
     subtest 'linear calculation' => sub {
         plan tests => 3;
-        my $project = chapter_3_project();
-        my $am = Algorithm::AM->new($project);
+        my $am = Algorithm::AM->new(
+            train => $train,
+            test => $test
+        );
         my ($result) = $am->classify(linear => 1);
         is($result->total_pointers, 7, 'total pointers')
             or note $result->total_pointers;;
@@ -62,12 +68,15 @@ sub test_linear_classification {
 # and include_nulls
 # TODO: test for the correct number of active variables
 sub test_nulls {
-    my $project = Algorithm::AM::Project->new(variables => 3);
-    for my $datum( chapter_3_data() ){
-        $project->add_data(@$datum);
-    }
-    $project->add_test([qw(= 1 2)], '', 'r');
-    my $am = Algorithm::AM->new($project);
+    my $test = Algorithm::AM::DataSet->new(vector_length => 3);
+    $test->add_item(
+        features => ['', '1', '2'],
+        class => 'r'
+    );
+    my $am = Algorithm::AM->new(
+        train => $train,
+        test => $test
+    );
 
     subtest 'exclude nulls' => sub {
         plan tests => 3;
@@ -95,11 +104,15 @@ sub test_nulls {
 
 # test case where test data is in given data
 sub test_given {
-    my $project = chapter_3_project();
-    $project->add_data(
-      [qw(3 1 2)], 'r', 'same as the test exemplar');
+    my $train = chapter_3_train();
+    $train->add_item(
+        features => [qw(3 1 2)],
+        class => 'r',
+        comment => 'same as the test exemplar'
+    );
     my $am = Algorithm::AM->new(
-        $project,
+        train => $train,
+        test => $test,
         exclude_given => 1
     );
 
@@ -134,18 +147,18 @@ sub test_analogical_set {
         is_deeply($set, {0 => 4, 2 => 2, 3 => 3, 4 => 4},
             'data indices and pointer values') or note explain $set;
         # now confirm that the referenced data really are what we think
-        is($project->get_exemplar_spec(0), 'myFirstCommentHere',
+        is($train->get_item(0)->comment, 'myFirstCommentHere',
             'confirm first item')
-            or note $project->get_exemplar_spec(0);
-        is($project->get_exemplar_spec(2), 'myThirdCommentHere',
+            or note $train->get_item(0)->comment;
+        is($train->get_item(2)->comment, 'myThirdCommentHere',
             'confirm third item')
-            or note $project->get_exemplar_spec(2);
-        is($project->get_exemplar_spec(3), 'myFourthCommentHere',
+            or note $train->get_item(2)->comment;
+        is($train->get_item(3)->comment, 'myFourthCommentHere',
             'confirm fourth item')
-            or note $project->get_exemplar_spec(3);
-        is($project->get_exemplar_spec(4), 'myFifthCommentHere',
+            or note $train->get_item(3)->comment;
+        is($train->get_item(4)->comment, 'myFifthCommentHere',
             'confirm fifth item')
-            or note $project->get_exemplar_spec(4);
+            or note $train->get_item(4)->comment;
     };
     return;
 }
@@ -210,12 +223,14 @@ sub test_gang_effects {
 # test the finnverb data set; just check how many exemplars
 # were correctly classified
 sub test_finnverb {
+    my $train = dataset_from_file(
+        path => path($Bin, '..', 'data', 'finnverb', 'data'),
+        format => 'nocommas',
+        unknown => '='
+    );
     my $am = Algorithm::AM->new(
-        Algorithm::AM::Project->new(
-            path => path($Bin, '..', 'data', 'finnverb'),
-            variables => 10,
-            commas => 0
-        ),
+        train => $train,
+        test => $train,
         exclude_given => 1,
     );
 

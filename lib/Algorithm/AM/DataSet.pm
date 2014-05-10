@@ -186,6 +186,11 @@ sub _exemplar_outcomes {
     return $self->{exemplar_outcomes};
 }
 
+sub _integer_outcome {
+    my ($self, $index) = @_;
+    return $self->{outcomes}->{$self->get_item($index)->class};
+}
+
 =head2 C<read_data>
 
 This function may be exported. Given 'path' and 'format' arguments,

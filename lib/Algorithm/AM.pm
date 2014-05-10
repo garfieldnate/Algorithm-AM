@@ -9,14 +9,15 @@ use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use Data::Dumper;
 
-use Algorithm::AM::Project;
 use Algorithm::AM::Result;
 use Algorithm::AM::BigInt 'bigcmp';
+use Algorithm::AM::DataSet;
 use Import::Into;
 # Use Import::Into to export classes into caller
 sub import {
     my $target = caller;
     Algorithm::AM::BigInt->import::into($target, 'bigcmp');
+    Algorithm::AM::DataSet->import::into($target, 'dataset_from_file');
     return;
 }
 
@@ -26,11 +27,19 @@ XSLoader::load(__PACKAGE__, $VERSION);
 use Log::Any qw($log);
 
 sub new {
-    my ($class, $project, %opts) = @_;
+    my ($class, %opts) = @_;
 
-    if(!(ref $project && $project->isa('Algorithm::AM::Project'))){
-        croak 'Missing required input Algorithm::AM::Project object.'
+    for('train','test'){
+        if(!$opts{$_}){
+            croak "Missing required parameter '$_'";
+        }
+        if('Algorithm::AM::DataSet' ne ref $opts{$_}){
+            croak "Parameter $_ should be an AlgorithM::AM::DataSet";
+        }
     }
+    my ($train, $test) = ($opts{train}, $opts{test});
+    delete $opts{train};
+    delete $opts{test};
 
     my $opts = _check_classify_opts(
         #classification defaults
@@ -43,7 +52,7 @@ sub new {
     );
     my $self = bless $opts, $class;
 
-    $self->_initialize($project);
+    $self->_initialize($train, $test);
 
     return $self;
 }
@@ -51,22 +60,23 @@ sub new {
 # do all of the classification data structure initialization here,
 # as well as calling the XS initialization method.
 sub _initialize {
-    my ($self, $project) = @_;
+    my ($self, $train, $test) = @_;
 
-    $self->{project} = $project;
+    $self->{train} = $train;
+    $self->{test} = $test;
 
     # compute activeVars here so that lattice space can be allocated in the
     # _initialize method
-    $self->{activeVars} = _compute_lattice_sizes($project->num_variables);
+    $self->{activeVars} = _compute_lattice_sizes($train->vector_length);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
-    @{$self->{sum}} = (0.0) x ($project->num_outcomes + 1);
+    @{$self->{sum}} = (0.0) x ($train->num_classes + 1);
 
     # preemptively allocate memory
     # TODO: not sure what this does
-    @{$self->{itemcontextchain}} = (0) x $project->num_exemplars;
+    @{$self->{itemcontextchain}} = (0) x $train->size;
     # maps data indices to context labels
-    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x $project->num_exemplars;
+    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x $train->size;
 
     $self->{$_} = {} for (
         qw(
@@ -81,7 +91,7 @@ sub _initialize {
     # Initialize XS data structures
     $self->_xs_initialize(
         $self->{activeVars},
-        $project->_exemplar_outcomes,
+        $train->_exemplar_outcomes,
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
         $self->{context_to_outcome},
@@ -91,6 +101,26 @@ sub _initialize {
         $self->{sum}
     );
     return;
+}
+
+=head2 C<training_set>
+
+Returns the dataset used for training.
+
+=cut
+sub training_set {
+    my ($self) = @_;
+    return $self->{train};
+}
+
+=head2 C<test_set>
+
+Returns the dataset used for testing.
+
+=cut
+sub test_set {
+    my ($self) = @_;
+    return $self->{test};
 }
 
 =head2 C<classify>
@@ -113,7 +143,8 @@ sub classify {
         $self->{$opt_name} = $opts->{$opt_name};
     }
 
-    my $project = $self->{project};
+    my $train = $self->{train};
+    my $test = $self->{test};
 
 ## stuff to be exported
     my $grandtotal;
@@ -121,7 +152,7 @@ sub classify {
     my @results;
 
     #Kee track of iteration related information
-    my $datacap = $project->num_exemplars;
+    my $datacap = $train->size;
     my $pass;
 
     my ( $sec, $min, $hour );
@@ -130,28 +161,32 @@ sub classify {
         $self->{beginhook}->($self);
     }
 
-    my $left = scalar $project->num_test_items;
-    foreach my $item_number (0 .. $project->num_test_items - 1) {
+    my $left = scalar $test->size;
+    foreach my $item_number (0 .. $test->size - 1) {
         $log->debug("Test items left: $left")
             if $log->is_debug;
         --$left;
-        my $t = $project->get_test_item($item_number);
-        my ( $curTestOutcome, $curTestItem, $curTestSpec ) = @$t;
+        my $t = $test->get_item($item_number);
+        my ( $curTestOutcome, $curTestItem, $curTestSpec ) = (
+            $t->class,
+            $t->features,
+            $t->comment
+        );
 
         # num_variables is the number of active variables; if we
         # exclude nulls, then we need to minus the number of '=' found in
         # this test item; otherwise, it's just the number of columns in a
         # single item vector
-        my $num_variables = $project->num_variables;
+        my $num_variables = $train->vector_length;
 
         if($self->{exclude_nulls}){
-            $num_variables -= grep {$_ eq '='} @{ $curTestItem };
+            $num_variables -= grep {$_ eq ''} @{ $curTestItem };
         }
         if(exists $self->{begintesthook}){
             # pass in self and the test item
             $self->{begintesthook}->($self,
                 [
-                    $project->get_outcome($curTestOutcome),
+                    $curTestOutcome,
                     $curTestItem,
                     $curTestSpec
                 ]);
@@ -191,7 +226,7 @@ sub classify {
                 # pass in self, test item, and data
                 $self->{beginrepeathook}->($self,
                     [
-                        $project->get_outcome($curTestOutcome),
+                        $curTestOutcome,
                         $curTestItem,
                         $curTestSpec
                     ], {pass => $pass, datacap => $datacap});
@@ -208,7 +243,7 @@ sub classify {
             # change it.
             %{$self->{contextsize}}             = ();
             %{$self->{itemcontextchainhead}}    = ();
-            %{$self->{context_to_outcome}}            = ();
+            %{$self->{context_to_outcome}}      = ();
             %{$self->{pointers}}                = ();
             %{$self->{gang}}                    = ();
             @{$self->{datatocontext}}           = ();
@@ -227,7 +262,7 @@ sub classify {
                             # pass in self, test, data and data index
                             $self,
                             [
-                                $project->get_outcome($curTestOutcome),
+                                $curTestOutcome,
                                 $curTestItem,
                                 $curTestSpec
                             ],
@@ -247,7 +282,7 @@ sub classify {
                     # Note: this must be copied to prevent infinite loop;
                     # see todo note for _context_label
                     [@{$self->{activeVars}}],
-                    $project->get_exemplar_data($data_index),
+                    $train->get_item($data_index)->features,
                     $curTestItem,
                     $self->{exclude_nulls}
                 );
@@ -261,7 +296,7 @@ sub classify {
                 # store the outcome for the subcontext; if there
                 # is already a different outcome for this subcontext,
                 # then store 0, signifying heterogeneity.
-                my $outcome = $project->get_exemplar_outcome($data_index);
+                my $outcome = $train->_integer_outcome($data_index);
                 if ( defined $self->{context_to_outcome}->{$context} ) {
                     $self->{context_to_outcome}->{$context} = 0
                       if $self->{context_to_outcome}->{$context} != $outcome;
@@ -279,7 +314,6 @@ sub classify {
                    $given_excluded = 1;
                 }
             }
-
             # initialize the results object to hold all of the configuration
             # info.
             my $result = Algorithm::AM::Result->new(
@@ -294,7 +328,8 @@ sub classify {
                 count_method => $self->{linear} ? 'linear' : 'squared',
                 datacap => $datacap,
                 test_in_data => $testindata,
-                project => $project
+                train => $train,
+                test => $test,
             );
 
             $log->debug(${$result->config_info})
@@ -349,7 +384,7 @@ sub classify {
                 $self->{endrepeathook}->(
                     $self,
                     [
-                        $project->get_outcome($curTestOutcome),
+                        $curTestOutcome,
                         $curTestItem,
                         $curTestSpec
                     ],
@@ -370,7 +405,7 @@ sub classify {
             $self->{endtesthook}->(
                 $self,
                 [
-                    $project->get_outcome($curTestOutcome),
+                    $curTestOutcome,
                     $curTestItem,
                     $curTestSpec
                 ],
@@ -389,16 +424,6 @@ sub classify {
     }
 
     return @results;
-}
-
-=head2 C<get_project>
-
-Returns the Project object used as the source of data by this instance.
-
-=cut
-sub get_project {
-    my ($self) = @_;
-    return $self->{project};
 }
 
 sub _check_classify_opts {
@@ -465,23 +490,27 @@ sub _context_label {
     # number of active variables in each lattice,
     # exemplar (data) variables, item variables,
     # and boolean indicating if nulls should be excluded
-    my ($active_vars, $exemplar_vars, $item_vars, $skip_nulls) = @_;
+    my ($active_vars, $train_feats, $test_feats, $skip_nulls) = @_;
 
     # variable index
     my $index        = 0;
     # the binary context labels for each separate lattice
     my @context_list    = ();
+
     for my $a (@$active_vars) {
         # binary context label for a single sublattice
         my $context = 0;
         # loop through all variables in the sublattice
+        # assign 0 if variables match, 1 if they do not
         for ( ; $a ; --$a ) {
-            # skip null variables
+
+            # skip unknown variables if indicated
             if($skip_nulls){
-                ++$index while ${ $item_vars }[$index] eq '=';
+                ++$index while $test_feats->[$index] eq '';
             }
             # add a 1 for mismatched variable, 0 for matched variable
-            $context = ( $context << 1 ) | ( ${ $item_vars }[$index] ne $exemplar_vars->[$index] );
+            $context = ( $context << 1 ) | (
+                $test_feats->[$index] ne $train_feats->[$index] );
             ++$index;
         }
         push @context_list, $context;

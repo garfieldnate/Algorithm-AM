@@ -4,11 +4,11 @@ use warnings;
 use feature qw(state);
 use Test::More 0.88;
 use Test::NoWarnings;
-use t::TestAM qw(
-	chapter_3_data
-	chapter_3_project
-	chapter_3_test
-);
+use t::TestAM qw(chapter_3_train chapter_3_test);
+
+my $train = chapter_3_train();
+my $test = chapter_3_test();
+
 use Algorithm::AM;
 
 # Tests are run by the hooks passed into the classify() method.
@@ -47,40 +47,55 @@ my %test_subs = (
 );
 
 
-my $project = chapter_3_project();
-$project->add_test([qw(3 1 3)], 'e', 'second test item');
+$train = chapter_3_train();
+$test = chapter_3_test();
+$test->add_item(
+	features => [qw(3 1 3)],
+	comment => 'second test item',
+	class => 'e',
+);
 
 my $am = Algorithm::AM->new(
-	$project,
+	train => $train,
+	test => $test,
 	repeat => 2,
 	probability => 1,
 );
 $am->classify(
-	beginhook => make_hook('beginhook',
-		'test_beginning_vars'),
-	begintesthook => make_hook('begintesthook',
+	beginhook => make_hook(
+		'beginhook',
+		'test_beginning_vars'
+	),
+	begintesthook => make_hook(
+		'begintesthook',
 		'test_beginning_vars',
 		'test_item_vars'),
-	beginrepeathook => make_hook('begintesthook',
+	beginrepeathook => make_hook(
+		'begintesthook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
-	datahook => make_hook('begintesthook',
+	datahook => make_hook(
+		'begintesthook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
-	endrepeathook => make_hook('begintesthook',
+	endrepeathook => make_hook(
+		'begintesthook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
 		'test_end_iter_vars'),
-	endtesthook => make_hook('begintesthook',
+	endtesthook => make_hook(
+		'begintesthook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_end_iter_vars'),
-	endhook => make_hook('endhook',
+	endhook => make_hook(
+		'endhook',
 		'test_beginning_vars',
-		'test_end_vars'),
+		'test_end_vars'
+	),
 );
 
 # make a hook which runs the given test subs in a single subtest.
@@ -106,7 +121,7 @@ sub make_hook {
 sub test_beginning_vars {
 	my ($hook_name, $am) = @_;
 	isa_ok($am, 'Algorithm::AM', "$hook_name: \$am");
-	is($am->get_project->num_exemplars, 5,
+	is($am->training_set->size, 5,
 		"$hook_name: \$am has correct project");
 	return;
 }

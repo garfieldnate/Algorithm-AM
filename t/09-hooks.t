@@ -5,12 +5,22 @@ use Algorithm::AM;
 use Test::More 0.88;
 plan tests => 3;
 use Test::NoWarnings;
-use t::TestAM 'chapter_3_project';
+use t::TestAM qw(chapter_3_train chapter_3_test);
 
-my $project = chapter_3_project();
-$project->add_test([qw(3 1 2)], 'second test item', 'e');
+my $train = chapter_3_train();
+my $test = chapter_3_test();
 
-my $am = Algorithm::AM->new($project, repeat => 2);
+$test->add_item(
+	features => [qw(3 1 2)],
+	class => 'e',
+	comment => 'second test item',
+);
+
+my $am = Algorithm::AM->new(
+	train => $train,
+	test => $test,
+	repeat => 2
+);
 
 #first test that each hook is called at the appropriate time
 #by recording the call of each hook in @record
