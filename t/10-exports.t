@@ -32,7 +32,7 @@ plan tests => $total_calls + 1;
 # can plan subtests
 my %tests_per_sub = (
 	test_beginning_vars => 2,
-	test_item_vars => 3,
+	test_item_vars => 4,
 	test_iter_vars => 3,
 	test_end_iter_vars => 1,
 	test_end_vars => 4
@@ -130,32 +130,34 @@ sub test_beginning_vars {
 # different specs and outcomes. Check each one.
 sub test_item_vars {
 	my ($am, $test_item) = @_;
-	my ($outcome, $variables, $spec) = @$test_item;
 
-	ok($outcome eq 'r' || $outcome eq 'e', 'test outcome');
-	if($outcome eq 'e'){
+	isa_ok($test_item, 'Algorithm::AM::DataSet::Item');
+
+	ok($test_item->class eq 'r' || $test_item->class eq 'e',
+		'test outcome');
+	if($test_item->class eq 'e'){
 		like(
-			$spec,
+			$test_item->comment,
 			qr/second test item$/,
 			'test spec'
 		);
-		is_deeply($variables, [3,1,3], 'test variables')
-			or note explain $variables;
+		is_deeply($test_item->features, [3,1,3], 'test variables')
+			or note explain $test_item->features;
 	}else{
 		like(
-			$spec,
+			$test_item->comment,
 			qr/test item spec$/,
 			'test spec'
 		);
-		is_deeply($variables, [3,1,2], 'test variables')
-			or note explain $variables;
+		is_deeply($test_item->features, [3,1,2], 'test variables')
+			or note explain $test_item->features;
 	}
 	return;
 }
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($am, $test, $iter_data) = @_;
+	my ($am, $test_item, $iter_data) = @_;
 	ok(
 		$iter_data->{pass} == 0 || $iter_data->{pass} == 1,
 		'$pass- only do 2 passes of the data');
@@ -168,10 +170,9 @@ sub test_iter_vars {
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($am, $test, $iter_data, $result) = @_;
-	my ($outcome, $variables, $spc) = @$test;
+	my ($am, $test_item, $iter_data, $result) = @_;
 
-	if($outcome eq 'e'){
+	if($test_item->class eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},
 			'outcome scores');
 	}else{

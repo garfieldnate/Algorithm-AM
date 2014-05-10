@@ -237,9 +237,8 @@ sub test_finnverb {
     my $count = 0;
     $am->classify(
         endtesthook   => sub {
-            my ($am, $test, $data, $result) = @_;
-            my ($outcome, $variables, $spec) = @$test;
-            ++$count if grep {$_ eq $outcome} @{$result->winners()};
+            my ($am, $test_item, $data, $result) = @_;
+            ++$count if $result->result ne 'incorrect';
         }
     );
 

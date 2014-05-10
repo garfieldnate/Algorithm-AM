@@ -143,8 +143,8 @@ sub classify {
         $self->{$opt_name} = $opts->{$opt_name};
     }
 
-    my $train = $self->{train};
-    my $test = $self->{test};
+    my $training_set = $self->{train};
+    my $test_set = $self->{test};
 
 ## stuff to be exported
     my $grandtotal;
@@ -152,7 +152,7 @@ sub classify {
     my @results;
 
     #Kee track of iteration related information
-    my $datacap = $train->size;
+    my $datacap = $training_set->size;
     my $pass;
 
     my ( $sec, $min, $hour );
@@ -161,35 +161,30 @@ sub classify {
         $self->{beginhook}->($self);
     }
 
-    my $left = scalar $test->size;
-    foreach my $item_number (0 .. $test->size - 1) {
+    my $left = scalar $test_set->size;
+    foreach my $item_number (0 .. $test_set->size - 1) {
         $log->debug("Test items left: $left")
             if $log->is_debug;
         --$left;
-        my $t = $test->get_item($item_number);
+        my $test_item = $test_set->get_item($item_number);
         my ( $curTestOutcome, $curTestItem, $curTestSpec ) = (
-            $t->class,
-            $t->features,
-            $t->comment
+            $test_item->class,
+            $test_item->features,
+            $test_item->comment
         );
 
         # num_variables is the number of active variables; if we
         # exclude nulls, then we need to minus the number of '=' found in
         # this test item; otherwise, it's just the number of columns in a
         # single item vector
-        my $num_variables = $train->vector_length;
+        my $num_variables = $training_set->vector_length;
 
         if($self->{exclude_nulls}){
             $num_variables -= grep {$_ eq ''} @{ $curTestItem };
         }
         if(exists $self->{begintesthook}){
             # pass in self and the test item
-            $self->{begintesthook}->($self,
-                [
-                    $curTestOutcome,
-                    $curTestItem,
-                    $curTestSpec
-                ]);
+            $self->{begintesthook}->($self, $test_item);
         }
 
         # recalculate the lattice sizes with new number of active variables;
@@ -225,11 +220,7 @@ sub classify {
             if(exists $self->{beginrepeathook}){
                 # pass in self, test item, and data
                 $self->{beginrepeathook}->($self,
-                    [
-                        $curTestOutcome,
-                        $curTestItem,
-                        $curTestSpec
-                    ], {pass => $pass, datacap => $datacap});
+                    $test_item, {pass => $pass, datacap => $datacap});
             }
             $datacap = int($datacap);
 
@@ -261,11 +252,7 @@ sub classify {
                         !$self->{datahook}->(
                             # pass in self, test, data and data index
                             $self,
-                            [
-                                $curTestOutcome,
-                                $curTestItem,
-                                $curTestSpec
-                            ],
+                            $test_item,
                             {pass => $pass, datacap => $datacap},
                              $data_index)
                         ){
@@ -282,7 +269,7 @@ sub classify {
                     # Note: this must be copied to prevent infinite loop;
                     # see todo note for _context_label
                     [@{$self->{activeVars}}],
-                    $train->get_item($data_index)->features,
+                    $training_set->get_item($data_index)->features,
                     $curTestItem,
                     $self->{exclude_nulls}
                 );
@@ -296,7 +283,7 @@ sub classify {
                 # store the outcome for the subcontext; if there
                 # is already a different outcome for this subcontext,
                 # then store 0, signifying heterogeneity.
-                my $outcome = $train->_integer_outcome($data_index);
+                my $outcome = $training_set->_integer_outcome($data_index);
                 if ( defined $self->{context_to_outcome}->{$context} ) {
                     $self->{context_to_outcome}->{$context} = 0
                       if $self->{context_to_outcome}->{$context} != $outcome;
@@ -328,8 +315,8 @@ sub classify {
                 count_method => $self->{linear} ? 'linear' : 'squared',
                 datacap => $datacap,
                 test_in_data => $testindata,
-                train => $train,
-                test => $test,
+                train => $training_set,
+                test => $test_set,
             );
 
             $log->debug(${$result->config_info})
@@ -376,18 +363,13 @@ sub classify {
                 $log->info(${ $result->gang_summary(0) })
             }
             push @results, $result;
-
         }
         continue {
             if(exists $self->{endrepeathook}){
                 # pass in self, test item, data, and result
                 $self->{endrepeathook}->(
                     $self,
-                    [
-                        $curTestOutcome,
-                        $curTestItem,
-                        $curTestSpec
-                    ],
+                    $test_item,
                     {pass => $pass, datacap => $datacap},
                     $results[-1]
                 );
@@ -404,11 +386,7 @@ sub classify {
             # pass in self, test item, data, and result
             $self->{endtesthook}->(
                 $self,
-                [
-                    $curTestOutcome,
-                    $curTestItem,
-                    $curTestSpec
-                ],
+                $test_item,
                 {pass => $pass, datacap => $datacap},
                 $results[-1]
             );

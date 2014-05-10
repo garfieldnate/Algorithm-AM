@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Update params to hook. Then have AM check that train and test have vectors with the same cardinality
+Have AM check that train and test have vectors with the same cardinality
 
 Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
 
