@@ -21,15 +21,18 @@ test_gang_summary($result);
 # the config_info method after setting internal state through
 # the constructor.
 sub test_config_info {
+    my $item = Algorithm::AM::DataSet::Item->new(
+        features => [qw(a b c)],
+        comment => 'comment',
+        class => 'e',
+    );
     subtest 'configuration info string' => sub {
         plan tests => 2;
         my $result = Algorithm::AM::Result->new(
+            test_item => $item,
             excluded_data => [0,1,2],
             given_excluded => 1,
             num_variables => 3,
-            test_item => [qw(a b c)],
-            test_spec => 'comment',
-            test_outcome => 2,
             exclude_nulls => 1,
             count_method => 'linear',
             datacap => 50,
@@ -56,9 +59,7 @@ END_INFO
             excluded_data => [],
             given_excluded => 0,
             num_variables => 3,
-            test_item => [qw(a b c)],
-            test_spec => 'comment',
-            test_outcome => 2,
+            test_item => $item,
             exclude_nulls => 0,
             probability => .5,
             count_method => 'squared',

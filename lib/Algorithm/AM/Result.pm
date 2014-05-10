@@ -38,8 +38,6 @@ use Class::Tiny qw(
     num_variables
     test_in_data
     test_item
-    test_spec
-    test_outcome
     probability
     count_method
     datacap
@@ -76,7 +74,6 @@ following accessors is included:
     num_variables
     test_in_data
     test_item
-    test_spec
     probability
     count_method
     datacap
@@ -86,7 +83,8 @@ sub config_info {
     my ($self) = @_;
     my @headers = ('Option', 'Setting');
     my @rows = (
-        [ "Given context", "@{ $self->{test_item} }, $self->{test_spec}" ],
+        [ "Given context", (join ' ', @{$self->test_item->features}) .
+            ', ' . $self->test_item->comment],
         [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
         [ "Gang",  $self->{count_method}],
         [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
@@ -113,9 +111,10 @@ sub config_info {
 # provided, and set is_tie, high_score, scores, winners, and
 # total_pointers.
 sub _process_stats {
-    my ($self, $total_pointers, $sum, $expected, $pointers,
+    my ($self, $sum, $pointers,
         $itemcontextchainhead, $itemcontextchain, $context_to_outcome,
         $gang, $active_vars, $contextsize) = @_;
+    my $total_pointers = $pointers->{grandtotal};
     my $max = '';
     my @winners;
     my %scores;
@@ -146,8 +145,7 @@ sub _process_stats {
 
     # set result to tie/correct/incorrect after comparing
     # expected/actual outcomes
-    if($expected){
-        $self->test_outcome($expected);
+    if(my $expected = $self->test_item->class){
         if(exists $scores{$expected} &&
                 bigcmp($scores{$expected}, $max) == 0){
             if(@winners > 1){
@@ -213,7 +211,7 @@ sub statistical_summary {
     $info .= join '', @table;
     # the predicted outcome (the one with the highest number
     # of pointers) and the result (correct/incorrect/tie).
-    if ( defined (my $outcome = $self->test_outcome) ) {
+    if ( defined (my $outcome = $self->test_item->class) ) {
         $info .= "Expected outcome: $outcome\n";
         my $result = $self->result;
         if ( $result eq 'correct') {
@@ -347,7 +345,7 @@ sub gang_summary {
         undef,
         undef,
         undef,
-        @$test_item,
+        @{$test_item->features},
     ];
 
     # store the number of rows added for each gang
@@ -406,7 +404,7 @@ sub gang_summary {
         'Pointers' => \' | ',
         'Num Items' => \' | ',
         'Outcome' => \' | ',
-        ('' => \' ') x @$test_item
+        ('' => \' ') x @{$test_item->features}
     );
     pop @headers;
     if($print_list){
@@ -516,7 +514,7 @@ sub _calculate_gangs {
 # wich have ('a' 'b' whatever) as variable values.
 sub _unpack_supracontext {
     my ($self, $context) = @_;
-    my (@variables) = @{ $self->test_item };
+    my (@variables) = @{ $self->test_item->features };
     my @context_list   = unpack "S!4", $context;
     my @alist   = @{$self->{active_vars}};
     my $j       = 1;
@@ -597,15 +595,7 @@ True if the test item was present among the data items.
 
 =head2 C<test_item>
 
-Returns an array ref containing the variables in the test item.
-
-=head2 C<test_spec>
-
-Returns the spec associated with the test item.
-
-=head2 C<test_outcome>
-
-Returns the outcome of the test item.
+Returns the Item which was classified.
 
 =head2 C<probability>
 

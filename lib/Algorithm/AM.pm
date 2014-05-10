@@ -146,8 +146,6 @@ sub classify {
     my $training_set = $self->{train};
     my $test_set = $self->{test};
 
-## stuff to be exported
-    my $grandtotal;
     # save the result objects from each run here
     my @results;
 
@@ -167,11 +165,6 @@ sub classify {
             if $log->is_debug;
         --$left;
         my $test_item = $test_set->get_item($item_number);
-        my ( $curTestOutcome, $curTestItem, $curTestSpec ) = (
-            $test_item->class,
-            $test_item->features,
-            $test_item->comment
-        );
 
         # num_variables is the number of active variables; if we
         # exclude nulls, then we need to minus the number of '=' found in
@@ -180,7 +173,8 @@ sub classify {
         my $num_variables = $training_set->vector_length;
 
         if($self->{exclude_nulls}){
-            $num_variables -= grep {$_ eq ''} @{ $curTestItem };
+            $num_variables -= grep {$_ eq ''} @{
+                $test_item->features };
         }
         if(exists $self->{begintesthook}){
             # pass in self and the test item
@@ -208,7 +202,7 @@ sub classify {
         if($log->is_debug){
             $log->info(
                 sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
-                "@{ $curTestItem }\n" .
+                (join ' ', @{$test_item->features}) . "\n" .
                 sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
                     $hour, $min, $sec ) );
         }
@@ -270,7 +264,7 @@ sub classify {
                     # see todo note for _context_label
                     [@{$self->{activeVars}}],
                     $training_set->get_item($data_index)->features,
-                    $curTestItem,
+                    $test_item->features,
                     $self->{exclude_nulls}
                 );
                 $self->{contextsize}->{$context}++;
@@ -307,9 +301,7 @@ sub classify {
                 excluded_data => \@excluded_data,
                 given_excluded => $given_excluded,
                 num_variables => $num_variables,
-                test_item => $curTestItem,
-                test_spec => $curTestSpec,
-                test_outcome => $curTestOutcome,
+                test_item => $test_item,
                 exclude_nulls => $self->{exclude_nulls},
                 probability => $self->{probability},
                 count_method => $self->{linear} ? 'linear' : 'squared',
@@ -326,9 +318,7 @@ sub classify {
             $self->_fillandcount($self->{linear} ? 0 : 1);
             $result->end_time([ (localtime)[0..2] ]);
 
-            $grandtotal = $self->{pointers}->{'grandtotal'};
-
-            unless ($grandtotal) {
+            unless ($self->{pointers}->{'grandtotal'}) {
                 #TODO: is this tested yet?
                 if($log->is_warn){
                     $log->warn('No data items considered. ' .
@@ -340,9 +330,7 @@ sub classify {
             $result->_process_stats(
                 # TODO: after refactoring to a "guts" object,
                 # just pass that in
-                $grandtotal,
                 $self->{sum},
-                $curTestOutcome,
                 $self->{pointers},
                 $self->{itemcontextchainhead},
                 $self->{itemcontextchain},
