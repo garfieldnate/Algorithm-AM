@@ -30,14 +30,19 @@ sub new {
     my ($class, %opts) = @_;
 
     for('train','test'){
-        if(!$opts{$_}){
+        if(!exists $opts{$_}){
             croak "Missing required parameter '$_'";
         }
         if('Algorithm::AM::DataSet' ne ref $opts{$_}){
-            croak "Parameter $_ should be an AlgorithM::AM::DataSet";
+            croak "Parameter $_ should be an Algorithm::AM::DataSet";
         }
     }
     my ($train, $test) = ($opts{train}, $opts{test});
+    if($train->vector_length != $test->vector_length){
+        croak 'Training and test sets do not have the same ' .
+            'cardinality (' . $train->vector_length . ' and ' .
+                $test->vector_length . ')';
+    }
     delete $opts{train};
     delete $opts{test};
 

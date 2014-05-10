@@ -1,23 +1,16 @@
 Algorithm::AM
 
-Have AM check that train and test have vectors with the same cardinality
+Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there, as well as all of the iteration-related hooks.
 
-Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there.
-
-
-Someday: should be able to ignore any variables
-
-Put a path-saving mechanism in DataSet
-
-As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in beginhook the user can add another data item which was classified via a previous run.
+As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in endhook the user can add the classified test item to the training data.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
+
+Someday: should be able to ignore any variables
 
 Add tests for logging
 
 Add tests for everything in Result that isn't tested yet.
-
-Add logic for classifying items whose correct classification is unknown.
 
 Try to move more of the AM guts stuff back into AM.pm or into Project.pm, or into a new Guts.pm. Right now quite a bit of it is in Result, which seems sub-par.
 
@@ -25,8 +18,6 @@ Add timing accessors to Result.
 Do better time handling in Result; something that will allow checking how long classification took would be nice.
 
 Add other bigint helper methods into BigInt and test them, as well.
-
-Make '=' into a constant somewhere so it obvious that it represents UNKNOWN_VARIABLE.
 
 Instead of passing around the "activeVars" variable and skipping nulls if needed, it might make more sense to create an array containing all of the active indices, i.e. [0,1,2,4,6,7] if 3 and 5 are null and exclude nulls is on. This would make it easier to simplify things via `map` or whatever.
 
@@ -71,13 +62,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 		classify() method should classify a single vector
 			- that might mean more refactoring of project
 		Should move iteration, and iter vars, into a separate class.
-	I think beginning vars should just be in the AM object
-	Variable access via $data in hooks should be replaced with method access via objects passed to hooks
-		these should simplify basic operations for the user; for example:
-			outcome strings should be given, instead of numbers (no more outcometonum)
-			The user shouldn't be required access arrays starting from index 1, like with @sum
-			possibly rename to "subtotals"
-			envars should just be given the Result object
 
 ## Documentation TODOs:
 - Documentation on how to use AM will need to be almost completely re-written, as the API has completely changed.
@@ -91,4 +75,3 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- grandtotal/total_pointers/total_score
 	- datacap
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
-- Create tests for each of the example programs in the documentation. This way they are forced to be updated as the API is updated.

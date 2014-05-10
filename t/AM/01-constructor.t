@@ -5,7 +5,7 @@ use Algorithm::AM;
 use Test::More 0.88;
 use Test::Exception;
 use Test::NoWarnings;
-plan tests => 7;
+plan tests => 8;
 use FindBin qw($Bin);
 use Path::Tiny;
 
@@ -33,7 +33,7 @@ sub test_input_checking {
             train => 'stuff',
             test => Algorithm::AM::DataSet->new(vector_length => 3),
         );
-    } qr/Parameter train should be an AlgorithM::AM::DataSet/,
+    } qr/Parameter train should be an Algorithm::AM::DataSet/,
     'dies with bad training set';
 
     throws_ok {
@@ -41,7 +41,7 @@ sub test_input_checking {
             train => Algorithm::AM::DataSet->new(vector_length => 3),
             test => 'stuff',
         );
-    } qr/Parameter test should be an AlgorithM::AM::DataSet/,
+    } qr/Parameter test should be an Algorithm::AM::DataSet/,
     'dies with bad test set';
 
     throws_ok {
@@ -52,6 +52,14 @@ sub test_input_checking {
         );
     } qr/Unknown option foo/,
     'dies with bad argument';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            test => Algorithm::AM::DataSet->new(vector_length => 4),
+        );
+    } qr/Training and test sets do not have the same cardinality \(3 and 4\)/,
+    'dies with mismatched dataset cardinalities';
     return;
 }
 
@@ -62,7 +70,7 @@ sub test_project {
         my $project_path = path($Bin, '..', 'data', 'chapter3');
         my $am = Algorithm::AM->new(
             train => Algorithm::AM::DataSet->new(vector_length => 3),
-            test => Algorithm::AM::DataSet->new(vector_length => 2),
+            test => Algorithm::AM::DataSet->new(vector_length => 3),
         );
         isa_ok($am->training_set, 'Algorithm::AM::DataSet',
             'training_set returns correct object type');
@@ -71,7 +79,7 @@ sub test_project {
 
         is($am->training_set->vector_length, 3,
             'training set saved');
-        is($am->test_set->vector_length, 2,
+        is($am->test_set->vector_length, 3,
             'test set saved');
     };
 }
