@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 9;
+plan tests => 10;
 use Test::NoWarnings;
 use Test::Exception;
 use Algorithm::AM::DataSet::Item;
@@ -26,7 +26,7 @@ sub test_constructor {
 
     lives_ok {
         Algorithm::AM::DataSet::Item->new(features => ['a','b']);
-    } 'add_data fails with missing features parameter';
+    } q[constructor doesn't die with good input];
     return;
 }
 
@@ -37,6 +37,7 @@ sub test_accessors {
     is_deeply($item->features, ['a', 'b'], 'features value');
     is($item->class, 'zed', 'class value');
     is($item->comment, 'xyz', 'comment value');
+    is($item->cardinality, 2, 'cardinality');
 
     $item = Algorithm::AM::DataSet::Item->new(features => ['a', 'b']);
     is($item->class, undef, 'class default value');

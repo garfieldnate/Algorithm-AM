@@ -48,6 +48,13 @@ containing the string value for each feature.
 
 Returns the comment for this item.
 
-=cut
+=head2 C<cardinality>
 
+Returns the length of the feature vector for this item.
+
+=cut
+sub cardinality {
+    my ($self) = @_;
+    return scalar @{$self->features};
+}
 1;
