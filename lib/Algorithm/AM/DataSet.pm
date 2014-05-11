@@ -58,16 +58,19 @@ sub _check_opts {
 # initialize internal state
 sub _init {
     my ($self) = @_;
-    # used to keep track of unique outcomes
-    $self->{outcomes} = {};
-    $self->{outcome_num} = 0;
-    # index 0 of outcomelist is reserved for the AM algorithm
-    $self->{outcomelist} = [''];
-
+    # contains all of the items in the dataset
     $self->{items} = [];
-    $self->{data} = [];
-    $self->{exemplar_outcomes} = [];
-    $self->{spec} = [];
+
+    # map unique class labels to unique integers;
+    # these are the indices of the class labels in class_list below;
+    # the indices must start at 1 for AM to work, as 0 is reserved
+    # for heterogeneity.
+    $self->{class_num_index} = {};
+    # contains the list of class strings in an order that matches
+    # the indices in class_num_index
+    $self->{class_list} = [];
+    # the total number of different classes contained in the data set
+    $self->{num_classes} = 0;
     return;
 }
 
@@ -89,6 +92,16 @@ Returns the number of items in the data set.
 sub size {
     my ($self) = @_;
     return scalar @{$self->{items}};
+}
+
+=head2 C<classes>
+
+Returns the list of all unique class labels in the data set.
+
+=cut
+sub classes {
+    my ($self) = @_;
+    return @{ $self->{class_list} };
 }
 
 =head2 C<add_item>
@@ -116,33 +129,22 @@ sub add_item {
     }
 
     if(defined $item->class){
-        $self->_update_outcome_vars($item->class);
-        push @{$self->{exemplar_outcomes}},
-            $self->{outcomes}{$item->class};
-    }else{
-        push @{$self->{exemplar_outcomes}}, undef;
+        $self->_update_class_vars($item->class);
     }
+
     # store the new data item
-    push @{$self->{spec}}, $item->comment;
-    push @{$self->{data}}, $item->features;
-    push @{$self->{classes}}, $item->class;
     push @{$self->{items}}, $item;
     return;
 }
 
-# keep track of outcomes; needs updating for every data/test item.
-# Variables:
-#   outcomes maps outcomes to their index in outcomelist
-#   outcome_num is the total number of outcomes so far
-#   outcomelist is a list of the unique outcomes
-# TODO: We don't need so many of these structures, do we?
-sub _update_outcome_vars {
-    my ($self, $outcome) = @_;
+# keep track of classes; needs updating for every data/test item.
+sub _update_class_vars {
+    my ($self, $class) = @_;
 
-    if(!$self->{outcomes}->{$outcome}){
-        $self->{outcome_num}++;
-        $self->{outcomes}->{$outcome} = $self->{outcome_num};
-        push @{$self->{outcomelist}}, $outcome;
+    if(!$self->{class_num_index}->{$class}){
+        $self->{num_classes}++;
+        $self->{class_num_index}->{$class} = $self->{num_classes};
+        push @{$self->{class_list}}, $class;
     }
     return;
 }
@@ -166,29 +168,32 @@ the data set.
 =cut
 sub num_classes {
     my ($self) = @_;
-    return $self->{outcome_num};
+    return $self->{num_classes};
 }
 
-=head2 C<get_outcome>
-
-Returns the outcome string contained at a given index in outcomelist.
-
-=cut
-sub get_outcome {
-    my ($self, $index) = @_;
-    return $self->{outcomelist}->[$index];
-}
-
-# Used by AM.pm to retrieve the arrayref containing all of the
-# outcomes for the data set (ordered the same as the data set).
-sub _exemplar_outcomes {
+# Used by AM. Return an arrayref containing all of the
+# classes for the data set (ordered the same as the data set).
+sub _data_classes {
     my ($self) = @_;
-    return $self->{exemplar_outcomes};
+    my @classes = map {
+        defined $_->class ?
+            $self->_index_for_class($_->class) :
+            undef
+        } @{$self->{items}};
+    return \@classes;
 }
 
-sub _integer_outcome {
+# Used by AM. Return the integer mapped to the given class string.
+sub _index_for_class {
+    my ($self, $class) = @_;
+    return $self->{class_num_index}->{$class};
+}
+
+# Used by Result, which traverses data structures from
+# AM's guts.
+sub _class_for_index {
     my ($self, $index) = @_;
-    return $self->{outcomes}->{$self->get_item($index)->class};
+    return $self->{class_list}->[$index - 1];
 }
 
 =head2 C<read_data>
@@ -221,12 +226,12 @@ sub dataset_from_file {
 
     my ($field_sep, $feature_sep);
     if($format eq 'commas'){
-        # outcome/data/spec separate by a comma
+        # class/data/comment separated by a comma
         $field_sep   = qr{\s*,\s*};
         # variables separated by space
         $feature_sep = qr{\s+};
     }elsif($format eq 'nocommas'){
-        # outcome/data/spec separated by space
+        # class/data/comment separated by space
         $field_sep   = qr{\s+};
         # no seps for variables; each is a single character
         $feature_sep = qr{};

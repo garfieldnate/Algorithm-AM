@@ -123,7 +123,7 @@ sub _process_stats {
         # skip outcomes with no pointers
         next unless $outcome_pointers = $sum->[$outcome_index];
 
-        my $outcome = $self->train->get_outcome($outcome_index);
+        my $outcome = $self->train->_class_for_index($outcome_index);
         $scores{$outcome} = $outcome_pointers;
 
         # check if the outcome has the highest score, or ties for it
@@ -450,10 +450,10 @@ sub _calculate_gangs {
 
         my $p = $self->{pointers}->{$context};
         # if the supracontext is homogenous
-        if ( my $outcome = $self->{context_to_outcome}->{$context} ) {
+        if ( my $outcome_index = $self->{context_to_outcome}->{$context} ) {
             # store a 'homogenous' key that indicates this, besides
             # indicating the unanimous outcome.
-            $outcome = $train->get_outcome($outcome);
+            my $outcome = $train->_class_for_index($outcome_index);
             $gangs->{$key}->{homogenous} = $outcome;
             my @data;
             for (

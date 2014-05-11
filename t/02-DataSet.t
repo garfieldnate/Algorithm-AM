@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 24;
+plan tests => 26;
 use Test::NoWarnings;
 use Test::Exception;
 use Algorithm::AM::DataSet 'dataset_from_file';
@@ -178,7 +178,7 @@ sub test_dataset_from_file {
 # data should not have to be exposed
 sub test_private_data {
     my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
-    is_deeply($dataset->_exemplar_outcomes, [],
+    is_deeply($dataset->_data_classes, [],
         "empty data set has empty outcomes");
 
     my @data = chapter_3_data();
@@ -191,7 +191,11 @@ sub test_private_data {
             comment => $datum->[2]);
     }
 
-    is_deeply($dataset->_exemplar_outcomes, [qw(1 2 2 2 2)],
-        "correct data set outcomes");
+    is_deeply($dataset->_data_classes, [qw(1 2 2 2 2)],
+        "list of classes for data set");
+    is($dataset->_index_for_class('r'), 2,
+        '_index_for_class');
+    is($dataset->_class_for_index(2), 'r',
+        '_class_for_index');
     return;
 }

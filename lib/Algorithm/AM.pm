@@ -81,9 +81,12 @@ sub _initialize {
     );
 
     # Initialize XS data structures
+    # TODO: Perl crashes unless this is saved. The XS
+    # must not be increasing the reference count
+    $self->{save_this} = $train->_data_classes;
     $self->_xs_initialize(
         $self->{activeVars},
-        $train->_exemplar_outcomes,
+        $self->{save_this},
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
         $self->{context_to_outcome},
@@ -214,7 +217,8 @@ sub classify {
         # store the outcome for the subcontext; if there
         # is already a different outcome for this subcontext,
         # then store 0, signifying heterogeneity.
-        my $outcome = $training_set->_integer_outcome($data_index);
+        my $outcome = $training_set->_index_for_class(
+            $training_set->get_item($data_index)->class);
         if ( defined $self->{context_to_outcome}->{$context} ) {
             $self->{context_to_outcome}->{$context} = 0
               if $self->{context_to_outcome}->{$context} != $outcome;

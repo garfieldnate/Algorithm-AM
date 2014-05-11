@@ -2,11 +2,9 @@ Algorithm::AM
 
 Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
 
-Perhaps make a DataSet iterator that would work even when new items were added. That could be used to allow the user to add items during any hook and have them be used immediately.
-
 It is weird to have the classify method take parameters that are stored forever. They should be temporary, or not accepted by the classify method.
 
-See if any internals of DataSet can be cleaned out.
+Increase reference count on data_class array (search 'save_this' in AM)
 
 Note that datacap won't take effect until next round of data adding
 
@@ -22,6 +20,8 @@ Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 Someday: should be able to ignore any variables
 
 Add tests for logging
+
+Perhaps make a DataSet iterator that would work even when new items were added. That could be used to allow the user to add items during any hook and have them be used immediately.
 
 Add tests for everything in Result that isn't tested yet.
 
@@ -39,10 +39,6 @@ Scrub the code for consistent naming. "Data" should be given, or training, or ex
 test properly that classification arguments can be given with either the constructor or the classify() method.
 
 do something better than just calling rand() for the probability/skip function.
-
-Projects normally contain separate datasets for training/testing/evaluating. Create another module to hold a dataset. Project can manage 2 datasets (data and test). This would be much more flexible.
-
-change $self->{data/outcome/spec} to $self->{data}->{data/outcome/spec}. $self->{outcome/outcomes} are too similarly named.
 
 Move the XS code to a different package so all of those variables can be stored in something private: pointers, itemcontextchainhead, etc. The work done on gangs could also be put into this package, since it requires special knowledge of the underlying structure. Maybe the Guts package?
 
