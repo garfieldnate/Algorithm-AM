@@ -100,9 +100,7 @@ sub classify {
     my $datacap = $self->training_set->size;
     my $pass;
 
-    my ( $sec, $min, $hour );
-
-    if(defined $self->beginhook){
+    if($self->beginhook){
         $self->beginhook->($self);
     }
 
@@ -113,12 +111,12 @@ sub classify {
         --$left;
         my $test_item = $test_set->get_item($item_number);
 
-        if(defined $self->begintesthook){
+        if($self->begintesthook){
             # pass in self and the test item
             $self->begintesthook->($self, $test_item);
         }
 
-        ( $sec, $min, $hour ) = localtime();
+        my ( $sec, $min, $hour ) = localtime();
         if($log->is_debug){
             $log->info(
                 sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
@@ -131,7 +129,7 @@ sub classify {
         while ( $pass < $self->repeat ) {
             my @excluded_data = ();
             my $given_excluded = 0;
-            if(defined $self->beginrepeathook){
+            if($self->beginrepeathook){
                 # pass in self, test item, and data
                 $self->beginrepeathook->($self,
                     $test_item, {pass => $pass, datacap => $datacap});
@@ -141,19 +139,19 @@ sub classify {
             # use the original DataSet object if there are no settings
             # that would trim items from it
             my $training_set;
-            if(!defined $self->datahook &&
+            if(!$self->datahook &&
                     ($self->probability == 1) &&
                     $datacap >= $self->training_set->size){
                 $training_set = $self->training_set;
             }else{
-                # otherwise, make a new set
-                # with just the selected items
+                # otherwise, make a new set with just the selected
+                # items
                 $training_set = Algorithm::AM::DataSet->new(
                     vector_length => $self->training_set->vector_length);
                 # determine the data set to be used for classification
                 for my $data_index ( 0 .. $datacap - 1 ) {
                     # skip this data item if the datahook returns false
-                    if(defined $self->datahook &&
+                    if($self->datahook &&
                             !$self->datahook->(
                                 # pass in self, test, data and data index
                                 $self,
@@ -191,7 +189,7 @@ sub classify {
             push @results, $result;
         }
         continue {
-            if(defined $self->endrepeathook){
+            if($self->endrepeathook){
                 # pass in self, test item, data, and result
                 $self->endrepeathook->(
                     $self,
@@ -201,14 +199,14 @@ sub classify {
                 );
             }
             ++$pass;
-            ( $sec, $min, $hour ) = localtime();
+            my ( $sec, $min, $hour ) = localtime();
             $log->info(
                 sprintf(
                     "$pass/$self->{repeat}  %2s:%02s:%02s",
                     $hour, $min, $sec ) )
                 if $log->is_info;
         }
-        if(defined $self->endtesthook){
+        if($self->endtesthook){
             # pass in self, test item, data, and result
             $self->endtesthook->(
                 $self,
@@ -219,11 +217,11 @@ sub classify {
         }
     }
 
-    ( $sec, $min, $hour ) = localtime();
+    my ( $sec, $min, $hour ) = localtime();
     $log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
         if $log->is_info;
 
-    if(defined $self->endhook){
+    if($self->endhook){
         $self->endhook->($self, @results);
     }
     return @results;
