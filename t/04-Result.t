@@ -3,6 +3,8 @@ use warnings;
 use Test::More 0.88;
 plan tests => 4;
 use Test::LongString;
+# TODO: Remove the use of Algorithm::AM so that the
+# tests aren't co-dependent
 use Algorithm::AM;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
@@ -10,9 +12,8 @@ test_config_info();
 
 my $am = Algorithm::AM->new(
     train => chapter_3_train(),
-    test => chapter_3_test
 );
-my ($result) = $am->classify();
+my ($result) = $am->classify(chapter_3_test->get_item(0));
 test_statistical_summary($result);
 test_aset_summary($result);
 test_gang_summary($result);
@@ -21,6 +22,7 @@ test_gang_summary($result);
 # the config_info method after setting internal state through
 # the constructor.
 sub test_config_info {
+    my $train = chapter_3_train();
     my $item = Algorithm::AM::DataSet::Item->new(
         features => [qw(a b c)],
         comment => 'comment',
@@ -30,13 +32,13 @@ sub test_config_info {
         plan tests => 2;
         my $result = Algorithm::AM::Result->new(
             test_item => $item,
-            excluded_data => [0,1,2],
             given_excluded => 1,
             num_variables => 3,
             exclude_nulls => 1,
             count_method => 'linear',
-            datacap => 50,
+            # datacap => 50,
             test_in_data => 1,
+            train => $train
         );
         my $info = ${$result->config_info};
         my $expected = <<'END_INFO';
@@ -48,23 +50,22 @@ sub test_config_info {
 | Gang                       | linear         |
 | Test item in data          | yes            |
 | Test item excluded         | yes            |
-| Total excluded items       |  4             |
-| Number of data items       | 50             |
+| Number of data items       |  5             |
 | Number of active variables |  3             |
 +----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
             'given/nulls excluded, linear, item in data') or note $info;
         $result = Algorithm::AM::Result->new(
-            excluded_data => [],
             given_excluded => 0,
             num_variables => 3,
             test_item => $item,
             exclude_nulls => 0,
             probability => .5,
             count_method => 'squared',
-            datacap => 40,
+            # datacap => 40,
             test_in_data => 0,
+            train => $train,
         );
 
         $info = ${$result->config_info};
@@ -77,8 +78,7 @@ END_INFO
 | Gang                       | squared        |
 | Test item in data          | no             |
 | Test item excluded         | no             |
-| Total excluded items       |  0             |
-| Number of data items       | 40             |
+| Number of data items       |  5             |
 | Number of active variables |  3             |
 | Data Inclusion Probability |  0.5           |
 +----------------------------+----------------+

@@ -1,6 +1,18 @@
 Algorithm::AM
 
-Next: Move iteration logic into a separate module so that AM can only classify a single item at a time. Put pass, datacap, and probability there, as well as all of the iteration-related hooks.
+Next: Reorganize everything to match the new design.
+
+Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data. Rewrite 04-probability.t.
+
+For datahook, pass in training item, not just its index.
+
+The datacap control got taken out somehow. Put it back!
+
+Change vector_length to cardinality
+
+Make a shortcut for making new items
+
+Excluded data isn't quite reported properly if the test item is given, more than once.
 
 As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in endhook the user can add the classified test item to the training data.
 

@@ -4,30 +4,85 @@
 use strict;
 use warnings;
 use Algorithm::AM;
+use Algorithm::AM::Batch;
 use Test::More 0.88;
-plan tests => 10;
+plan tests => 14;
 use Test::NoWarnings;
-use Test::LongString;
+use Test::Exception;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
 use FindBin qw($Bin);
 use Path::Tiny;
-use File::Slurp;
+
+test_input_checking();
+test_accessors();
+
 
 my $train = chapter_3_train();
-my $test = chapter_3_test();
+my $test = chapter_3_test()->get_item(0);
 my $am = Algorithm::AM->new(
     train => $train,
-    test => $test
 );
-my ($result) = $am->classify();
+my ($result) = $am->classify($test);
 test_quadratic_classification($result);
 test_analogical_set($result);
 test_gang_effects($result);
 test_linear_classification();
 test_nulls();
 test_given();
-test_finnverb();
+
+# test that methods die with bad input
+sub test_input_checking {
+    throws_ok {
+        Algorithm::AM->new();
+    } qr/Missing required parameter 'train'/,
+    'dies when no training set provided';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => 'stuff',
+        );
+    } qr/Parameter train should be an Algorithm::AM::DataSet/,
+    'dies with bad training set';
+
+    throws_ok {
+        Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            foo => 'bar'
+        );
+    } qr/Unknown option foo/,
+    'dies with bad argument';
+
+    throws_ok {
+        my $am = Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+        );
+        $am->classify(
+            Algorithm::AM::DataSet::Item->new(
+                features => ['a']
+            )
+        );
+    } qr/Training set and test item do not have the same cardinality \(3 and 1\)/,
+    'dies with mismatched train/test cardinalities';
+
+    return;
+}
+
+# test that constructor sets state properly
+sub test_accessors {
+    subtest 'AM constructor saves data set' => sub {
+        plan tests => 2;
+        my $project_path = path($Bin, '..', 'data', 'chapter3');
+        my $am = Algorithm::AM->new(
+            train => Algorithm::AM::DataSet->new(vector_length => 3),
+        );
+        isa_ok($am->training_set, 'Algorithm::AM::DataSet',
+            'training_set returns correct object type');
+
+        is($am->training_set->vector_length, 3,
+            'training set saved');
+    };
+}
 
 # test classification results using quadratic counting
 sub test_quadratic_classification {
@@ -51,9 +106,8 @@ sub test_linear_classification {
         plan tests => 3;
         my $am = Algorithm::AM->new(
             train => $train,
-            test => $test
         );
-        my ($result) = $am->classify(linear => 1);
+        my ($result) = $am->classify($test, linear => 1);
         is($result->total_pointers, 7, 'total pointers')
             or note $result->total_pointers;;
         is($result->count_method, 'linear',
@@ -68,19 +122,17 @@ sub test_linear_classification {
 # and include_nulls
 # TODO: test for the correct number of active variables
 sub test_nulls {
-    my $test = Algorithm::AM::DataSet->new(vector_length => 3);
-    $test->add_item(
+    my $test = Algorithm::AM::DataSet::Item->new(
         features => ['', '1', '2'],
-        class => 'r'
+        class => 'r',
     );
     my $am = Algorithm::AM->new(
         train => $train,
-        test => $test
     );
 
     subtest 'exclude nulls' => sub {
         plan tests => 3;
-        my ($result) = $am->classify(exclude_nulls => 1);
+        my ($result) = $am->classify($test, exclude_nulls => 1);
         is($result->total_pointers, 10, 'total pointers')
             or note $result->total_pointers;
         ok($result->exclude_nulls, 'exclude nulls is true');
@@ -91,7 +143,7 @@ sub test_nulls {
 
     subtest 'include nulls' => sub {
         plan tests => 3;
-        my ($result) = $am->classify(exclude_nulls => 0);
+        my ($result) = $am->classify($test, exclude_nulls => 0);
         is($result->total_pointers, 5, 'total pointers')
             or note $result->total_pointers;
         ok(!$result->exclude_nulls, 'exclude nulls is false');
@@ -112,13 +164,12 @@ sub test_given {
     );
     my $am = Algorithm::AM->new(
         train => $train,
-        test => $test,
         exclude_given => 1
     );
 
     subtest 'exclude given' => sub {
         plan tests => 3;
-        my ($result) = $am->classify();
+        my ($result) = $am->classify($test);
         is($result->total_pointers, 13, 'total pointers')
             or note $result->total_pointers;
         ok($result->given_excluded, 'given item was excluded');
@@ -128,7 +179,7 @@ sub test_given {
 
     subtest 'include given' => sub {
         plan tests => 3;
-        my ($result) = $am->classify(exclude_given => 0);
+        my ($result) = $am->classify($test, exclude_given => 0);
         is($result->total_pointers, 15, 'total pointers')
             or note $result->total_pointers;
         ok(!$result->given_excluded, 'given was not excluded');
@@ -218,29 +269,4 @@ sub test_gang_effects {
         note explain $result->gang_effects;
 
     return;
-}
-
-# test the finnverb data set; just check how many exemplars
-# were correctly classified
-sub test_finnverb {
-    my $train = dataset_from_file(
-        path => path($Bin, '..', 'data', 'finnverb', 'data'),
-        format => 'nocommas',
-        unknown => '='
-    );
-    my $am = Algorithm::AM->new(
-        train => $train,
-        test => $train,
-        exclude_given => 1,
-    );
-
-    my $count = 0;
-    $am->classify(
-        endtesthook   => sub {
-            my ($am, $test_item, $data, $result) = @_;
-            ++$count if $result->result ne 'incorrect';
-        }
-    );
-
-    is($count, 161, '161 items correctly predicted');
 }

@@ -33,21 +33,18 @@ generating printable reports with this information.
 ## %contextsize
 use Class::Tiny qw(
     exclude_nulls
-    excluded_data
     given_excluded
     num_variables
     test_in_data
     test_item
     probability
     count_method
-    datacap
     total_pointers
 
     start_time
     end_time
 
     train
-    test
 
     high_score
     winners
@@ -69,14 +66,12 @@ configuration at the time of classification. Information from the
 following accessors is included:
 
     exclude_nulls
-    excluded_data
     given_excluded
     num_variables
     test_in_data
     test_item
     probability
     count_method
-    datacap
 
 =cut
 sub config_info {
@@ -89,9 +84,9 @@ sub config_info {
         [ "Gang",  $self->{count_method}],
         [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
         [ "Test item excluded", ($self->{given_excluded} ? 'yes' : 'no')],
-        [ "Total excluded items", scalar @{$self->excluded_data} +
-            ($self->{given_excluded} ? 1 : 0)],
-        [ "Number of data items", "$self->{datacap}" ],
+        # [ "Total excluded items", scalar @{$self->excluded_data} +
+        #     ($self->{given_excluded} ? 1 : 0)],
+        [ "Number of data items", $self->train->size ],
         [ "Number of active variables", $self->{num_variables} ],
         (defined $self->{probability} ?
             [ "Data Inclusion Probability", $self->{probability} ] :
@@ -607,10 +602,6 @@ never set.
 
 Returns either "linear" or "squared", indicating the setting used
 for counting pointers.
-
-=head2 C<datacap>
-
-Returns the number of data items used to classify the test item.
 
 =head2 C<start_time>
 

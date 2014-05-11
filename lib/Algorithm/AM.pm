@@ -4,10 +4,8 @@ use warnings;
 # ABSTRACT: Perl extension for Analogical Modeling using a parallel algorithm
 our $VERSION = 2.45; # VERSION
 use feature 'state';
-use Path::Tiny;
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
-use Data::Dumper;
 
 use Algorithm::AM::Result;
 use Algorithm::AM::BigInt 'bigcmp';
@@ -29,22 +27,14 @@ use Log::Any qw($log);
 sub new {
     my ($class, %opts) = @_;
 
-    for('train','test'){
-        if(!exists $opts{$_}){
-            croak "Missing required parameter '$_'";
-        }
-        if('Algorithm::AM::DataSet' ne ref $opts{$_}){
-            croak "Parameter $_ should be an Algorithm::AM::DataSet";
-        }
+    if(!exists $opts{'train'}){
+        croak "Missing required parameter 'train'";
     }
-    my ($train, $test) = ($opts{train}, $opts{test});
-    if($train->vector_length != $test->vector_length){
-        croak 'Training and test sets do not have the same ' .
-            'cardinality (' . $train->vector_length . ' and ' .
-                $test->vector_length . ')';
+    if('Algorithm::AM::DataSet' ne ref $opts{'train'}){
+        croak "Parameter train should be an Algorithm::AM::DataSet";
     }
+    my $train = $opts{train};
     delete $opts{train};
-    delete $opts{test};
 
     my $opts = _check_classify_opts(
         #classification defaults
@@ -57,7 +47,7 @@ sub new {
     );
     my $self = bless $opts, $class;
 
-    $self->_initialize($train, $test);
+    $self->_initialize($train);
 
     return $self;
 }
@@ -65,10 +55,9 @@ sub new {
 # do all of the classification data structure initialization here,
 # as well as calling the XS initialization method.
 sub _initialize {
-    my ($self, $train, $test) = @_;
+    my ($self, $train) = @_;
 
     $self->{train} = $train;
-    $self->{test} = $test;
 
     # compute activeVars here so that lattice space can be allocated in the
     # _initialize method
@@ -140,7 +129,14 @@ with items listed is logged at the debug level.
 
 =cut
 sub classify {
-    my ($self, @args) = @_;
+    my ($self, $test_item, @args) = @_;
+
+    my $training_set = $self->{train};
+    if($training_set->vector_length != $test_item->cardinality){
+        croak 'Training set and test item do not have the same ' .
+            'cardinality (' . $training_set->vector_length . ' and ' .
+                $test_item->cardinality . ')';
+    }
 
     #check all input parameters and then save them in $self
     my $opts = _check_classify_opts(@args);
@@ -148,253 +144,151 @@ sub classify {
         $self->{$opt_name} = $opts->{$opt_name};
     }
 
-    my $training_set = $self->{train};
-    my $test_set = $self->{test};
 
-    # save the result objects from each run here
-    my @results;
+    # num_variables is the number of active variables; if we
+    # exclude nulls, then we need to minus the number of '=' found in
+    # this test item; otherwise, it's just the number of columns in a
+    # single item vector
+    my $num_variables = $training_set->vector_length;
 
-    #Kee track of iteration related information
-    my $datacap = $training_set->size;
-    my $pass;
-
-    my ( $sec, $min, $hour );
-
-    if(exists $self->{beginhook}){
-        $self->{beginhook}->($self);
+    if($self->{exclude_nulls}){
+        $num_variables -= grep {$_ eq ''} @{
+            $test_item->features };
     }
 
-    my $left = scalar $test_set->size;
-    foreach my $item_number (0 .. $test_set->size - 1) {
-        $log->debug("Test items left: $left")
-            if $log->is_debug;
-        --$left;
-        my $test_item = $test_set->get_item($item_number);
-
-        # num_variables is the number of active variables; if we
-        # exclude nulls, then we need to minus the number of '=' found in
-        # this test item; otherwise, it's just the number of columns in a
-        # single item vector
-        my $num_variables = $training_set->vector_length;
-
-        if($self->{exclude_nulls}){
-            $num_variables -= grep {$_ eq ''} @{
-                $test_item->features };
-        }
-        if(exists $self->{begintesthook}){
-            # pass in self and the test item
-            $self->{begintesthook}->($self, $test_item);
-        }
-
-        # recalculate the lattice sizes with new number of active variables;
-        # must edit activeVars instead of assigning it a new arrayref because
-        # the XS code only has the existing arrayref and will not be given
-        # a new one. This must be done for every test item because activeVars
-        # is a global that could have been edited during classification of the
-        # last test item.
-        # TODO: pass activeVars into fill_and_count instead of doing this
-        {
-            my $lattice_sizes = _compute_lattice_sizes($num_variables);
-            for(0 .. $#$lattice_sizes){
-                $self->{activeVars}->[$_] = $lattice_sizes->[$_];
-            }
-        }
-    ##  $activeContexts = 1 << $activeVar;
-
-        my $nullcontext = pack "b64", '0' x 64;
-
-        ( $sec, $min, $hour ) = localtime();
-        if($log->is_debug){
-            $log->info(
-                sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
-                (join ' ', @{$test_item->features}) . "\n" .
-                sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
-                    $hour, $min, $sec ) );
-        }
-
-        $pass = 0;
-        while ( $pass < $self->{repeat} ) {
-            my @excluded_data = ();
-            my $given_excluded = 0;
-            if(exists $self->{beginrepeathook}){
-                # pass in self, test item, and data
-                $self->{beginrepeathook}->($self,
-                    $test_item, {pass => $pass, datacap => $datacap});
-            }
-            $datacap = int($datacap);
-
-            my $testindata   = 0;
-
-            # initialize classification-related variables
-            # it is important to dereference rather than just
-            # assigning a new one with [] or {}. This is because
-            # the XS code has access to the existing reference,
-            # but will be accessing the wrong variable if we
-            # change it.
-            %{$self->{contextsize}}             = ();
-            %{$self->{itemcontextchainhead}}    = ();
-            %{$self->{context_to_outcome}}      = ();
-            %{$self->{pointers}}                = ();
-            %{$self->{gang}}                    = ();
-            @{$self->{datatocontext}}           = ();
-            @{$self->{itemcontextchain}}        = ();
-            # big ints are used in AM.xs; these consist of an
-            # array of 8 unsigned longs
-            foreach (@{$self->{sum}}) {
-                $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
-            }
-
-            # determine the data set to be used for classification
-            for my $data_index ( 0 .. $datacap - 1 ) {
-                # skip this data item if the datahook returns false
-                if(exists $self->{datahook} &&
-                        !$self->{datahook}->(
-                            # pass in self, test, data and data index
-                            $self,
-                            $test_item,
-                            {pass => $pass, datacap => $datacap},
-                             $data_index)
-                        ){
-                    push @excluded_data, $data_index;
-                    next;
-                }
-                # skip this data item with probability $self->{probability}
-                if(defined $self->{probability} and
-                        rand() > $self->{probability}){
-                    push @excluded_data, $data_index;
-                    next;
-                }
-                my $context = _context_label(
-                    # Note: this must be copied to prevent infinite loop;
-                    # see todo note for _context_label
-                    [@{$self->{activeVars}}],
-                    $training_set->get_item($data_index)->features,
-                    $test_item->features,
-                    $self->{exclude_nulls}
-                );
-                $self->{contextsize}->{$context}++;
-                $self->{datatocontext}->[$data_index] = $context;
-                # TODO: explain itemcontextchain and itemcontextchainhead
-                $self->{itemcontextchain}->[$data_index] =
-                    $self->{itemcontextchainhead}->{$context};
-                $self->{itemcontextchainhead}->{$context} = $data_index;
-
-                # store the outcome for the subcontext; if there
-                # is already a different outcome for this subcontext,
-                # then store 0, signifying heterogeneity.
-                my $outcome = $training_set->_integer_outcome($data_index);
-                if ( defined $self->{context_to_outcome}->{$context} ) {
-                    $self->{context_to_outcome}->{$context} = 0
-                      if $self->{context_to_outcome}->{$context} != $outcome;
-                }
-                else {
-                    $self->{context_to_outcome}->{$context} = $outcome;
-                }
-            }
-            # $nullcontext is all 0's, which is a context label only
-            # to a data item that exactly matches the test item.
-            if ( exists $self->{context_to_outcome}->{$nullcontext} ) {
-                $testindata = 1;
-                if($self->{exclude_given}){
-                   delete $self->{context_to_outcome}->{$nullcontext};
-                   $given_excluded = 1;
-                }
-            }
-            # initialize the results object to hold all of the configuration
-            # info.
-            my $result = Algorithm::AM::Result->new(
-                excluded_data => \@excluded_data,
-                given_excluded => $given_excluded,
-                num_variables => $num_variables,
-                test_item => $test_item,
-                exclude_nulls => $self->{exclude_nulls},
-                probability => $self->{probability},
-                count_method => $self->{linear} ? 'linear' : 'squared',
-                datacap => $datacap,
-                test_in_data => $testindata,
-                train => $training_set,
-                test => $test_set,
-            );
-
-            $log->debug(${$result->config_info})
-                if($log->is_debug);
-
-            $result->start_time([ (localtime)[0..2] ]);
-            $self->_fillandcount($self->{linear} ? 0 : 1);
-            $result->end_time([ (localtime)[0..2] ]);
-
-            unless ($self->{pointers}->{'grandtotal'}) {
-                #TODO: is this tested yet?
-                if($log->is_warn){
-                    $log->warn('No data items considered. ' .
-                        'No prediction possible.');
-                }
-                next;
-            }
-
-            $result->_process_stats(
-                # TODO: after refactoring to a "guts" object,
-                # just pass that in
-                $self->{sum},
-                $self->{pointers},
-                $self->{itemcontextchainhead},
-                $self->{itemcontextchain},
-                $self->{context_to_outcome},
-                $self->{gang},
-                $self->{activeVars},
-                $self->{contextsize}
-            );
-            $log->info(${$result->statistical_summary})
-                if($log->is_info);
-
-            $log->info(${$result->analogical_set_summary()})
-                if($log->is_info);
-
-            if($log->is_debug){
-                $log->debug(${ $result->gang_summary(1) });
-            }elsif($log->is_info){
-                $log->info(${ $result->gang_summary(0) })
-            }
-            push @results, $result;
-        }
-        continue {
-            if(exists $self->{endrepeathook}){
-                # pass in self, test item, data, and result
-                $self->{endrepeathook}->(
-                    $self,
-                    $test_item,
-                    {pass => $pass, datacap => $datacap},
-                    $results[-1]
-                );
-            }
-            ++$pass;
-            ( $sec, $min, $hour ) = localtime();
-            $log->info(
-                sprintf(
-                    "$pass/$self->{repeat}  %2s:%02s:%02s",
-                    $hour, $min, $sec ) )
-                if $log->is_info;
-        }
-        if(exists $self->{endtesthook}){
-            # pass in self, test item, data, and result
-            $self->{endtesthook}->(
-                $self,
-                $test_item,
-                {pass => $pass, datacap => $datacap},
-                $results[-1]
-            );
+    # recalculate the lattice sizes with new number of active variables;
+    # must edit activeVars instead of assigning it a new arrayref because
+    # the XS code only has the existing arrayref and will not be given
+    # a new one. This must be done for every test item because activeVars
+    # is a global that could have been edited during classification of the
+    # last test item.
+    # TODO: pass activeVars into fill_and_count instead of doing this
+    {
+        my $lattice_sizes = _compute_lattice_sizes($num_variables);
+        for(0 .. $#$lattice_sizes){
+            $self->{activeVars}->[$_] = $lattice_sizes->[$_];
         }
     }
+##  $activeContexts = 1 << $activeVar;
 
-    ( $sec, $min, $hour ) = localtime();
-    $log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
-        if $log->is_info;
+    my $nullcontext = pack "b64", '0' x 64;
 
-    if(exists $self->{endhook}){
-        $self->{endhook}->($self, @results);
+    my $given_excluded = 0;
+    my $testindata   = 0;
+
+    # initialize classification-related variables
+    # it is important to dereference rather than just
+    # assigning a new one with [] or {}. This is because
+    # the XS code has access to the existing reference,
+    # but will be accessing the wrong variable if we
+    # change it.
+    %{$self->{contextsize}}             = ();
+    %{$self->{itemcontextchainhead}}    = ();
+    %{$self->{context_to_outcome}}      = ();
+    %{$self->{pointers}}                = ();
+    %{$self->{gang}}                    = ();
+    @{$self->{datatocontext}}           = ();
+    @{$self->{itemcontextchain}}        = ();
+    # big ints are used in AM.xs; these consist of an
+    # array of 8 unsigned longs
+    foreach (@{$self->{sum}}) {
+        $_ = pack "L!8", 0, 0, 0, 0, 0, 0, 0, 0;
     }
 
-    return @results;
+    # calculate context labels and associated structures for
+    # the entire data set
+    for my $data_index ( 0 .. $training_set->size - 1 ) {
+        my $context = _context_label(
+            # Note: this must be copied to prevent infinite loop;
+            # see todo note for _context_label
+            [@{$self->{activeVars}}],
+            $training_set->get_item($data_index)->features,
+            $test_item->features,
+            $self->{exclude_nulls}
+        );
+        $self->{contextsize}->{$context}++;
+        $self->{datatocontext}->[$data_index] = $context;
+        # TODO: explain itemcontextchain and itemcontextchainhead
+        $self->{itemcontextchain}->[$data_index] =
+            $self->{itemcontextchainhead}->{$context};
+        $self->{itemcontextchainhead}->{$context} = $data_index;
+
+        # store the outcome for the subcontext; if there
+        # is already a different outcome for this subcontext,
+        # then store 0, signifying heterogeneity.
+        my $outcome = $training_set->_integer_outcome($data_index);
+        if ( defined $self->{context_to_outcome}->{$context} ) {
+            $self->{context_to_outcome}->{$context} = 0
+              if $self->{context_to_outcome}->{$context} != $outcome;
+        }
+        else {
+            $self->{context_to_outcome}->{$context} = $outcome;
+        }
+    }
+    # $nullcontext is all 0's, which is a context label for
+    # a data item that exactly matches the test item. Take note
+    # of the item, and exclude it if required.
+    if ( exists $self->{context_to_outcome}->{$nullcontext} ) {
+        $testindata = 1;
+        if($self->{exclude_given}){
+           delete $self->{context_to_outcome}->{$nullcontext};
+           $given_excluded = 1;
+        }
+    }
+    # initialize the results object to hold all of the configuration
+    # info.
+    my $result = Algorithm::AM::Result->new(
+        # excluded_data => \@excluded_data,
+        given_excluded => $given_excluded,
+        num_variables => $num_variables,
+        exclude_nulls => $self->{exclude_nulls},
+        probability => $self->{probability},
+        count_method => $self->{linear} ? 'linear' : 'squared',
+        train => $training_set,
+        test_item => $test_item,
+        test_in_data => $testindata,
+    );
+
+    $log->debug(${$result->config_info})
+        if($log->is_debug);
+
+    $result->start_time([ (localtime)[0..2] ]);
+    $self->_fillandcount($self->{linear} ? 0 : 1);
+    $result->end_time([ (localtime)[0..2] ]);
+
+    unless ($self->{pointers}->{'grandtotal'}) {
+        #TODO: is this tested yet?
+        if($log->is_warn){
+            $log->warn('No data items considered. ' .
+                'No prediction possible.');
+        }
+        return;
+    }
+
+    $result->_process_stats(
+        # TODO: after refactoring to a "guts" object,
+        # just pass that in
+        $self->{sum},
+        $self->{pointers},
+        $self->{itemcontextchainhead},
+        $self->{itemcontextchain},
+        $self->{context_to_outcome},
+        $self->{gang},
+        $self->{activeVars},
+        $self->{contextsize}
+    );
+    $log->info(${$result->statistical_summary})
+        if($log->is_info);
+
+    $log->info(${$result->analogical_set_summary()})
+        if($log->is_info);
+
+    if($log->is_debug){
+        $log->debug(${ $result->gang_summary(1) });
+    }elsif($log->is_info){
+        $log->info(${ $result->gang_summary(0) })
+    }
+    return $result;
 }
 
 sub _check_classify_opts {

@@ -1,4 +1,4 @@
-#test exported variables and methods
+# hooks and their arguments
 use strict;
 use warnings;
 use feature qw(state);
@@ -9,7 +9,7 @@ use t::TestAM qw(chapter_3_train chapter_3_test);
 my $train = chapter_3_train();
 my $test = chapter_3_test();
 
-use Algorithm::AM;
+use Algorithm::AM::Batch;
 
 # Tests are run by the hooks passed into the classify() method.
 # Each hook contains one test with several subtests. Each is called
@@ -55,9 +55,9 @@ $test->add_item(
 	class => 'e',
 );
 
-my $am = Algorithm::AM->new(
-	train => $train,
-	test => $test,
+my $am = Algorithm::AM::Batch->new(
+	training_set => $train,
+	test_set => $test,
 	repeat => 2,
 	probability => 1,
 );
@@ -119,7 +119,7 @@ sub make_hook {
 #check vars available from beginning to end of classification
 sub test_beginning_vars {
 	my ($am) = @_;
-	isa_ok($am, 'Algorithm::AM');
+	isa_ok($am, 'Algorithm::AM::Batch');
 	is($am->training_set->size, 5,
 		"training set in \$am");
 	return;
