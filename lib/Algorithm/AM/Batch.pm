@@ -86,7 +86,7 @@ items listed) are logged at the info level, and the full gang summary
 with items listed is logged at the debug level.
 
 =cut
-sub classify {
+sub classify_all {
     my ($self, %args) = @_;
 
     # update settings with input parameters

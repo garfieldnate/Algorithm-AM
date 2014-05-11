@@ -17,14 +17,14 @@ my $train = dataset_from_file(
     format => 'nocommas',
     unknown => '='
 );
-my $am = Algorithm::AM::Batch->new(
+my $batch = Algorithm::AM::Batch->new(
     training_set => $train,
     test_set => $train,
     exclude_given => 1,
 );
 
 my $count = 0;
-$am->classify(
+$batch->classify_all(
     endtesthook   => sub {
         my ($am, $test_item, $result) = @_;
         ++$count if $result->result ne 'incorrect';

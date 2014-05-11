@@ -59,11 +59,11 @@ sub test_input_checking {
     'dies with mismatched dataset cardinalities';
 
     throws_ok {
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => Algorithm::AM::DataSet->new(cardinality => 3),
             test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
-        $am->classify(foo => 'bar');
+        $batch->classify_all(foo => 'bar');
     } qr/Invalid attribute 'foo'/,
     'dies with bad argument to classify';
     return;
@@ -147,7 +147,7 @@ sub test_classify {
         $test->add_item($test->get_item(0));
         # add test to train to test exclude_given
         $train->add_item($test->get_item(0));
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => $train,
             test_set => $test,
             repeat => 2,
@@ -155,7 +155,7 @@ sub test_classify {
             exclude_given => 0,
             linear => 1,
         );
-        my @results = $am->classify();
+        my @results = $batch->classify_all();
         is(scalar @results, 4, '2 items are analyzed twice') or
             note scalar @results;
         isa_ok($results[0], 'Algorithm::AM::Result');

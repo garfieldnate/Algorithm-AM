@@ -14,11 +14,11 @@ use subs qw(bigcmp);
 my $train = chapter_3_train();
 my $test = chapter_3_test();
 
-my $am = Algorithm::AM::Batch->new(
+my $batch = Algorithm::AM::Batch->new(
     training_set => $train,
     test_set => $test
 );
-$am->classify(
+$batch->classify_all(
 	endhook => \&endhook,
 );
 

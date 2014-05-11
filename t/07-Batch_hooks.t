@@ -62,7 +62,7 @@ my $batch = Algorithm::AM::Batch->new(
 	max_training_items => 10,
 );
 # all tests are run in classification hooks
-$batch->classify(
+$batch->classify_all(
 	beginhook => make_hook(
 		'beginhook',
 		'test_beginning_vars'
@@ -215,7 +215,7 @@ sub test_data_hook {
 		training_set => chapter_3_train(),
 		test_set => chapter_3_test,
 	);
-	$batch->classify(
+	$batch->classify_all(
 		datahook 	=> sub {
 			# false return value indicates that item should be excluded
 			return 0;

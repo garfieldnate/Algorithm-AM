@@ -15,6 +15,7 @@ Make a shortcut for making new items
 Excluded data isn't quite reported properly if the test item is given, more than once.
 
 As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in endhook the user can add the classified test item to the training data.
+	- Pretty sure this is done. Make a demo before crossing it off.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?
 
