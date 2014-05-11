@@ -41,8 +41,6 @@ sub new {
         exclude_nulls     => 1,
         exclude_given    => 1,
         linear      => 0,
-        probability => undef,
-        repeat      => 1,
         %opts
     );
     my $self = bless $opts, $class;
@@ -242,7 +240,6 @@ sub classify {
         given_excluded => $given_excluded,
         num_variables => $num_variables,
         exclude_nulls => $self->{exclude_nulls},
-        probability => $self->{probability},
         count_method => $self->{linear} ? 'linear' : 'squared',
         train => $training_set,
         test_item => $test_item,
@@ -296,20 +293,9 @@ sub _check_classify_opts {
 
     state $valid_args =
     [qw(
-        variables
         exclude_nulls
         exclude_given
         linear
-        probability
-        repeat
-
-        beginhook
-        beginrepeathook
-        begintesthook
-        datahook
-        endtesthook
-        endrepeathook
-        endhook
     )];
 
     for my $option (keys %opts){
