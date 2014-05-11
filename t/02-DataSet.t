@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 23;
+plan tests => 24;
 use Test::NoWarnings;
 use Test::Exception;
 use Algorithm::AM::DataSet 'dataset_from_file';
@@ -135,6 +135,14 @@ sub test_dataset_from_file {
         );
     } qr/Could not find file .*nonexistent/,
     'fail with non-existent Path';
+
+    throws_ok {
+        my $dataset = dataset_from_file(
+            path => path($data_dir, 'chapter3_bad_data_line', 'data'),
+            format => 'nocommas'
+        );
+    } qr/Couldn't read data at line 2 in .*chapter3_bad_data_line/,
+    'fail with malformed data file';
 
     subtest 'data set with default unknown labels' => sub {
         plan tests => 3;
