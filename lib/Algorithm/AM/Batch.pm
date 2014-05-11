@@ -16,6 +16,7 @@ use Class::Tiny qw(
     linear
     probability
     repeat
+    max_training_items
 
     beginhook
     beginrepeathook
@@ -96,19 +97,15 @@ sub classify {
     # save the result objects from each run here
     my @results;
 
-    #Kee track of iteration related information
-    my $datacap = $self->training_set->size;
-    my $pass;
-
     if($self->beginhook){
         $self->beginhook->($self);
     }
 
-    my $left = scalar $test_set->size;
     foreach my $item_number (0 .. $test_set->size - 1) {
-        $log->debug("Test items left: $left")
-            if $log->is_debug;
-        --$left;
+        if($log->is_debug){
+            $log->debug('Test items left: ' .
+                $test_set->size + 1 - $item_number);
+        }
         my $test_item = $test_set->get_item($item_number);
 
         if($self->begintesthook){
@@ -125,38 +122,50 @@ sub classify {
                     $hour, $min, $sec ) );
         }
 
-        $pass = 0;
+        my $pass = 0;
+        # Cap the amount of considered data if specified
+        my $max = defined $self->max_training_items ?
+            int($self->max_training_items) :
+            $self->training_set->size;
+
         while ( $pass < $self->repeat ) {
             my @excluded_data = ();
             my $given_excluded = 0;
             if($self->beginrepeathook){
                 # pass in self, test item, and data
                 $self->beginrepeathook->($self,
-                    $test_item, {pass => $pass, datacap => $datacap});
+                    $test_item, {pass => $pass});
             }
-            $datacap = int($datacap);
+            # user may have set max during hook
+            $max = defined $self->max_training_items ?
+                int($self->max_training_items) :
+                $self->training_set->size;
 
             # use the original DataSet object if there are no settings
             # that would trim items from it
             my $training_set;
             if(!$self->datahook &&
                     ($self->probability == 1) &&
-                    $datacap >= $self->training_set->size){
+                    $max >= $self->training_set->size){
                 $training_set = $self->training_set;
             }else{
                 # otherwise, make a new set with just the selected
                 # items
                 $training_set = Algorithm::AM::DataSet->new(
                     vector_length => $self->training_set->vector_length);
-                # determine the data set to be used for classification
-                for my $data_index ( 0 .. $datacap - 1 ) {
+
+                # don't try to add more items than we have!
+                my $num_items = ($max > $self->training_set->size) ?
+                    $self->training_set->size :
+                    $max;
+                for my $data_index ( 0 .. $num_items - 1 ) {
                     # skip this data item if the datahook returns false
                     if($self->datahook &&
                             !$self->datahook->(
                                 # pass in self, test, data and data index
                                 $self,
                                 $test_item,
-                                {pass => $pass, datacap => $datacap},
+                                {pass => $pass},
                                  $data_index)
                             ){
                         push @excluded_data, $data_index;
@@ -172,15 +181,13 @@ sub classify {
                         $self->training_set->get_item($data_index));
                 }
             }
-            # classify the item with the given set and configurations
-            my %opts;
-            for(qw(exclude_nulls exclude_given linear)){
-                $opts{$_} = $self->{$_};
-            }
+
+            # classify the item with the given training set and
+            # configuration
             my $am = Algorithm::AM->new(
                 train => $training_set,
             );
-            my ($result) = $am->classify(
+            my $result = $am->classify(
                 $test_item,
                 exclude_nulls => $self->exclude_nulls,
                 exclude_given => $self->exclude_given,
@@ -194,7 +201,7 @@ sub classify {
                 $self->endrepeathook->(
                     $self,
                     $test_item,
-                    {pass => $pass, datacap => $datacap},
+                    {pass => $pass},
                     $results[-1]
                 );
             }
@@ -211,7 +218,7 @@ sub classify {
             $self->endtesthook->(
                 $self,
                 $test_item,
-                {pass => $pass, datacap => $datacap},
+                {pass => $pass},
                 $results[-1]
             );
         }

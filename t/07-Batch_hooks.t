@@ -31,9 +31,9 @@ plan tests => $total_calls + 1;
 # store number of tests run by each method so we
 # can plan subtests
 my %tests_per_sub = (
-	test_beginning_vars => 2,
+	test_beginning_vars => 4,
 	test_item_vars => 4,
-	test_iter_vars => 3,
+	test_iter_vars => 1,
 	test_end_iter_vars => 1,
 	test_end_vars => 4
 );
@@ -55,13 +55,14 @@ $test->add_item(
 	class => 'e',
 );
 
-my $am = Algorithm::AM::Batch->new(
+my $batch = Algorithm::AM::Batch->new(
 	training_set => $train,
 	test_set => $test,
 	repeat => 2,
 	probability => 1,
+	max_training_items => 10,
 );
-$am->classify(
+$batch->classify(
 	beginhook => make_hook(
 		'beginhook',
 		'test_beginning_vars'
@@ -118,10 +119,14 @@ sub make_hook {
 
 #check vars available from beginning to end of classification
 sub test_beginning_vars {
-	my ($am) = @_;
-	isa_ok($am, 'Algorithm::AM::Batch');
-	is($am->training_set->size, 5,
-		"training set in \$am");
+	my ($batch) = @_;
+	isa_ok($batch, 'Algorithm::AM::Batch');
+	is($batch->training_set->size, 5,
+		"training set");
+	is($batch->probability, 1,
+		'$probability is 1 by default');
+	is($batch->max_training_items, 10,
+		'training data capped at 10 items');
 	return;
 }
 
@@ -129,7 +134,7 @@ sub test_beginning_vars {
 # There are two items, 312 and 313, marked with
 # different specs and outcomes. Check each one.
 sub test_item_vars {
-	my ($am, $test_item) = @_;
+	my ($batch, $test_item) = @_;
 
 	isa_ok($test_item, 'Algorithm::AM::DataSet::Item');
 
@@ -157,20 +162,16 @@ sub test_item_vars {
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($am, $test_item, $iter_data) = @_;
+	my ($batch, $test_item, $iter_data) = @_;
 	ok(
 		$iter_data->{pass} == 0 || $iter_data->{pass} == 1,
 		'$pass- only do 2 passes of the data');
-	is($am->{probability}, 1,
-		'$probability is 1 by default');
-	is($iter_data->{datacap}, 5,
-		'$datacap is 5, the number of exemplars');
 	return;
 }
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($am, $test_item, $iter_data, $result) = @_;
+	my ($batch, $test_item, $iter_data, $result) = @_;
 
 	if($test_item->class eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},
@@ -184,7 +185,7 @@ sub test_end_iter_vars {
 
 # Test variables provided after all iterations are finished
 sub test_end_vars {
-	my ($am, @results) = @_;
+	my ($batch, @results) = @_;
 
 	is_deeply($results[0]->scores, {e => '4', r => '9'},
 		'scores for first result');

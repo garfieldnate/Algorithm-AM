@@ -2,13 +2,13 @@ Algorithm::AM
 
 Next: Reorganize everything to match the new design.
 
-Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data. Rewrite 04-probability.t.
+Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
 
 For datahook, pass in training item, not just its index.
 
-The datacap control got taken out somehow. Put it back!
-
 Change vector_length to cardinality
+
+Note that datacap won't take effect until next round of data adding
 
 Make a shortcut for making new items
 
