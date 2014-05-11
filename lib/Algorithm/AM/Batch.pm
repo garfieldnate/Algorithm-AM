@@ -123,59 +123,14 @@ sub classify {
         }
 
         $self->_set_pass(0);
-        # Cap the amount of considered data if specified
-        my $max = defined $self->max_training_items ?
-            int($self->max_training_items) :
-            $self->training_set->size;
-
         while ( $self->pass < $self->repeat ) {
-            my @excluded_data = ();
+            my @excluded_items = ();
             my $given_excluded = 0;
             if($self->beginrepeathook){
                 $self->beginrepeathook->($self, $test_item);
             }
-            # user may have set max during hook
-            $max = defined $self->max_training_items ?
-                int($self->max_training_items) :
-                $self->training_set->size;
 
-            # use the original DataSet object if there are no settings
-            # that would trim items from it
-            my $training_set;
-            if(!$self->datahook &&
-                    ($self->probability == 1) &&
-                    $max >= $self->training_set->size){
-                $training_set = $self->training_set;
-            }else{
-                # otherwise, make a new set with just the selected
-                # items
-                $training_set = Algorithm::AM::DataSet->new(
-                    vector_length => $self->training_set->vector_length);
-
-                # don't try to add more items than we have!
-                my $num_items = ($max > $self->training_set->size) ?
-                    $self->training_set->size :
-                    $max;
-                for my $data_index ( 0 .. $num_items - 1 ) {
-                    my $training_item =
-                        $self->training_set->get_item($data_index);
-                    # skip this data item if the datahook returns false
-                    if($self->datahook &&
-                            !$self->datahook->($self,
-                                $test_item, $training_item)
-                            ){
-                        push @excluded_data, $data_index;
-                        next;
-                    }
-                    # skip this data item with probability $self->{probability}
-                    if($self->probability != 1 &&
-                            rand() > $self->probability){
-                        push @excluded_data, $data_index;
-                        next;
-                    }
-                    $training_set->add_item($training_item);
-                }
-            }
+            my $training_set = $self->_make_training_set($test_item);
 
             # classify the item with the given training set and
             # configuration
@@ -241,6 +196,57 @@ sub classify {
     }
 }
 
+sub _make_training_set {
+    my ($self, $test_item) = @_;
+    my $training_set;
+
+    $self->_set_excluded_items([]);
+    my @excluded_items;
+    # Cap the amount of considered data if specified
+    my $max = defined $self->max_training_items ?
+        int($self->max_training_items) :
+        $self->training_set->size;
+
+    # use the original DataSet object if there are no settings
+    # that would trim items from it
+    if(!$self->datahook &&
+            ($self->probability == 1) &&
+            $max >= $self->training_set->size){
+        $training_set = $self->training_set;
+    }else{
+        # otherwise, make a new set with just the selected
+        # items
+        $training_set = Algorithm::AM::DataSet->new(
+            vector_length => $self->training_set->vector_length);
+
+        # don't try to add more items than we have!
+        my $num_items = ($max > $self->training_set->size) ?
+            $self->training_set->size :
+            $max;
+        for my $data_index ( 0 .. $num_items - 1 ) {
+            my $training_item =
+                $self->training_set->get_item($data_index);
+            # skip this data item if the datahook returns false
+            if($self->datahook &&
+                    !$self->datahook->($self,
+                        $test_item, $training_item)
+                    ){
+                push @excluded_items, $data_index;
+                next;
+            }
+            # skip this data item with probability $self->{probability}
+            if($self->probability != 1 &&
+                    rand() > $self->probability){
+                push @excluded_items, $data_index;
+                next;
+            }
+            $training_set->add_item($training_item);
+        }
+    }
+    $self->_set_excluded_items(\@excluded_items);
+    return $training_set;
+}
+
 =head2 C<iteration>
 
 Returns the current iteration of classification. This is only relevant
@@ -255,6 +261,26 @@ sub pass {
 sub _set_pass {
     my ($self, $pass) = @_;
     $self->{pass} = $pass;
+}
+
+=head2 C<excluded_items>
+
+Returns an array ref containing the indices of the training items
+that were excluded from training during the last classification.
+The items themselves can then be retrieved using C<training_set>.
+This list does not include items which were excluded because of
+C<max_training_items>.
+
+=cut
+
+sub excluded_items {
+    my ($self) = @_;
+    return $self->{excluded_items};
+}
+
+sub _set_excluded_items {
+    my ($self, $excluded_items) = @_;
+    $self->{excluded_items} = $excluded_items;
 }
 
 1;

@@ -6,9 +6,6 @@ use Test::More 0.88;
 use Test::NoWarnings;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
-my $train = chapter_3_train();
-my $test = chapter_3_test();
-
 use Algorithm::AM::Batch;
 
 # Tests are run by the hooks passed into the classify() method.
@@ -25,8 +22,9 @@ my %hook_calls = (
 );
 my $total_calls = 0;
 $total_calls += $_ for values %hook_calls;
+# +1 for extra datahook test
 # +1 for Test::NoWarnings
-plan tests => $total_calls + 1;
+plan tests => $total_calls + 1 + 1;
 
 # store number of tests run by each method so we
 # can plan subtests
@@ -35,7 +33,7 @@ my %tests_per_sub = (
 	test_item_vars => 4,
 	test_iter_vars => 1,
 	test_datahook_vars => 2,
-	test_end_iter_vars => 1,
+	test_end_iter_vars => 2,
 	test_end_vars => 4
 );
 # store methods for choosing to what run in make_hook
@@ -48,9 +46,8 @@ my %test_subs = (
 	test_end_vars => \&test_end_vars
 );
 
-
-$train = chapter_3_train();
-$test = chapter_3_test();
+my $train = chapter_3_train();
+my $test = chapter_3_test();
 $test->add_item(
 	features => [qw(3 1 3)],
 	comment => 'second test item',
@@ -64,6 +61,7 @@ my $batch = Algorithm::AM::Batch->new(
 	probability => 1,
 	max_training_items => 10,
 );
+# all tests are run in classification hooks
 $batch->classify(
 	beginhook => make_hook(
 		'beginhook',
@@ -82,8 +80,8 @@ $batch->classify(
 		'datahook',
 		'test_beginning_vars',
 		'test_item_vars',
-		'test_datahook_vars',
-		'test_iter_vars'),
+		'test_iter_vars',
+		'test_datahook_vars'),
 	endrepeathook => make_hook(
 		'endrepeathook',
 		'test_beginning_vars',
@@ -101,6 +99,8 @@ $batch->classify(
 		'test_end_vars'
 	),
 );
+# one last test
+test_data_hook();
 
 # make a hook which runs the given test subs in a single subtest.
 # Pass on the arguments passed to the hook at classification time.
@@ -190,6 +190,7 @@ sub test_end_iter_vars {
 		is_deeply($result->scores, {e => '4', r => '9'},
 			'outcomes scores');
 	}
+	is_deeply($batch->excluded_items, [], 'no items excluded');
 	return;
 }
 
@@ -205,5 +206,25 @@ sub test_end_vars {
 		'scores for third result');
 	is_deeply($results[3]->scores, {e => '4', r => '4'},
 		'scores for fourth result');
+	return;
+}
+
+# test that datahook excludes items via false return value
+sub test_data_hook {
+	my $batch = Algorithm::AM::Batch->new(
+		training_set => chapter_3_train(),
+		test_set => chapter_3_test,
+	);
+	$batch->classify(
+		datahook 	=> sub {
+			# false return value indicates that item should be excluded
+			return 0;
+		},
+		endrepeathook => sub {
+			my ($batch) = @_;
+			is_deeply($batch->excluded_items, [0, 1, 2, 3, 4],
+			 	'datahook can exluced items');
+		},
+	);
 	return;
 }
