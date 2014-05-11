@@ -152,9 +152,9 @@ sub test_dataset_from_file {
         );
         is($dataset->size, 2, 'size');
         my $item = $dataset->get_item(0);
-        is($item->class, undef, 'class is undefined');
+        is($item->class, undef, 'class is unknown');
         is_deeply($item->features, ['3', '1', ''],
-            'third feature is undefined')
+            'third feature is unknown')
     };
 
     subtest 'data set with = unknown labels' => sub {
@@ -166,9 +166,9 @@ sub test_dataset_from_file {
         );
         is($dataset->size, 2, 'size');
         my $item = $dataset->get_item(0);
-        is($item->class, undef, 'class is undefined');
+        is($item->class, undef, 'class is unknown');
         is_deeply($item->features, ['3', '1', ''],
-            'third feature is undefined')
+            'third feature is unknown')
     };
     return;
 }
