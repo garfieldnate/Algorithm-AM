@@ -14,7 +14,7 @@ my $train = chapter_3_train();
 my $test = chapter_3_test();
 
 my $am = Algorithm::AM->new(
-    train => $train,
+    training_set => $train,
 );
 my $result = $am->classify($test->get_item(0));
 test_bigcmp($am, $result);

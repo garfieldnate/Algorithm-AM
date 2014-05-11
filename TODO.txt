@@ -1,10 +1,10 @@
 Algorithm::AM
 
-Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
+Next: Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
 
-It is weird to have the classify method take parameters that are stored forever. They should be temporary, or not accepted by the classify method.
+Increase reference count on data_classes array (search 'save_this' in AM)
 
-Increase reference count on data_class array (search 'save_this' in AM)
+In AM.xs, change SvUVX(ST(1)) on 687 to something more readable. That's the boolean linear argument.
 
 Note that datacap won't take effect until next round of data adding
 
@@ -36,27 +36,13 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
 
-test properly that classification arguments can be given with either the constructor or the classify() method.
-
 do something better than just calling rand() for the probability/skip function.
 
 Move the XS code to a different package so all of those variables can be stored in something private: pointers, itemcontextchainhead, etc. The work done on gangs could also be put into this package, since it requires special knowledge of the underlying structure. Maybe the Guts package?
 
-Use undef instead of increment for making unique string lists using hashes.
-
-It seems Theron expected no more than 60 data columns. Find out why, and if some warnings are needed for datasets that exceed that.
-
-Add method to remove data from a project.
-
-Change the POD to use Pod::Weaver properly (=method, etc.).
+Add method to remove Item from a DataSet.
 
 change activeVars to be accepted at classification time
-
-work on types of input to AM dataset
-	Right now we have commas and no commas;
-	- how about allowing user to specify input separators bigsep and littlesep?
-	- how about taking the name of a class that can read and return a data set? It would be nice to then be able to log messages like "Comma Formatter found bad line", which would tell the user which formatter was used, which may have been a mistake.
-	- how about allowing users to pass in an extraction sub that will be given lines and returns data?
 
 properly destroy project or AM object on error so that illegal state is not possible even if someone catches an error and tries to continue.
 
@@ -65,12 +51,6 @@ properly destroy project or AM object on error so that illegal state is not poss
 -Figure out good project organization to allow dual builders (MB and EUMM)
 -Create an AM old stuff branch
 -Think about possibilities of other types of lattices (non-boolean)
-
-#Eventual refactoring plan:
-	Algorithm::AM object should be a single classifier, not a batch runner.
-		classify() method should classify a single vector
-			- that might mean more refactoring of project
-		Should move iteration, and iter vars, into a separate class.
 
 ## Documentation TODOs:
 - Documentation on how to use AM will need to be almost completely re-written, as the API has completely changed.
@@ -84,3 +64,4 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- grandtotal/total_pointers/total_score
 	- datacap
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
+- Change the POD to use Pod::Weaver properly (=method, etc.).

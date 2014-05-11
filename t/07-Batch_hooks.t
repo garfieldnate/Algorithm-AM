@@ -29,7 +29,7 @@ plan tests => $total_calls + 1 + 1;
 # store number of tests run by each method so we
 # can plan subtests
 my %tests_per_sub = (
-	test_beginning_vars => 4,
+	test_beginning_vars => 5,
 	test_item_vars => 4,
 	test_iter_vars => 1,
 	test_datahook_vars => 2,
@@ -56,13 +56,9 @@ $test->add_item(
 
 my $batch = Algorithm::AM::Batch->new(
 	training_set => $train,
-	test_set => $test,
 	repeat => 2,
 	probability => 1,
 	max_training_items => 10,
-);
-# all tests are run in classification hooks
-$batch->classify_all(
 	beginhook => make_hook(
 		'beginhook',
 		'test_beginning_vars'
@@ -99,6 +95,8 @@ $batch->classify_all(
 		'test_end_vars'
 	),
 );
+# all tests are run in classification hooks
+$batch->classify_all($test);
 # one last test
 test_data_hook();
 
@@ -125,9 +123,10 @@ sub test_beginning_vars {
 	my ($batch) = @_;
 	isa_ok($batch, 'Algorithm::AM::Batch');
 	is($batch->training_set->size, 5,
-		"training set");
+		'training set');
+	is($batch->test_set->size, 2, 'test set');
 	is($batch->probability, 1,
-		'$probability is 1 by default');
+		'probability is 1 by default');
 	is($batch->max_training_items, 10,
 		'training data capped at 10 items');
 	return;
@@ -213,9 +212,6 @@ sub test_end_vars {
 sub test_data_hook {
 	my $batch = Algorithm::AM::Batch->new(
 		training_set => chapter_3_train(),
-		test_set => chapter_3_test,
-	);
-	$batch->classify_all(
 		datahook 	=> sub {
 			# false return value indicates that item should be excluded
 			return 0;
@@ -226,5 +222,6 @@ sub test_data_hook {
 			 	'datahook can exluced items');
 		},
 	);
+	$batch->classify_all(chapter_3_test());
 	return;
 }

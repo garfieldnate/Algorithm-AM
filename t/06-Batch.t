@@ -5,7 +5,7 @@ use Algorithm::AM::Batch;
 use Test::More 0.88;
 use Test::Exception;
 use Test::NoWarnings;
-plan tests => 13;
+plan tests => 12;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
 test_input_checking();
@@ -20,52 +20,49 @@ sub test_input_checking {
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3)
-        );
-    } qr/Missing required parameter 'test_set'/,
-    'dies when no test set provided';
-
-    throws_ok {
-        Algorithm::AM::Batch->new(
             training_set => 'stuff',
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
     } qr/Parameter training_set should be an Algorithm::AM::DataSet/,
     'dies with bad training set';
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => 'stuff',
-        );
-    } qr/Parameter test_set should be an Algorithm::AM::DataSet/,
-    'dies with bad test set';
-
-    throws_ok {
-        Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
             foo => 'bar'
         );
     } qr/Invalid attributes for Algorithm::AM::Batch/,
     'dies with bad argument';
 
     throws_ok {
-        Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 4),
+        my $batch = Algorithm::AM::Batch->new(
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3)
         );
+        $batch->classify_all(Algorithm::AM::DataSet->new(
+            cardinality => 4));
     } qr/Training and test sets do not have the same cardinality \(3 and 4\)/,
     'dies with mismatched dataset cardinalities';
 
     throws_ok {
         my $batch = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set =>
+                Algorithm::AM::DataSet->new(cardinality => 3)
         );
-        $batch->classify_all(foo => 'bar');
-    } qr/Invalid attribute 'foo'/,
-    'dies with bad argument to classify';
+        $batch->classify_all();
+    } qr/Must provide a DataSet to classify_all/,
+    'dies with no input to classify';
+
+    throws_ok {
+        my $batch = Algorithm::AM::Batch->new(
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+        );
+        $batch->classify_all('foo');
+    } qr/Must provide a DataSet to classify_all/,
+    'dies with bad test set';
     return;
 }
 
@@ -73,8 +70,10 @@ sub test_accessors {
     subtest 'Constructor saves data sets' => sub {
         plan tests => 4;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
         );
         isa_ok($am->training_set, 'Algorithm::AM::DataSet',
             'training_set returns correct object type');
@@ -90,8 +89,10 @@ sub test_accessors {
     subtest 'default configuration' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
         );
         ok($am->exclude_nulls, 'exclude nulls by default');
         ok($am->exclude_given, 'exclude given by default');
@@ -103,8 +104,10 @@ sub test_accessors {
     subtest 'configuration via constructor' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
             exclude_nulls => 0,
             exclude_given => 0,
             linear => 1,
@@ -121,8 +124,10 @@ sub test_accessors {
     subtest 'configuration via accessors' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
-            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            training_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(
+                cardinality => 3),
         );
         $am->exclude_nulls(0);
         $am->exclude_given(0);
@@ -149,13 +154,12 @@ sub test_classify {
         $train->add_item($test->get_item(0));
         my $batch = Algorithm::AM::Batch->new(
             training_set => $train,
-            test_set => $test,
             repeat => 2,
             exclude_nulls => 0,
             exclude_given => 0,
             linear => 1,
         );
-        my @results = $batch->classify_all();
+        my @results = $batch->classify_all($test);
         is(scalar @results, 4, '2 items are analyzed twice') or
             note scalar @results;
         isa_ok($results[0], 'Algorithm::AM::Result');

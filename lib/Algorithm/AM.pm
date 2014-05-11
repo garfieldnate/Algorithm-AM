@@ -6,6 +6,30 @@ our $VERSION = 2.45; # VERSION
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
+use Class::Tiny qw(
+    training_set
+    exclude_nulls
+    exclude_given
+    linear
+), {
+    exclude_nulls     => 1,
+    exclude_given    => 1,
+    linear      => 0,
+};
+
+sub BUILD {
+    my ($self, $args) = @_;
+
+    if(!exists $args->{'training_set'}){
+        croak "Missing required parameter 'training_set'";
+    }
+    if('Algorithm::AM::DataSet' ne ref $args->{'training_set'}){
+        croak 'Parameter training_set should ' .
+            'be an Algorithm::AM::DataSet';
+    }
+    $self->_initialize();
+    return;
+}
 
 use Algorithm::AM::Result;
 use Algorithm::AM::BigInt 'bigcmp';
@@ -24,39 +48,12 @@ XSLoader::load(__PACKAGE__, $VERSION);
 
 use Log::Any qw($log);
 
-sub new {
-    my ($class, %opts) = @_;
-
-    if(!exists $opts{'train'}){
-        croak "Missing required parameter 'train'";
-    }
-    if('Algorithm::AM::DataSet' ne ref $opts{'train'}){
-        croak "Parameter train should be an Algorithm::AM::DataSet";
-    }
-    my $train = $opts{train};
-    delete $opts{train};
-
-    my $opts = _check_classify_opts(
-        #classification defaults
-        exclude_nulls     => 1,
-        exclude_given    => 1,
-        linear      => 0,
-        %opts
-    );
-    my $self = bless $opts, $class;
-
-    $self->_initialize($train);
-
-    return $self;
-}
-
 # do all of the classification data structure initialization here,
 # as well as calling the XS initialization method.
 sub _initialize {
-    my ($self, $train) = @_;
+    my ($self) = @_;
 
-    $self->{train} = $train;
-
+    my $train = $self->training_set;
     # compute activeVars here so that lattice space can be allocated in the
     # _initialize method
     $self->{activeVars} = _compute_lattice_sizes($train->cardinality);
@@ -102,22 +99,6 @@ sub _initialize {
 
 Returns the dataset used for training.
 
-=cut
-sub training_set {
-    my ($self) = @_;
-    return $self->{train};
-}
-
-=head2 C<test_set>
-
-Returns the dataset used for testing.
-
-=cut
-sub test_set {
-    my ($self) = @_;
-    return $self->{test};
-}
-
 =head2 C<classify>
 
 Using the analogical modeling algorithm, this method classifies
@@ -132,19 +113,12 @@ with items listed is logged at the debug level.
 sub classify {
     my ($self, $test_item, @args) = @_;
 
-    my $training_set = $self->{train};
+    my $training_set = $self->training_set;
     if($training_set->cardinality != $test_item->cardinality){
         croak 'Training set and test item do not have the same ' .
             'cardinality (' . $training_set->cardinality . ' and ' .
                 $test_item->cardinality . ')';
     }
-
-    #check all input parameters and then save them in $self
-    my $opts = _check_classify_opts(@args);
-    for my $opt_name(keys %$opts){
-        $self->{$opt_name} = $opts->{$opt_name};
-    }
-
 
     # num_variables is the number of active variables; if we
     # exclude nulls, then we need to minus the number of '=' found in
@@ -152,7 +126,7 @@ sub classify {
     # single item vector
     my $num_variables = $training_set->cardinality;
 
-    if($self->{exclude_nulls}){
+    if($self->exclude_nulls){
         $num_variables -= grep {$_ eq ''} @{
             $test_item->features };
     }
@@ -205,7 +179,7 @@ sub classify {
             [@{$self->{activeVars}}],
             $training_set->get_item($data_index)->features,
             $test_item->features,
-            $self->{exclude_nulls}
+            $self->exclude_nulls
         );
         $self->{contextsize}->{$context}++;
         $self->{datatocontext}->[$data_index] = $context;
@@ -232,7 +206,7 @@ sub classify {
     # of the item, and exclude it if required.
     if ( exists $self->{context_to_outcome}->{$nullcontext} ) {
         $testindata = 1;
-        if($self->{exclude_given}){
+        if($self->exclude_given){
            delete $self->{context_to_outcome}->{$nullcontext};
            $given_excluded = 1;
         }
@@ -240,12 +214,11 @@ sub classify {
     # initialize the results object to hold all of the configuration
     # info.
     my $result = Algorithm::AM::Result->new(
-        # excluded_data => \@excluded_data,
         given_excluded => $given_excluded,
         num_variables => $num_variables,
-        exclude_nulls => $self->{exclude_nulls},
-        count_method => $self->{linear} ? 'linear' : 'squared',
-        train => $training_set,
+        exclude_nulls => $self->exclude_nulls,
+        count_method => $self->linear ? 'linear' : 'squared',
+        training_set => $training_set,
         test_item => $test_item,
         test_in_data => $testindata,
     );
@@ -254,7 +227,7 @@ sub classify {
         if($log->is_debug);
 
     $result->start_time([ (localtime)[0..2] ]);
-    $self->_fillandcount($self->{linear} ? 0 : 1);
+    $self->_fillandcount($self->linear ? 0 : 1);
     $result->end_time([ (localtime)[0..2] ]);
 
     unless ($self->{pointers}->{'grandtotal'}) {
@@ -290,27 +263,6 @@ sub classify {
         $log->info(${ $result->gang_summary(0) })
     }
     return $result;
-}
-
-sub _check_classify_opts {
-    my %opts = @_;
-
-    state $valid_args =
-    [qw(
-        exclude_nulls
-        exclude_given
-        linear
-    )];
-
-    for my $option (keys %opts){
-        if(!grep {$_ eq $option} @$valid_args){
-            croak "Unknown option $option";
-        }
-    }
-
-    #todo: properly check types of parameters; hooks should be subs, etc.
-
-    return \%opts;
 }
 
 # since we split the lattice in four, we have to decide which variables

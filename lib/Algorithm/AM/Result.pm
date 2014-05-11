@@ -44,7 +44,7 @@ use Class::Tiny qw(
     start_time
     end_time
 
-    train
+    training_set
 
     high_score
     winners
@@ -86,7 +86,7 @@ sub config_info {
         [ "Test item excluded", ($self->{given_excluded} ? 'yes' : 'no')],
         # [ "Total excluded items", scalar @{$self->excluded_data} +
         #     ($self->{given_excluded} ? 1 : 0)],
-        [ "Number of data items", $self->train->size ],
+        [ "Number of data items", $self->training_set->size ],
         [ "Number of active variables", $self->{num_variables} ],
         (defined $self->{probability} ?
             [ "Data Inclusion Probability", $self->{probability} ] :
@@ -118,12 +118,12 @@ sub _process_stats {
     # non-zero score. Store the high-scorers, as well.
     # 1) find which one(s) has the most pointers (is the prediction) and
     # 2) print out the ones with pointers (change of prediction)
-    for my $outcome_index (1 .. $self->train->num_classes) {
+    for my $outcome_index (1 .. $self->training_set->num_classes) {
         my $outcome_pointers;
         # skip outcomes with no pointers
         next unless $outcome_pointers = $sum->[$outcome_index];
 
-        my $outcome = $self->train->_class_for_index($outcome_index);
+        my $outcome = $self->training_set->_class_for_index($outcome_index);
         $scores{$outcome} = $outcome_pointers;
 
         # check if the outcome has the highest score, or ties for it
@@ -251,7 +251,7 @@ set.
 sub analogical_set_summary {
     my ($self) = @_;
     my $set = $self->analogical_set;
-    my $train = $self->train;
+    my $train = $self->training_set;
     my $total_pointers = $self->total_pointers;
 
     # Make a table for the analogical set. Each row contains an
@@ -321,7 +321,7 @@ meaning gang items items are printed. This is false (off) by default.
 =cut
 sub gang_summary {
     my ($self, $print_list) = @_;
-    my $train = $self->train;
+    my $train = $self->training_set;
     my $test_item = $self->test_item;
 
     my $gangs = $self->gang_effects;
@@ -434,7 +434,7 @@ sub gang_summary {
 
 sub _calculate_gangs {
     my ($self) = @_;
-    my $train = $self->train;
+    my $train = $self->training_set;
     my $total_pointers = $self->total_pointers;
     my $raw_gang = $self->{gang};
     my $gangs = {};
@@ -570,11 +570,6 @@ of AM at the time of classification.
 
 True if null variables were ignored.
 
-=head2 C<excluded_data>
-
-An array ref containing the data indices of any items that were ignored
-during classification.
-
 =head2 C<given_excluded>
 
 True if the given item (the test item) was in the data set but was
@@ -591,12 +586,6 @@ True if the test item was present among the data items.
 =head2 C<test_item>
 
 Returns the Item which was classified.
-
-=head2 C<probability>
-
-Returns the probabibility that any one data item would be included
-among the exemplars used during classification, or undef if that was
-never set.
 
 =head2 C<count_method>
 

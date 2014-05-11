@@ -9,7 +9,6 @@ our @CARP_NOT = qw(Algorithm::AM::Batch);
 use Algorithm::AM;
 use Class::Tiny qw(
     training_set
-    test_set
 
     exclude_nulls
     exclude_given
@@ -38,19 +37,13 @@ use Log::Any qw($log);
 sub BUILD {
     my ($self, $args) = @_;
 
-    for('training_set','test_set'){
-        if(!exists $args->{$_}){
-            croak "Missing required parameter '$_'";
-        }
-        if(!(ref $args) or !$args->{$_}->isa('Algorithm::AM::DataSet')){
-            croak "Parameter $_ should be an Algorithm::AM::DataSet";
-        }
+    if(!exists $args->{training_set}){
+        croak "Missing required parameter 'training_set'";
     }
-    my ($train, $test) = ($args->{training_set}, $args->{test_set});
-    if($train->cardinality != $test->cardinality){
-        croak 'Training and test sets do not have the same ' .
-            'cardinality (' . $train->cardinality . ' and ' .
-                $test->cardinality . ')';
+    if(!(ref $args) or !$args->{training_set}->isa(
+            'Algorithm::AM::DataSet')){
+        croak 'Parameter training_set should be an ' .
+            'Algorithm::AM::DataSet';
     }
     for(qw(
         beginhook
@@ -61,7 +54,7 @@ sub BUILD {
         endrepeathook
         endhook
     )){
-        if(exists $args->{$_} and 'SUB' ne ref $args->{$_}){
+        if(exists $args->{$_} and 'CODE' ne ref $args->{$_}){
             croak "Input $_ should be a subroutine";
         }
     }
@@ -75,7 +68,7 @@ Returns the dataset used for training.
 
 Returns the dataset used for testing.
 
-=head2 C<classify>
+=head2 C<classify_all>
 
 Using the analogical modeling algorithm, this method classifies
 the test items in the project and returns a list of
@@ -87,13 +80,17 @@ with items listed is logged at the debug level.
 
 =cut
 sub classify_all {
-    my ($self, %args) = @_;
+    my ($self, $test_set) = @_;
+    $self->_set_test_set($test_set);
 
-    # update settings with input parameters
-    $self->_set_classify_opts(%args);
-
-    my $test_set = $self->test_set;
-
+    if(!$test_set || 'Algorithm::AM::DataSet' ne ref $test_set){
+        croak q[Must provide a DataSet to classify_all];
+    }
+    if($self->training_set->cardinality != $test_set->cardinality){
+        croak 'Training and test sets do not have the same ' .
+            'cardinality (' . $self->training_set->cardinality .
+                ' and ' . $test_set->cardinality . ')';
+    }
     # save the result objects from each run here
     my @results;
 
@@ -135,14 +132,12 @@ sub classify_all {
             # classify the item with the given training set and
             # configuration
             my $am = Algorithm::AM->new(
-                train => $training_set,
-            );
-            my $result = $am->classify(
-                $test_item,
+                training_set => $training_set,
                 exclude_nulls => $self->exclude_nulls,
                 exclude_given => $self->exclude_given,
                 linear => $self->linear,
             );
+            my $result = $am->classify($test_item);
             push @results, $result;
         }
         continue {
@@ -173,27 +168,8 @@ sub classify_all {
     if($self->endhook){
         $self->endhook->($self, @results);
     }
+    $self->_set_test_set(undef);
     return @results;
-}
-
-{
-    # create a hash of the legal input parameters
-    my @attrs = Class::Tiny->get_all_attributes_for(
-        "Algorithm::AM::Batch");
-    my %atts = map {$_ => 1} @attrs;
-    # call setters for all input arguments, making sure they are
-    # legal first
-    sub _set_classify_opts {
-        my ($self, %args) = @_;
-        for my $key (keys %args){
-            if(exists $atts{$key}){
-                $self->$key($args{$key});
-            }else{
-                croak "Invalid attribute '$key'";
-            }
-        }
-        return;
-    }
 }
 
 sub _make_training_set {
@@ -247,6 +223,23 @@ sub _make_training_set {
     return $training_set;
 }
 
+=head2 C<test_set>
+
+Returns the test set currently providing the source of items to
+classify. This only returns something when called inside one of the
+hook subroutines.
+
+=cut
+sub test_set {
+    my ($self) = @_;
+    return $self->{test_set};
+}
+
+sub _set_test_set {
+    my ($self, $test_set) = @_;
+    $self->{test_set} = $test_set;
+}
+
 =head2 C<iteration>
 
 Returns the current iteration of classification. This is only relevant
@@ -284,3 +277,21 @@ sub _set_excluded_items {
 }
 
 1;
+
+__END__
+
+=head2 C<probability>
+
+Get/set the probabibility that any one data item would be included
+among the training items used during classification, which is 1 by
+default.
+
+=head2 C<exclude_nulls>
+
+Get/set true if features that are unknown in the test item should
+be ignored.
+
+=head2 C<exclude_given>
+
+Get/set true if the test item should be removed from the training set
+if found there.

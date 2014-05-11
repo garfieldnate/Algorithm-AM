@@ -11,7 +11,7 @@ use t::TestAM qw(chapter_3_train chapter_3_test);
 test_config_info();
 
 my $am = Algorithm::AM->new(
-    train => chapter_3_train(),
+    training_set => chapter_3_train(),
 );
 my ($result) = $am->classify(chapter_3_test->get_item(0));
 test_statistical_summary($result);
@@ -38,7 +38,7 @@ sub test_config_info {
             count_method => 'linear',
             # datacap => 50,
             test_in_data => 1,
-            train => $train
+            training_set => $train
         );
         my $info = ${$result->config_info};
         my $expected = <<'END_INFO';
@@ -65,7 +65,7 @@ END_INFO
             count_method => 'squared',
             # datacap => 40,
             test_in_data => 0,
-            train => $train,
+            training_set => $train,
         );
 
         $info = ${$result->config_info};
