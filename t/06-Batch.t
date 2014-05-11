@@ -20,7 +20,7 @@ sub test_input_checking {
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3)
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3)
         );
     } qr/Missing required parameter 'test_set'/,
     'dies when no test set provided';
@@ -28,14 +28,14 @@ sub test_input_checking {
     throws_ok {
         Algorithm::AM::Batch->new(
             training_set => 'stuff',
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
     } qr/Parameter training_set should be an Algorithm::AM::DataSet/,
     'dies with bad training set';
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
             test_set => 'stuff',
         );
     } qr/Parameter test_set should be an Algorithm::AM::DataSet/,
@@ -43,8 +43,8 @@ sub test_input_checking {
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
             foo => 'bar'
         );
     } qr/Invalid attributes for Algorithm::AM::Batch/,
@@ -52,16 +52,16 @@ sub test_input_checking {
 
     throws_ok {
         Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 4),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 4),
         );
     } qr/Training and test sets do not have the same cardinality \(3 and 4\)/,
     'dies with mismatched dataset cardinalities';
 
     throws_ok {
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         $am->classify(foo => 'bar');
     } qr/Invalid attribute 'foo'/,
@@ -73,25 +73,25 @@ sub test_accessors {
     subtest 'Constructor saves data sets' => sub {
         plan tests => 4;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         isa_ok($am->training_set, 'Algorithm::AM::DataSet',
             'training_set returns correct object type');
         isa_ok($am->test_set, 'Algorithm::AM::DataSet',
             'test_set returns correct object type');
 
-        is($am->training_set->vector_length, 3,
+        is($am->training_set->cardinality, 3,
             'training set saved');
-        is($am->test_set->vector_length, 3,
+        is($am->test_set->cardinality, 3,
             'test set saved');
     };
 
     subtest 'default configuration' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         ok($am->exclude_nulls, 'exclude nulls by default');
         ok($am->exclude_given, 'exclude given by default');
@@ -103,8 +103,8 @@ sub test_accessors {
     subtest 'configuration via constructor' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
             exclude_nulls => 0,
             exclude_given => 0,
             linear => 1,
@@ -121,8 +121,8 @@ sub test_accessors {
     subtest 'configuration via accessors' => sub {
         plan tests => 5;
         my $am = Algorithm::AM::Batch->new(
-            training_set => Algorithm::AM::DataSet->new(vector_length => 3),
-            test_set => Algorithm::AM::DataSet->new(vector_length => 3),
+            training_set => Algorithm::AM::DataSet->new(cardinality => 3),
+            test_set => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         $am->exclude_nulls(0);
         $am->exclude_given(0);

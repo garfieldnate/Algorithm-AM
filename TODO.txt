@@ -2,8 +2,6 @@ Algorithm::AM
 
 Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
 
-Change vector_length to cardinality
-
 Perhaps make a DataSet iterator that would work even when new items were added. That could be used to allow the user to add items during any hook and have them be used immediately.
 
 It is weird to have the classify method take parameters that are stored forever. They should be temporary, or not accepted by the classify method.

@@ -59,7 +59,7 @@ sub _initialize {
 
     # compute activeVars here so that lattice space can be allocated in the
     # _initialize method
-    $self->{activeVars} = _compute_lattice_sizes($train->vector_length);
+    $self->{activeVars} = _compute_lattice_sizes($train->cardinality);
 
     # sum is intitialized to a list of zeros the same length as outcomelist
     @{$self->{sum}} = (0.0) x ($train->num_classes + 1);
@@ -130,9 +130,9 @@ sub classify {
     my ($self, $test_item, @args) = @_;
 
     my $training_set = $self->{train};
-    if($training_set->vector_length != $test_item->cardinality){
+    if($training_set->cardinality != $test_item->cardinality){
         croak 'Training set and test item do not have the same ' .
-            'cardinality (' . $training_set->vector_length . ' and ' .
+            'cardinality (' . $training_set->cardinality . ' and ' .
                 $test_item->cardinality . ')';
     }
 
@@ -147,7 +147,7 @@ sub classify {
     # exclude nulls, then we need to minus the number of '=' found in
     # this test item; otherwise, it's just the number of columns in a
     # single item vector
-    my $num_variables = $training_set->vector_length;
+    my $num_variables = $training_set->cardinality;
 
     if($self->{exclude_nulls}){
         $num_variables -= grep {$_ eq ''} @{

@@ -21,33 +21,33 @@ test_private_data();
 sub test_constructor {
     throws_ok {
         Algorithm::AM::DataSet->new();
-    } qr/Failed to provide 'vector_length' parameter/,
-    q<dies without 'vector_length' parameter>;
+    } qr/Failed to provide 'cardinality' parameter/,
+    q<dies without 'cardinality' parameter>;
 
     throws_ok {
         Algorithm::AM::DataSet->new(
-            vector_length => 3,
+            cardinality => 3,
             foo => 'bar',
             baz => 'buff'
         );
-    } qr/Unknown parameters in Project constructor: baz, foo/,
+    } qr/Unknown parameters in DataSet constructor: baz, foo/,
     'dies with unknown parameters';
 
     lives_ok {
         Algorithm::AM::DataSet->new(
-            vector_length => 3,
+            cardinality => 3,
         );
     } 'constructor lives with normal input';
-    my $dataset = Algorithm::AM::DataSet->new(vector_length => 3);
-    is($dataset->vector_length, 3, 'vector_length set by constructor');
+    my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
+    is($dataset->cardinality, 3, 'cardinality set by constructor');
     return;
 }
 
 # test that add_item correctly adds data to the set and validates input
 # TODO: rename this something more descriptive
 sub test_data {
-    # first check empty project
-    my $dataset = Algorithm::AM::DataSet->new(vector_length => 3);
+    # first check empty DataSet
+    my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
     is($dataset->size, 0, 'new data set has 0 exemplars');
     is($dataset->num_classes, 0, 'new data set has 0 outcomes');
 
@@ -57,7 +57,7 @@ sub test_data {
         comment => 'stuff'
     );
     is($dataset->size, 1,
-        'add_item adds 1 exemplar to project');
+        'add_item adds 1 item to data set');
     is($dataset->num_classes, 1, 'data set has 1 outcome');
 
     $dataset->add_item(
@@ -79,7 +79,7 @@ sub test_data {
     'add_item fails with wrong number of variables';
 
     # The error should be thrown from Tiny.pm, the caller of DataSet,
-    # not from DataSet (tests that @CARP_NOT is working properly).
+    # not from DataSet (tests that @CARP_NOT is working cardinalityperly).
     throws_ok {
         $dataset->add_item();
     } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
@@ -95,7 +95,7 @@ sub test_dataset_from_file {
             path => path($data_dir, 'chapter_3_no_commas.txt'),
             format => 'nocommas'
         );
-        is($dataset->vector_length, 3, 'vector_length');
+        is($dataset->cardinality, 3, 'cardinality');
         is($dataset->size, 5, 'size');
     };
     subtest 'read commas data set' => sub {
@@ -104,7 +104,7 @@ sub test_dataset_from_file {
             path => path($data_dir, 'chapter_3_commas.txt'),
             format => 'commas'
         );
-        is($dataset->vector_length, 3, 'vector_length');
+        is($dataset->cardinality, 3, 'cardinality');
         is($dataset->size, 5, 'size');
     };
 
@@ -177,7 +177,7 @@ sub test_dataset_from_file {
 # hopefully this can be eliminated in the future, as private
 # data should not have to be exposed
 sub test_private_data {
-    my $dataset = Algorithm::AM::DataSet->new(vector_length => 3);
+    my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
     is_deeply($dataset->_exemplar_outcomes, [],
         "empty data set has empty outcomes");
 

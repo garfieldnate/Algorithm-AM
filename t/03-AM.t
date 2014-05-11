@@ -47,7 +47,7 @@ sub test_input_checking {
 
     throws_ok {
         Algorithm::AM->new(
-            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            train => Algorithm::AM::DataSet->new(cardinality => 3),
             foo => 'bar'
         );
     } qr/Unknown option foo/,
@@ -55,7 +55,7 @@ sub test_input_checking {
 
     throws_ok {
         my $am = Algorithm::AM->new(
-            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            train => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         $am->classify(
             Algorithm::AM::DataSet::Item->new(
@@ -73,12 +73,12 @@ sub test_accessors {
     subtest 'AM constructor saves data set' => sub {
         plan tests => 2;
         my $am = Algorithm::AM->new(
-            train => Algorithm::AM::DataSet->new(vector_length => 3),
+            train => Algorithm::AM::DataSet->new(cardinality => 3),
         );
         isa_ok($am->training_set, 'Algorithm::AM::DataSet',
             'training_set returns correct object type');
 
-        is($am->training_set->vector_length, 3,
+        is($am->training_set->cardinality, 3,
             'training set saved');
     };
 }

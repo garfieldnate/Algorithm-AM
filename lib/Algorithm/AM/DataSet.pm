@@ -12,7 +12,7 @@ use Exporter::Easy (
 
 =head2 C<new>
 
-Creates a new DataSet object. You must provide a C<vector_length> argument
+Creates a new DataSet object. You must provide a C<cardinality> argument
 indicating the number of features to be contained in each data vector.
 You can then add items via the add_item method. Each item will contain
 a feature vector, and also optionally a class label and a comment
@@ -38,21 +38,21 @@ sub new {
 sub _check_opts {
     my (%opts) = @_;
 
-    my %proj_opts;
+    my %final_opts;
 
-    if(!defined $opts{vector_length}){
-        croak q{Failed to provide 'vector_length' parameter};
+    if(!defined $opts{cardinality}){
+        croak q{Failed to provide 'cardinality' parameter};
     }
-    $proj_opts{vector_length} = $opts{vector_length};
-    delete $opts{vector_length};
+    $final_opts{cardinality} = $opts{cardinality};
+    delete $opts{cardinality};
 
     if(keys %opts){
         # sort the keys in the error message to make testing possible
-        croak 'Unknown parameters in Project constructor: ' .
+        croak 'Unknown parameters in DataSet constructor: ' .
             (join ', ', sort keys %opts);
     }
 
-    return \%proj_opts;
+    return \%final_opts;
 }
 
 # initialize internal state
@@ -71,14 +71,14 @@ sub _init {
     return;
 }
 
-=head2 C<vector_length>
+=head2 C<cardinality>
 
 Returns the number of features contained in a single data vector.
 
 =cut
-sub vector_length {
+sub cardinality {
     my ($self) = @_;
-    return $self->{vector_length};
+    return $self->{cardinality};
 }
 
 =head2 C<size>
@@ -96,7 +96,7 @@ sub size {
 Adds a new item to the data set. The input may be either an
 L<Algorithm::AM::DataSet::Item> object, or the arguments to create
 one via its constructor (features, class, comment). This method will
-croak if the cardinality of the item does not match L</vector_length>.
+croak if the cardinality of the item does not match L</cardinality>.
 
 =cut
 sub add_item {
@@ -108,8 +108,8 @@ sub add_item {
         $item = Algorithm::AM::DataSet::Item->new(@args);
     }
 
-    if($self->vector_length != $item->cardinality){
-        croak 'Expected ' . $self->vector_length .
+    if($self->cardinality != $item->cardinality){
+        croak 'Expected ' . $self->cardinality .
             ' variables, but found ' . (scalar $item->cardinality) .
             ' in ' . (join ' ', @{$item->features}) .
             ' (' . $item->comment . ')';
@@ -245,7 +245,7 @@ sub dataset_from_file {
     if(!$item){
         croak "No data found in file $path";
     }
-    my $dataset = __PACKAGE__->new(vector_length => $item->cardinality);
+    my $dataset = __PACKAGE__->new(cardinality => $item->cardinality);
     $dataset->add_item($item);
     while($item = $reader->()){
         $dataset->add_item($item);

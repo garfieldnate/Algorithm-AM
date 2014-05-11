@@ -14,7 +14,7 @@ use Exporter::Easy (
 
 # return a dataset containing training data from chapter 3
 sub chapter_3_train {
-    my $train = Algorithm::AM::DataSet->new(vector_length => 3);
+    my $train = Algorithm::AM::DataSet->new(cardinality => 3);
     for my $datum(chapter_3_data()){
         $train->add_item(
             features => $datum->[0],
@@ -27,7 +27,7 @@ sub chapter_3_train {
 
 # return the data set used for training in chapter 3
 sub chapter_3_test {
-    my $test = Algorithm::AM::DataSet->new(vector_length => 3);
+    my $test = Algorithm::AM::DataSet->new(cardinality => 3);
     $test->add_item(
         features => [qw(3 1 2)],
         class => 'r',

@@ -47,10 +47,10 @@ sub BUILD {
         }
     }
     my ($train, $test) = ($args->{training_set}, $args->{test_set});
-    if($train->vector_length != $test->vector_length){
+    if($train->cardinality != $test->cardinality){
         croak 'Training and test sets do not have the same ' .
-            'cardinality (' . $train->vector_length . ' and ' .
-                $test->vector_length . ')';
+            'cardinality (' . $train->cardinality . ' and ' .
+                $test->cardinality . ')';
     }
     for(qw(
         beginhook
@@ -217,7 +217,7 @@ sub _make_training_set {
         # otherwise, make a new set with just the selected
         # items
         $training_set = Algorithm::AM::DataSet->new(
-            vector_length => $self->training_set->vector_length);
+            cardinality => $self->training_set->cardinality);
 
         # don't try to add more items than we have!
         my $num_items = ($max > $self->training_set->size) ?
