@@ -34,6 +34,7 @@ my %tests_per_sub = (
 	test_beginning_vars => 4,
 	test_item_vars => 4,
 	test_iter_vars => 1,
+	test_datahook_vars => 2,
 	test_end_iter_vars => 1,
 	test_end_vars => 4
 );
@@ -42,6 +43,7 @@ my %test_subs = (
 	test_beginning_vars => \&test_beginning_vars,
 	test_item_vars => \&test_item_vars,
 	test_iter_vars => \&test_iter_vars,
+	test_datahook_vars => \&test_datahook_vars,
 	test_end_iter_vars => \&test_end_iter_vars,
 	test_end_vars => \&test_end_vars
 );
@@ -80,6 +82,7 @@ $batch->classify(
 		'datahook',
 		'test_beginning_vars',
 		'test_item_vars',
+		'test_datahook_vars',
 		'test_iter_vars'),
 	endrepeathook => make_hook(
 		'endrepeathook',
@@ -167,6 +170,13 @@ sub test_iter_vars {
 		$batch->pass == 0 || $batch->pass == 1,
 		'pass- only do 2 passes of the data');
 	return;
+}
+
+sub test_datahook_vars {
+	my ($batch, $test_item, $train_item) = @_;
+	isa_ok($train_item, 'Algorithm::AM::DataSet::Item');
+	ok($train_item->comment =~ /my.*CommentHere/,
+		'item is from training set');
 }
 
 # Test variables provided after an iteration is finished

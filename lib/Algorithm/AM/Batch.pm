@@ -157,10 +157,12 @@ sub classify {
                     $self->training_set->size :
                     $max;
                 for my $data_index ( 0 .. $num_items - 1 ) {
+                    my $training_item =
+                        $self->training_set->get_item($data_index);
                     # skip this data item if the datahook returns false
                     if($self->datahook &&
                             !$self->datahook->($self,
-                                $test_item, $data_index)
+                                $test_item, $training_item)
                             ){
                         push @excluded_data, $data_index;
                         next;
@@ -171,8 +173,7 @@ sub classify {
                         push @excluded_data, $data_index;
                         next;
                     }
-                    $training_set->add_item(
-                        $self->training_set->get_item($data_index));
+                    $training_set->add_item($training_item);
                 }
             }
 
