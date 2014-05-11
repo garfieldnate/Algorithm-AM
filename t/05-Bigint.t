@@ -5,7 +5,6 @@ use Test::More 0.88;
 plan tests => 6;
 use Test::NoWarnings;
 use Algorithm::AM;
-use Algorithm::AM::Batch;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
 use vars qw(@sum);
@@ -14,17 +13,11 @@ use subs qw(bigcmp);
 my $train = chapter_3_train();
 my $test = chapter_3_test();
 
-my $batch = Algorithm::AM::Batch->new(
-    training_set => $train,
-    test_set => $test
+my $am = Algorithm::AM->new(
+    train => $train,
 );
-$batch->classify_all(
-	endhook => \&endhook,
-);
-
-sub endhook {
-	test_bigcmp(@_);
-}
+my $result = $am->classify($test->get_item(0));
+test_bigcmp($am, $result);
 
 #compare the pointer counts, which should be 4 and 9 for the chapter 3 data
 sub test_bigcmp {
