@@ -13,7 +13,7 @@ use FindBin qw($Bin);
 use Path::Tiny;
 
 my $train = dataset_from_file(
-    path => path($Bin, 'data', 'finnverb', 'data'),
+    path => path($Bin, 'data', 'finnverb.txt'),
     format => 'nocommas',
     unknown => '='
 );

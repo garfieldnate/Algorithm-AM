@@ -72,7 +72,6 @@ sub test_input_checking {
 sub test_accessors {
     subtest 'AM constructor saves data set' => sub {
         plan tests => 2;
-        my $project_path = path($Bin, '..', 'data', 'chapter3');
         my $am = Algorithm::AM->new(
             train => Algorithm::AM::DataSet->new(vector_length => 3),
         );

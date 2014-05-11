@@ -92,7 +92,7 @@ sub test_dataset_from_file {
     subtest 'read nocommas data set' => sub {
         plan tests => 2;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'chapter3', 'data'),
+            path => path($data_dir, 'chapter_3_no_commas.txt'),
             format => 'nocommas'
         );
         is($dataset->vector_length, 3, 'vector_length');
@@ -101,7 +101,7 @@ sub test_dataset_from_file {
     subtest 'read commas data set' => sub {
         plan tests => 2;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'chapter3_commas', 'data'),
+            path => path($data_dir, 'chapter_3_commas.txt'),
             format => 'commas'
         );
         is($dataset->vector_length, 3, 'vector_length');
@@ -110,13 +110,13 @@ sub test_dataset_from_file {
 
     throws_ok {
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'chapter3_commas', 'data'),
+            path => path($data_dir, 'chapter_3_commas.txt'),
         );
     } qr/Failed to provide 'format' parameter/,
     'fail with missing format parameter';
     throws_ok {
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'chapter3_commas', 'data'),
+            path => path($data_dir, 'chapter_3_commas.txt'),
             format => 'buh'
         );
     } qr/Unknown value buh for format parameter \(should be 'commas' or 'nocommas'\)/,
@@ -138,16 +138,16 @@ sub test_dataset_from_file {
 
     throws_ok {
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'chapter3_bad_data_line', 'data'),
+            path => path($data_dir, 'bad_data_line.txt'),
             format => 'nocommas'
         );
-    } qr/Couldn't read data at line 2 in .*chapter3_bad_data_line/,
+    } qr/Couldn't read data at line 2 in .*bad_data_line/,
     'fail with malformed data file';
 
     subtest 'data set with default unknown labels' => sub {
         plan tests => 3;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'no_labels_unk'),
+            path => path($data_dir, 'no_labels_unk.txt'),
             format => 'commas'
         );
         is($dataset->size, 2, 'size');
@@ -160,7 +160,7 @@ sub test_dataset_from_file {
     subtest 'data set with = unknown labels' => sub {
         plan tests => 3;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'no_labels_eq'),
+            path => path($data_dir, 'no_labels_eq.txt'),
             format => 'commas',
             unknown => '='
         );
