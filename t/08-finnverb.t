@@ -26,7 +26,7 @@ my $am = Algorithm::AM::Batch->new(
 my $count = 0;
 $am->classify(
     endtesthook   => sub {
-        my ($am, $test_item, $data, $result) = @_;
+        my ($am, $test_item, $result) = @_;
         ++$count if $result->result ne 'incorrect';
     }
 );

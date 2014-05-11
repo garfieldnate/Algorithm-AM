@@ -162,16 +162,16 @@ sub test_item_vars {
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($batch, $test_item, $iter_data) = @_;
+	my ($batch, $test_item) = @_;
 	ok(
-		$iter_data->{pass} == 0 || $iter_data->{pass} == 1,
-		'$pass- only do 2 passes of the data');
+		$batch->pass == 0 || $batch->pass == 1,
+		'pass- only do 2 passes of the data');
 	return;
 }
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($batch, $test_item, $iter_data, $result) = @_;
+	my ($batch, $test_item, $result) = @_;
 
 	if($test_item->class eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},

@@ -122,19 +122,17 @@ sub classify {
                     $hour, $min, $sec ) );
         }
 
-        my $pass = 0;
+        $self->_set_pass(0);
         # Cap the amount of considered data if specified
         my $max = defined $self->max_training_items ?
             int($self->max_training_items) :
             $self->training_set->size;
 
-        while ( $pass < $self->repeat ) {
+        while ( $self->pass < $self->repeat ) {
             my @excluded_data = ();
             my $given_excluded = 0;
             if($self->beginrepeathook){
-                # pass in self, test item, and data
-                $self->beginrepeathook->($self,
-                    $test_item, {pass => $pass});
+                $self->beginrepeathook->($self, $test_item);
             }
             # user may have set max during hook
             $max = defined $self->max_training_items ?
@@ -161,12 +159,8 @@ sub classify {
                 for my $data_index ( 0 .. $num_items - 1 ) {
                     # skip this data item if the datahook returns false
                     if($self->datahook &&
-                            !$self->datahook->(
-                                # pass in self, test, data and data index
-                                $self,
-                                $test_item,
-                                {pass => $pass},
-                                 $data_index)
+                            !$self->datahook->($self,
+                                $test_item, $data_index)
                             ){
                         push @excluded_data, $data_index;
                         next;
@@ -198,29 +192,21 @@ sub classify {
         continue {
             if($self->endrepeathook){
                 # pass in self, test item, data, and result
-                $self->endrepeathook->(
-                    $self,
-                    $test_item,
-                    {pass => $pass},
-                    $results[-1]
-                );
+                $self->endrepeathook->($self,
+                    $test_item, $results[-1]);
             }
-            ++$pass;
+            $self->_set_pass($self->pass() + 1);
             my ( $sec, $min, $hour ) = localtime();
             $log->info(
                 sprintf(
-                    "$pass/$self->{repeat}  %2s:%02s:%02s",
+                    $self->pass . '/' . $self->repeat .
+                    '  %2s:%02s:%02s',
                     $hour, $min, $sec ) )
                 if $log->is_info;
         }
         if($self->endtesthook){
             # pass in self, test item, data, and result
-            $self->endtesthook->(
-                $self,
-                $test_item,
-                {pass => $pass},
-                $results[-1]
-            );
+            $self->endtesthook->($self, $test_item, $results[-1]);
         }
     }
 
@@ -252,6 +238,22 @@ sub classify {
         }
         return;
     }
+}
+
+=head2 C<iteration>
+
+Returns the current iteration of classification. This is only relevant
+inside of the hook subroutines, when repeat has been set higher than 1.
+
+=cut
+sub pass {
+    my ($self) = @_;
+    return $self->{pass};
+}
+
+sub _set_pass {
+    my ($self, $pass) = @_;
+    $self->{pass} = $pass;
 }
 
 1;

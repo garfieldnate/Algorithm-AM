@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Next: Reorganize everything to match the new design.
-
 Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
 
 For datahook, pass in training item, not just its index.
