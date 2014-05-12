@@ -1,12 +1,12 @@
 Algorithm::AM
 
-Put actual items in excluded_data
+Next: rename hooks to use snake case
+
+Make a shortcut for making new items
 
 Rename result->result when you can think of something better.
 
 Note that datacap won't take effect until next round of data adding
-
-Make a shortcut for making new items
 
 Increase reference count on data_classes array (search 'save_this' in AM)
 
@@ -14,7 +14,7 @@ Make a standalone app for classifying projects
 
 Excluded data isn't quite reported properly if the test item is given, more than once.
 
-As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in endhook the user can add the classified test item to the training data.
+As far as flexibility goes, a good goal is to make the system bootstrappable, meaning that in end_hook the user can add the classified test item to the training data.
 	- Pretty sure this is done. Make a demo before crossing it off.
 
 Anytime: What are the itemcontextchain and itemcontextchainhead variables?

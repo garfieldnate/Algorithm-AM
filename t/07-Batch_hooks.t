@@ -12,20 +12,20 @@ use Algorithm::AM::Batch;
 # Each hook contains one test with several subtests. Each is called
 # this many times:
 my %hook_calls = (
-	beginhook => 1,
-	begintesthook => 2,
-	beginrepeathook => 4,
-	endrepeathook => 4,
-	datahook => 20,
-	endtesthook => 2,
-	endhook => 1,
+	begin_hook => 1,
+	begin_test_hook => 2,
+	begin_repeat_hook => 4,
+	end_repeat_hook => 4,
+	training_data_hook => 20,
+	end_test_hook => 2,
+	end_hook => 1,
 );
 my $total_calls = 0;
 $total_calls += $_ for values %hook_calls;
-# +1 for test_data_hook
+# +1 for test_defaults, run twice
+# +2 for test_data_hook
 # +1 for Test::NoWarnings
-# +3 for test_defaults, run twice
-plan tests => $total_calls + 1 + 1 + 3*2;
+plan tests => $total_calls + 1*2 + 2 + 1;
 
 # store number of tests run by each method so we
 # can plan subtests
@@ -33,8 +33,9 @@ my %tests_per_sub = (
 	test_beginning_vars => 5,
 	test_item_vars => 4,
 	test_iter_vars => 1,
-	test_datahook_vars => 2,
+	test_training_data_hook_vars => 2,
 	test_end_iter_vars => 2,
+	test_end_test_vars => 3,
 	test_end_vars => 4
 );
 # store methods for choosing to what run in make_hook
@@ -42,8 +43,9 @@ my %test_subs = (
 	test_beginning_vars => \&test_beginning_vars,
 	test_item_vars => \&test_item_vars,
 	test_iter_vars => \&test_iter_vars,
-	test_datahook_vars => \&test_datahook_vars,
+	test_training_data_hook_vars => \&test_training_data_hook_vars,
 	test_end_iter_vars => \&test_end_iter_vars,
+	test_end_test_vars => \&test_end_test_vars,
 	test_end_vars => \&test_end_vars
 );
 
@@ -60,38 +62,39 @@ my $batch = Algorithm::AM::Batch->new(
 	repeat => 2,
 	probability => 1,
 	max_training_items => 10,
-	beginhook => make_hook(
-		'beginhook',
+	begin_hook => make_hook(
+		'begin_hook',
 		'test_beginning_vars'
 	),
-	begintesthook => make_hook(
-		'begintesthook',
+	begin_test_hook => make_hook(
+		'begin_test_hook',
 		'test_beginning_vars',
 		'test_item_vars'),
-	beginrepeathook => make_hook(
-		'beginrepeathook',
+	begin_repeat_hook => make_hook(
+		'begin_repeat_hook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
-	datahook => make_hook(
-		'datahook',
+	training_data_hook => make_hook(
+		'training_data_hook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
-		'test_datahook_vars'),
-	endrepeathook => make_hook(
-		'endrepeathook',
+		'test_training_data_hook_vars'),
+	end_repeat_hook => make_hook(
+		'end_repeat_hook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
 		'test_end_iter_vars'),
-	endtesthook => make_hook(
-		'endtesthook',
+	end_test_hook => make_hook(
+		'end_test_hook',
 		'test_beginning_vars',
 		'test_item_vars',
-		'test_end_iter_vars'),
-	endhook => make_hook(
-		'endhook',
+		'test_end_test_vars'
+		),
+	end_hook => make_hook(
+		'end_hook',
 		'test_beginning_vars',
 		'test_end_vars'
 	),
@@ -120,7 +123,7 @@ sub make_hook {
 			plan tests => $plan;
 			$test_subs{$_}->(@args) for @subs;
 		};
-		# true return value is needed by datahook to signal
+		# true return value is needed by training_data_hook to signal
 		# that data should be considered during classification
 		return 1;
 	};
@@ -172,15 +175,15 @@ sub test_item_vars {
 
 # Test variables available for each iteration
 sub test_iter_vars {
-	my ($batch, $test_item) = @_;
+	my ($batch, $test_item, $iteration) = @_;
 	ok(
-		$batch->iteration == 1 || $batch->iteration == 2,
+		$iteration == 1 || $iteration == 2,
 		'only do 2 iteration of the data');
 	return;
 }
 
-sub test_datahook_vars {
-	my ($batch, $test_item, $train_item) = @_;
+sub test_training_data_hook_vars {
+	my ($batch, $test_item, $iteration, $train_item) = @_;
 	isa_ok($train_item, 'Algorithm::AM::DataSet::Item');
 	ok($train_item->comment =~ /my.*CommentHere/,
 		'item is from training set');
@@ -188,7 +191,7 @@ sub test_datahook_vars {
 
 # Test variables provided after an iteration is finished
 sub test_end_iter_vars {
-	my ($batch, $test_item, $result) = @_;
+	my ($batch, $test_item, $iteration, $excluded_items, $result) = @_;
 
 	if($test_item->class eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},
@@ -197,8 +200,16 @@ sub test_end_iter_vars {
 		is_deeply($result->scores, {e => '4', r => '9'},
 			'outcomes scores');
 	}
-	is_deeply($batch->excluded_items, [], 'no items excluded');
+	is_deeply($excluded_items, [], 'no items excluded');
 	return;
+}
+
+sub test_end_test_vars {
+	my ($self, $test_item, @item_results) = @_;
+	isa_ok($item_results[0], 'Algorithm::AM::Result');
+	is(scalar @item_results, 2, '1 result for each iteration');
+	is($item_results[0]->test_item, $item_results[0]->test_item,
+		'results have the same test item');
 }
 
 # Test variables provided after all iterations are finished
@@ -218,25 +229,24 @@ sub test_end_vars {
 
 sub test_defaults {
 	my ($batch) = @_;
-	is($batch->excluded_items, undef,
-		'excluded_items is undef outside of hooks');
-	is($batch->iteration, undef, 'iteration is undef outside of hooks');
-	is($batch->test_set, undef, 'test_set is undef outcome of hooks');
+	is($batch->test_set, undef, 'test_set is undef outside of hooks');
 	return;
 }
 
-# test that datahook excludes items via false return value
+# test that training_data_hook excludes items via false return value
 sub test_data_hook {
 	my $batch = Algorithm::AM::Batch->new(
 		training_set => chapter_3_train(),
-		datahook 	=> sub {
+		training_data_hook 	=> sub {
 			# false return value indicates that item should be excluded
 			return 0;
 		},
-		endrepeathook => sub {
-			my ($batch) = @_;
-			is_deeply($batch->excluded_items, [0, 1, 2, 3, 4],
-			 	'datahook can exluced items');
+		end_repeat_hook => sub {
+			my $excluded_items = $_[3];
+			is(scalar @$excluded_items, 5,
+				'training_data_hook excluded all items');
+			isa_ok($excluded_items->[0],
+				'Algorithm::AM::DataSet::Item');
 		},
 	);
 	$batch->classify_all(chapter_3_test());

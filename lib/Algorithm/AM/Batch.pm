@@ -17,13 +17,13 @@ use Class::Tiny qw(
     repeat
     max_training_items
 
-    beginhook
-    beginrepeathook
-    begintesthook
-    datahook
-    endtesthook
-    endrepeathook
-    endhook
+    begin_hook
+    begin_repeat_hook
+    begin_test_hook
+    training_data_hook
+    end_test_hook
+    end_repeat_hook
+    end_hook
 ), {
     exclude_nulls     => 1,
     exclude_given    => 1,
@@ -46,13 +46,13 @@ sub BUILD {
             'Algorithm::AM::DataSet';
     }
     for(qw(
-        beginhook
-        beginrepeathook
-        begintesthook
-        datahook
-        endtesthook
-        endrepeathook
-        endhook
+        begin_hook
+        begin_repeat_hook
+        begin_test_hook
+        training_data_hook
+        end_test_hook
+        end_repeat_hook
+        end_hook
     )){
         if(exists $args->{$_} and 'CODE' ne ref $args->{$_}){
             croak "Input $_ should be a subroutine";
@@ -90,14 +90,14 @@ sub classify_all {
             'cardinality (' . $self->training_set->cardinality .
                 ' and ' . $test_set->cardinality . ')';
     }
-
     $self->_set_test_set($test_set);
-    # save the result objects from each run here
-    my @results;
 
-    if($self->beginhook){
-        $self->beginhook->($self);
+    if($self->begin_hook){
+        $self->begin_hook->($self);
     }
+
+    # save the result objects from all items, all iterations, here
+    my @all_results;
 
     foreach my $item_number (0 .. $test_set->size - 1) {
         if($log->is_debug){
@@ -105,14 +105,15 @@ sub classify_all {
                 $test_set->size + 1 - $item_number);
         }
         my $test_item = $test_set->get_item($item_number);
+        # store the results just for this item
+        my @item_results;
 
-        if($self->begintesthook){
-            # pass in self and the test item
-            $self->begintesthook->($self, $test_item);
+        if($self->begin_test_hook){
+            $self->begin_test_hook->($self, $test_item);
         }
 
-        my ( $sec, $min, $hour ) = localtime();
         if($log->is_debug){
+            my ( $sec, $min, $hour ) = localtime();
             $log->info(
                 sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
                 (join ' ', @{$test_item->features}) . "\n" .
@@ -120,15 +121,16 @@ sub classify_all {
                     $hour, $min, $sec ) );
         }
 
-        $self->_set_iteration(1);
-        while ( $self->iteration <= $self->repeat ) {
-            my @excluded_items = ();
-            my $given_excluded = 0;
-            if($self->beginrepeathook){
-                $self->beginrepeathook->($self, $test_item);
+        my $iteration = 1;
+        while ( $iteration <= $self->repeat ) {
+            if($self->begin_repeat_hook){
+                $self->begin_repeat_hook->(
+                    $self, $test_item, $iteration);
             }
 
-            my $training_set = $self->_make_training_set($test_item);
+            # this sets excluded_items
+            my ($training_set, $excluded_items) = $self->_make_training_set(
+                $test_item, $iteration);
 
             # classify the item with the given training set and
             # configuration
@@ -139,47 +141,54 @@ sub classify_all {
                 linear => $self->linear,
             );
             my $result = $am->classify($test_item);
-            push @results, $result;
-        }
-        continue {
-            if($self->endrepeathook){
-                # pass in self, test item, data, and result
-                $self->endrepeathook->($self,
-                    $test_item, $results[-1]);
+
+            if($log->is_info){
+                my ( $sec, $min, $hour ) = localtime();
+                $log->info(
+                    sprintf(
+                        $iteration . '/' . $self->repeat .
+                        '  %2s:%02s:%02s',
+                        $hour, $min, $sec
+                    )
+                );
             }
-            $self->_set_iteration($self->iteration() + 1);
-            my ( $sec, $min, $hour ) = localtime();
-            $log->info(
-                sprintf(
-                    $self->iteration . '/' . $self->repeat .
-                    '  %2s:%02s:%02s',
-                    $hour, $min, $sec ) )
-                if $log->is_info;
+
+            if($self->end_repeat_hook){
+                # pass in self, test item, data, and result
+                $self->end_repeat_hook->($self, $test_item,
+                    $iteration, $excluded_items, $result);
+            }
+            push @item_results, $result;
+            $iteration++;
         }
-        if($self->endtesthook){
-            # pass in self, test item, data, and result
-            $self->endtesthook->($self, $test_item, $results[-1]);
+
+        if($self->end_test_hook){
+            $self->end_test_hook->($self, $test_item, @item_results);
         }
+
+        push @all_results, @item_results;
     }
 
-    my ( $sec, $min, $hour ) = localtime();
-    $log->info( sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) )
-        if $log->is_info;
-
-    if($self->endhook){
-        $self->endhook->($self, @results);
+    if($log->is_info){
+        my ( $sec, $min, $hour ) = localtime();
+        $log->info(
+            sprintf( "Time: %2s:%02s:%02s", $hour, $min, $sec ) );
     }
-    $self->_set_excluded_items(undef);
+
+    if($self->end_hook){
+        $self->end_hook->($self, @all_results);
+    }
     $self->_set_test_set(undef);
-    $self->_set_iteration(undef);
-    return @results;
+    return @all_results;
 }
 
+# create the training set for this iteration, calling training_data_hook and
+# updating excluded_items along the way
 sub _make_training_set {
-    my ($self, $test_item) = @_;
+    my ($self, $test_item, $iteration) = @_;
     my $training_set;
 
-    $self->_set_excluded_items([]);
+    # $self->_set_excluded_items([]);
     my @excluded_items;
     # Cap the amount of considered data if specified
     my $max = defined $self->max_training_items ?
@@ -188,7 +197,7 @@ sub _make_training_set {
 
     # use the original DataSet object if there are no settings
     # that would trim items from it
-    if(!$self->datahook &&
+    if(!$self->training_data_hook &&
             ($self->probability == 1) &&
             $max >= $self->training_set->size){
         $training_set = $self->training_set;
@@ -205,64 +214,32 @@ sub _make_training_set {
         for my $data_index ( 0 .. $num_items - 1 ) {
             my $training_item =
                 $self->training_set->get_item($data_index);
-            # skip this data item if the datahook returns false
-            if($self->datahook &&
-                    !$self->datahook->($self,
-                        $test_item, $training_item)
+            # skip this data item if the training_data_hook returns false
+            if($self->training_data_hook &&
+                    !$self->training_data_hook->($self,
+                        $test_item, $iteration, $training_item)
                     ){
-                push @excluded_items, $data_index;
+                push @excluded_items, $training_item;
                 next;
             }
             # skip this data item with probability $self->{probability}
             if($self->probability != 1 &&
                     rand() > $self->probability){
-                push @excluded_items, $data_index;
+                push @excluded_items, $training_item;
                 next;
             }
             $training_set->add_item($training_item);
         }
     }
-    $self->_set_excluded_items(\@excluded_items);
-    return $training_set;
-}
-
-=head2 C<state_summary>
-
-Returns a scalar ref containing a printout of the current object state,
-including iteration, probability, size of training and test set,
-excluded items, pointer counting method, exclude given, and exclude
-nulls.
-
-=cut
-sub state_summary {
-    my ($self) = @_;
-    my $info = "Algorithm::AM::Batch State Summary\n";
-    $info .= 'Probability of including any item: '.
-        $self->probability . "\n";
-    $info .= 'Size of training set: ' . $self->training_set->size .
-        "\n";
-    $info .= 'Size of test set: ' . $self->test_set->size . "\n";
-    if($self->iteration){
-        $info .= 'Current iteration: ' . $self->iteration . "\n";
-    }
-    $info .= 'Pointer counting method: ' .
-        ($self->linear ? 'linear' : 'quadratic') . "\n";
-    if($self->excluded_items){
-        $info .= 'Items excluded from training set: ' .
-            (join ', ', @{$self->excluded_items}) . "\n";
-    }
-    $info .= 'Exclude nulls: ' .
-        ($self->exclude_nulls ? 'yes' : 'no') . "\n";
-    $info .= 'Exclude given: ' .
-        ($self->exclude_given ? 'yes' : 'no') . "\n";
-    return \$info;
+    # $self->_set_excluded_items(\@excluded_items);
+    return ($training_set, \@excluded_items);
 }
 
 =head2 C<test_set>
 
 Returns the test set currently providing the source of items to
 classify. Before and after classify_all, this returns undef, and so is
-only when called inside one of the hook subroutines.
+only useful when called inside one of the hook subroutines.
 
 =cut
 sub test_set {
@@ -273,45 +250,6 @@ sub test_set {
 sub _set_test_set {
     my ($self, $test_set) = @_;
     $self->{test_set} = $test_set;
-}
-
-=head2 C<iteration>
-
-Returns the current iteration of classification. This is only relevant
-inside of the hook subroutines, when repeat has been set higher than 1.
-Before and after classify_all is called, this returns undef.
-
-=cut
-sub iteration {
-    my ($self) = @_;
-    return $self->{iteration};
-}
-
-sub _set_iteration {
-    my ($self, $iteration) = @_;
-    $self->{iteration} = $iteration;
-}
-
-=head2 C<excluded_items>
-
-Returns an array ref containing the indices of the training items
-that were excluded from training during the current classification.
-This returns undef before and after the classify_all method is called,
-so its return value will only be useful inside the hook subroutines.
-The items themselves can then be retrieved using C<training_set>.
-This list does not include items which were excluded because of
-C<max_training_items>.
-
-=cut
-
-sub excluded_items {
-    my ($self) = @_;
-    return $self->{excluded_items};
-}
-
-sub _set_excluded_items {
-    my ($self, $excluded_items) = @_;
-    $self->{excluded_items} = $excluded_items;
 }
 
 1;

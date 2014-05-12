@@ -6,13 +6,12 @@ use Test::More 0.88;
 use Test::Exception;
 use Test::NoWarnings;
 use Test::LongString;
-plan tests => 14;
+plan tests => 12;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
 test_input_checking();
 test_accessors();
 test_classify();
-test_summary();
 
 sub test_input_checking {
     throws_ok {
@@ -183,32 +182,3 @@ sub test_classify {
     return;
 }
 
-sub test_summary {
-    my $batch = Algorithm::AM::Batch->new(
-        training_set => chapter_3_train(),
-        repeat => 2,
-        datahook => sub {0},
-        endrepeathook => sub {
-            my ($self) = @_;
-            my $summary = $self->state_summary;
-            my $iter = $self->iteration;
-            my $expected = <<"END_SUM";
-Algorithm::AM::Batch State Summary
-Probability of including any item: 1
-Size of training set: 5
-Size of test set: 1
-Current iteration: $iter
-Pointer counting method: quadratic
-Items excluded from training set: 0, 1, 2, 3, 4
-Exclude nulls: yes
-Exclude given: yes
-END_SUM
-            # match any types of newlines using \v
-            # instead of literal newline
-            $expected =~ s/[\v]+/\\v+/g;
-            like_string(${$self->state_summary}, qr/$expected/,
-                'summary string') or note $$summary;
-        },
-    );
-    $batch->classify_all(chapter_3_test());
-}

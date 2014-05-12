@@ -570,8 +570,8 @@ do it the "obvious" way; the following won't work:
 
 That's because at the very beginning of each run, the code for C<$p>
 reselects the file handle.  However, you can do this using a
-L<hook|/"USING HOOKS">; see C<-beginhook> for a simple example of redirected
-output and C<-beginrepeathook> for a more complicated one.
+L<hook|/"USING HOOKS">; see C<-begin_hook> for a simple example of redirected
+output and C<-begin_repeat_hook> for a more complicated one.
 
 L<Warnings and error messages|/"WARNINGS AND ERROR MESSAGES"> get sent
 to STDERR.  If there are no fatal errors and the program runs
@@ -595,27 +595,27 @@ are currently implemented:
 
 =over 4
 
-=item -beginhook
+=item -begin_hook
 
 This hook is called before any test items are run.
 
-=item -endhook
+=item -end_hook
 
 This hook is called after all test items are run.
 
 Example: To send all the output from a run to another file, you can do
 the following:
 
-  $p->classify(-beginhook => sub {open FH, ">myoutput"; select FH;},
-       -endhook => sub {close FH;});
+  $p->classify(-begin_hook => sub {open FH, ">myoutput"; select FH;},
+       -end_hook => sub {close FH;});
 
-=item -begintesthook
+=item -begin_test_hook
 
 This hook is called at the beginning of each new test item.  If a test
 item will be run more than once, this hook is called just once before
 the first iteration.
 
-=item -endtesthook
+=item -end_test_hook
 
 This hook is called at the end of each test item.  If a test item will
 be run more than once, this hook is called just once after the last
@@ -630,15 +630,15 @@ use the variables C<$curTestOutcome>, C<$pointermax>, and C<@sum>:
     ## must use eq instead of == in following statement
     ++$count if $sum[$curTestOutcome] eq $pointermax;
   };
-  $p->classify(-endtesthook => $countsub,
-       -endhook => sub {print "Number of correct predictions: $count\n";});
+  $p->classify(-end_test_hook => $countsub,
+       -end_hook => sub {print "Number of correct predictions: $count\n";});
 
-=item -beginrepeathook
+=item -begin_repeat_hook
 
 This hook is called at the beginning of each iteration of a test item.
 
 
-=item -endrepeathook
+=item -end_repeat_hook
 
 This hook is called at the end of each iteration of a test item.
 
@@ -651,7 +651,7 @@ item, you can use the variables C<$probability> and C<$pass>:
     $probability = (0.5, 0.2)[$pass];
     select((FH5, FH2)[$pass]);
   };
-  $p->classify(-beginrepeathook => $repeatsub);
+  $p->classify(-begin_repeat_hook => $repeatsub);
 
 Then on iteration 0, the test item is analyzed with the probability of
 any data item being included set to 0.5, with output sent to file
@@ -659,7 +659,7 @@ F<results05>, while on iteration 1, the test item is analyzed with the
 probability of any data item being included set to 0.2, with output
 sent to file F<results02>.
 
-=item -datahook
+=item -training_data_hook
 
 This hook is called for each data item considered during a test item
 run.  Unlike other hooks, which receive no arguments, this hook is
@@ -701,7 +701,7 @@ the variables C<@curTestItem>, C<@outcome>, and C<%outcometonum>:
     return 1 unless $outcome[$_[0]] eq $outcometonum{'a-oi'};
     return 0;
   };
-  $p->classify(-datahook => $datasub);
+  $p->classify(-training_data_hook => $datasub);
 
 =back
 
@@ -844,14 +844,14 @@ number of data items considered decreases.  Here's one way to do it:
   $repeatsub = sub {
     $datacap = (1, 0.5, 0.25)[$pass] * scalar @data;
   };
-  $p->classify(-repeat => 3, -beginrepeathook => $repeatsub);
+  $p->classify(-repeat => 3, -begin_repeat_hook => $repeatsub);
 
 Note that this will give different results than the following:
 
   $repeatsub = sub {
     $probability = (1, 0.5, 0.25)[$pass];
   };
-  $p->classify(-probability => 1, -repeat => 3, -beginrepeathook => $repeatsub);
+  $p->classify(-probability => 1, -repeat => 3, -begin_repeat_hook => $repeatsub);
 
 The first way would be useful for modeling how predictions change as
 more examples are gathered -- say, as a child grows older (though the
@@ -928,7 +928,7 @@ have the highest number of pointers, try something like this:
     push @winners, $i if $sum[$i] eq $pointermax; ## use eq, not ==
   }
 
-For another example using these variables, see C<-endtesthook>.
+For another example using these variables, see C<-end_test_hook>.
 
 =head3 Variables Useful for Formatting
 
@@ -1032,7 +1032,7 @@ for each test item.  Here's one way to do it:
     print "\n\n";
   };
   $p->classify(-probability => 0.005, -repeat => 5,
-       -begintesthook => $begintest, -endrepeathook => $endrepeat, -endtesthook => $endtest);
+       -begin_test_hook => $begintest, -end_repeat_hook => $endrepeat, -end_test_hook => $endtest);
 
 =head2 Creating a Confusion Matrix
 
@@ -1083,7 +1083,7 @@ Here's one way to do it:
     }
   };
   $p->classify(-probability => 0.005, -repeat => 5,
-       -beginhook => $begin, -endrepeathook => $endrepeat, -endhook => $end);
+       -begin_hook => $begin, -end_repeat_hook => $endrepeat, -end_hook => $end);
 
 
 =head1 WARNINGS AND ERROR MESSAGES

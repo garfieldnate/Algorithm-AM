@@ -21,7 +21,7 @@ my $count = 0;
 my $batch = Algorithm::AM::Batch->new(
     training_set => $finnverb_data,
     exclude_given => 1,
-    endtesthook => sub {
+    end_test_hook => sub {
         my ($am, $test_item, $result) = @_;
         ++$count if $result->result ne 'incorrect';
     }
