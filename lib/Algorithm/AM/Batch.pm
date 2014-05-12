@@ -119,8 +119,8 @@ sub classify_all {
                     $hour, $min, $sec ) );
         }
 
-        $self->_set_pass(0);
-        while ( $self->pass < $self->repeat ) {
+        $self->_set_pass(1);
+        while ( $self->pass <= $self->repeat ) {
             my @excluded_items = ();
             my $given_excluded = 0;
             if($self->beginrepeathook){
@@ -221,6 +221,38 @@ sub _make_training_set {
     }
     $self->_set_excluded_items(\@excluded_items);
     return $training_set;
+}
+
+=head2 C<state_summary>
+
+Returns a scalar ref containing a printout of the current object state,
+including iteration, probability, size of training and test set,
+excluded items, pointer counting method, exclude given, and exclude
+nulls.
+
+=cut
+sub state_summary {
+    my ($self) = @_;
+    my $info = "Algorithm::AM::Batch State Summary\n";
+    $info .= 'Probability of including any item: '.
+        $self->probability . "\n";
+    $info .= 'Size of training set: ' . $self->training_set->size .
+        "\n";
+    $info .= 'Size of test set: ' . $self->test_set->size . "\n";
+    if($self->pass){
+        $info .= 'Current iteration: ' . $self->pass . "\n";
+    }
+    $info .= 'Pointer counting method: ' .
+        ($self->linear ? 'linear' : 'quadratic') . "\n";
+    if($self->excluded_items){
+        $info .= 'Items excluded from training set: ' .
+            (join ', ', @{$self->excluded_items}) . "\n";
+    }
+    $info .= 'Exclude nulls: ' .
+        ($self->exclude_nulls ? 'yes' : 'no') . "\n";
+    $info .= 'Exclude given: ' .
+        ($self->exclude_given ? 'yes' : 'no') . "\n";
+    return \$info;
 }
 
 =head2 C<test_set>

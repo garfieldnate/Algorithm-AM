@@ -166,7 +166,7 @@ sub test_item_vars {
 sub test_iter_vars {
 	my ($batch, $test_item) = @_;
 	ok(
-		$batch->pass == 0 || $batch->pass == 1,
+		$batch->pass == 1 || $batch->pass == 2,
 		'pass- only do 2 passes of the data');
 	return;
 }

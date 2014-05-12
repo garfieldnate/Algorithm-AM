@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Next: Make a new config printer for iteration variables, which won't be available to Result. Probability and excluded data.
-
 Increase reference count on data_classes array (search 'save_this' in AM)
 
 Note that datacap won't take effect until next round of data adding
