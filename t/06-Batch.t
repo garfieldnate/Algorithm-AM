@@ -191,7 +191,7 @@ sub test_summary {
         endrepeathook => sub {
             my ($self) = @_;
             my $summary = $self->state_summary;
-            my $iter = $self->pass;
+            my $iter = $self->iteration;
             my $expected = <<"END_SUM";
 Algorithm::AM::Batch State Summary
 Probability of including any item: 1

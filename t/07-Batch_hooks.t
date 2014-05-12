@@ -174,8 +174,8 @@ sub test_item_vars {
 sub test_iter_vars {
 	my ($batch, $test_item) = @_;
 	ok(
-		$batch->pass == 1 || $batch->pass == 2,
-		'pass- only do 2 passes of the data');
+		$batch->iteration == 1 || $batch->iteration == 2,
+		'only do 2 iteration of the data');
 	return;
 }
 
@@ -220,7 +220,7 @@ sub test_defaults {
 	my ($batch) = @_;
 	is($batch->excluded_items, undef,
 		'excluded_items is undef outside of hooks');
-	is($batch->pass, undef, 'pass is undef outside of hooks');
+	is($batch->iteration, undef, 'iteration is undef outside of hooks');
 	is($batch->test_set, undef, 'test_set is undef outcome of hooks');
 	return;
 }

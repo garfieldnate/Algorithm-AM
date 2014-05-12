@@ -120,8 +120,8 @@ sub classify_all {
                     $hour, $min, $sec ) );
         }
 
-        $self->_set_pass(1);
-        while ( $self->pass <= $self->repeat ) {
+        $self->_set_iteration(1);
+        while ( $self->iteration <= $self->repeat ) {
             my @excluded_items = ();
             my $given_excluded = 0;
             if($self->beginrepeathook){
@@ -147,11 +147,11 @@ sub classify_all {
                 $self->endrepeathook->($self,
                     $test_item, $results[-1]);
             }
-            $self->_set_pass($self->pass() + 1);
+            $self->_set_iteration($self->iteration() + 1);
             my ( $sec, $min, $hour ) = localtime();
             $log->info(
                 sprintf(
-                    $self->pass . '/' . $self->repeat .
+                    $self->iteration . '/' . $self->repeat .
                     '  %2s:%02s:%02s',
                     $hour, $min, $sec ) )
                 if $log->is_info;
@@ -171,7 +171,7 @@ sub classify_all {
     }
     $self->_set_excluded_items(undef);
     $self->_set_test_set(undef);
-    $self->_set_pass(undef);
+    $self->_set_iteration(undef);
     return @results;
 }
 
@@ -242,8 +242,8 @@ sub state_summary {
     $info .= 'Size of training set: ' . $self->training_set->size .
         "\n";
     $info .= 'Size of test set: ' . $self->test_set->size . "\n";
-    if($self->pass){
-        $info .= 'Current iteration: ' . $self->pass . "\n";
+    if($self->iteration){
+        $info .= 'Current iteration: ' . $self->iteration . "\n";
     }
     $info .= 'Pointer counting method: ' .
         ($self->linear ? 'linear' : 'quadratic') . "\n";
@@ -282,14 +282,14 @@ inside of the hook subroutines, when repeat has been set higher than 1.
 Before and after classify_all is called, this returns undef.
 
 =cut
-sub pass {
+sub iteration {
     my ($self) = @_;
-    return $self->{pass};
+    return $self->{iteration};
 }
 
-sub _set_pass {
-    my ($self, $pass) = @_;
-    $self->{pass} = $pass;
+sub _set_iteration {
+    my ($self, $iteration) = @_;
+    $self->{iteration} = $iteration;
 }
 
 =head2 C<excluded_items>
