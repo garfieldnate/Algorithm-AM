@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Next: rename hooks to use snake case
-
 Make a shortcut for making new items
 
 Rename result->result when you can think of something better.
