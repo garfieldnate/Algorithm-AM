@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Make a shortcut for making new items
-
 Rename result->result when you can think of something better.
 
 Note that datacap won't take effect until next round of data adding

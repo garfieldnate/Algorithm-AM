@@ -14,6 +14,9 @@ use Class::Tiny qw(
         join ',', @{ $_[0]->{features} }
     },
 };
+use Exporter::Easy (
+    OK => ['new_item']
+);
 # ABSTRACT: A single data item for classification
 # VERSION;
 
@@ -37,6 +40,20 @@ sub BUILD {
         croak q[Must provide 'features' parameter of type array ref];
     }
     return;
+}
+
+=head2 C<new_item>
+
+This is an exportable shortcut for the new method. If exported, then
+instead of calling C<<Algorithm::AM::DataSet::Item->new>>, you may
+simply call C<new_item>.
+
+=cut
+sub new_item {
+    # unpack here so that warnings about odd numbers of elements are
+    # reported for this function, not for the new method
+    my %args = @_;
+    return __PACKAGE__->new(%args);
 }
 
 =head2 C<class>

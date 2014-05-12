@@ -2,10 +2,10 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 10;
+plan tests => 11;
 use Test::NoWarnings;
 use Test::Exception;
-use Algorithm::AM::DataSet::Item;
+use Algorithm::AM::DataSet::Item 'new_item';
 
 test_constructor();
 test_accessors();
@@ -24,9 +24,12 @@ sub test_constructor {
     } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
     'constructor dies with incorrect features parameter';
 
-    lives_ok {
-        Algorithm::AM::DataSet::Item->new(features => ['a','b']);
-    } q[constructor doesn't die with good input];
+    my $item = Algorithm::AM::DataSet::Item->new(features => ['a','b']);
+    isa_ok($item, 'Algorithm::AM::DataSet::Item');
+
+    $item = new_item(features => ['a','b']);
+    isa_ok($item, 'Algorithm::AM::DataSet::Item');
+
     return;
 }
 
