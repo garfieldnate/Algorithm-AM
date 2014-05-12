@@ -139,7 +139,8 @@ sub _process_stats {
     }
 
     # set result to tie/correct/incorrect after comparing
-    # expected/actual outcomes
+    # expected/actual outcomes. Only do this if the expected
+    # class label is known.
     if(my $expected = $self->test_item->class){
         if(exists $scores{$expected} &&
                 bigcmp($scores{$expected}, $max) == 0){
@@ -216,6 +217,8 @@ sub statistical_summary {
         }else {
             $info .= "Incorrect outcome predicted.\n";
         }
+    }else{
+        $info .= "Expected outcome unknown\n";
     }
     return \$info;
 }

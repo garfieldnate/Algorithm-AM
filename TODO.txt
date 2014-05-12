@@ -1,8 +1,8 @@
 Algorithm::AM
 
-Make sure result->result is undef for unknown outcomes. Also, seems like that could use a rename.
-
 Put actual items in excluded_data
+
+Rename result->result when you can think of something better.
 
 Note that datacap won't take effect until next round of data adding
 

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 4;
+plan tests => 5;
 use Test::LongString;
 # TODO: Remove the use of Algorithm::AM so that the
 # tests aren't co-dependent
@@ -13,10 +13,11 @@ test_config_info();
 my $am = Algorithm::AM->new(
     training_set => chapter_3_train(),
 );
-my ($result) = $am->classify(chapter_3_test->get_item(0));
+my $result = $am->classify(chapter_3_test->get_item(0));
 test_statistical_summary($result);
 test_aset_summary($result);
 test_gang_summary($result);
+test_undefined_result($am);
 
 # test that the configuration information is correctly printed by
 # the config_info method after setting internal state through
@@ -95,7 +96,7 @@ END_INFO
 sub test_statistical_summary{
     my ($result) = @_;
     subtest 'statistical summary' => sub {
-        plan tests => 3;
+        plan tests => 4;
         my $stats = ${$result->statistical_summary};
         my $expected = <<'END_STATS';
 Statistical Summary
@@ -163,6 +164,27 @@ END_STATS
                 'statistical summary (tie)') or
                 note $stats;
         }
+
+        # remove the class label and test printing for unlabeled item
+        my $item = chapter_3_test()->get_item(0);
+        $item->class(undef);
+        $result = $am->classify($item);
+        $stats = ${$result->statistical_summary};
+        $expected = <<'END_STATS';
+Statistical Summary
++---------+----------+------------+
+| Outcome | Pointers | Percentage |
++---------+----------+------------+
+| e       |  4       |  30.769%   |
+| r       |  9       |  69.231%   |
++---------+----------+------------+
+| Total   | 13       |            |
++---------+----------+------------+
+Expected outcome unknown
+END_STATS
+        is_string_nows($stats, $expected,
+            'statistical summary (unlabeled)') or
+            note $stats;
     };
     return;
 }
@@ -246,4 +268,14 @@ END_GANG
             'gang summary with items') or note $gang;
     };
     return;
+}
+
+# make sure that no correct/incorrect result is provided for an
+# unlabeled item
+sub test_undefined_result {
+    my ($am) = @_;
+    my $item = chapter_3_test()->get_item(0);
+    $item->class(undef);
+    my $result = $am->classify($item);
+    is($result->result, undef, 'result is undef for unlabeled item');
 }
