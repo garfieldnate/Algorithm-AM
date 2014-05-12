@@ -398,6 +398,7 @@ void
 _fillandcount(...)
  PREINIT:
   HV *project;
+  UV linear_flag;
   AM_GUTS *guts;
   MAGIC *mg;
   AM_SHORT activeVar[4];
@@ -418,7 +419,12 @@ _fillandcount(...)
   AM_SHORT *intersect, *intersectlist;
   AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
+  /* Input args are the AM object ($self) and a flag
+   * to indicate whether to count pointers linearly or
+   * quadratically.
+   */
   project = (HV *) SvRV(ST(0));
+  linear_flag = SvUVX(ST(1));
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
 
@@ -684,7 +690,7 @@ _fillandcount(...)
    *
    */
 
-  if (SvUVX(ST(1))) {
+  if (linear_flag) {
     /* squared */
     AM_SUPRA *p0, *p1, *p2, *p3;
     AM_SHORT outcome;
