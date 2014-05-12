@@ -81,7 +81,6 @@ with items listed is logged at the debug level.
 =cut
 sub classify_all {
     my ($self, $test_set) = @_;
-    $self->_set_test_set($test_set);
 
     if(!$test_set || 'Algorithm::AM::DataSet' ne ref $test_set){
         croak q[Must provide a DataSet to classify_all];
@@ -91,6 +90,8 @@ sub classify_all {
             'cardinality (' . $self->training_set->cardinality .
                 ' and ' . $test_set->cardinality . ')';
     }
+
+    $self->_set_test_set($test_set);
     # save the result objects from each run here
     my @results;
 
@@ -168,7 +169,9 @@ sub classify_all {
     if($self->endhook){
         $self->endhook->($self, @results);
     }
+    $self->_set_excluded_items(undef);
     $self->_set_test_set(undef);
+    $self->_set_pass(undef);
     return @results;
 }
 
@@ -258,8 +261,8 @@ sub state_summary {
 =head2 C<test_set>
 
 Returns the test set currently providing the source of items to
-classify. This only returns something when called inside one of the
-hook subroutines.
+classify. Before and after classify_all, this returns undef, and so is
+only when called inside one of the hook subroutines.
 
 =cut
 sub test_set {
@@ -276,6 +279,7 @@ sub _set_test_set {
 
 Returns the current iteration of classification. This is only relevant
 inside of the hook subroutines, when repeat has been set higher than 1.
+Before and after classify_all is called, this returns undef.
 
 =cut
 sub pass {
@@ -291,7 +295,9 @@ sub _set_pass {
 =head2 C<excluded_items>
 
 Returns an array ref containing the indices of the training items
-that were excluded from training during the last classification.
+that were excluded from training during the current classification.
+This returns undef before and after the classify_all method is called,
+so its return value will only be useful inside the hook subroutines.
 The items themselves can then be retrieved using C<training_set>.
 This list does not include items which were excluded because of
 C<max_training_items>.

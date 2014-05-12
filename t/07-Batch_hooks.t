@@ -22,9 +22,10 @@ my %hook_calls = (
 );
 my $total_calls = 0;
 $total_calls += $_ for values %hook_calls;
-# +1 for extra datahook test
+# +1 for test_data_hook
 # +1 for Test::NoWarnings
-plan tests => $total_calls + 1 + 1;
+# +3 for test_defaults, run twice
+plan tests => $total_calls + 1 + 1 + 3*2;
 
 # store number of tests run by each method so we
 # can plan subtests
@@ -95,9 +96,16 @@ my $batch = Algorithm::AM::Batch->new(
 		'test_end_vars'
 	),
 );
-# all tests are run in classification hooks
+
+# test that defaults are set before and after classification
+test_defaults($batch);
+
+# most tests are run in classification hooks
 $batch->classify_all($test);
-# one last test
+
+test_defaults($batch);
+
+# test item exclusion via data hook
 test_data_hook();
 
 # make a hook which runs the given test subs in a single subtest.
@@ -205,6 +213,15 @@ sub test_end_vars {
 		'scores for third result');
 	is_deeply($results[3]->scores, {e => '4', r => '4'},
 		'scores for fourth result');
+	return;
+}
+
+sub test_defaults {
+	my ($batch) = @_;
+	is($batch->excluded_items, undef,
+		'excluded_items is undef outside of hooks');
+	is($batch->pass, undef, 'pass is undef outside of hooks');
+	is($batch->test_set, undef, 'test_set is undef outcome of hooks');
 	return;
 }
 

@@ -1,10 +1,16 @@
 Algorithm::AM
 
-Increase reference count on data_classes array (search 'save_this' in AM)
+Make sure result->result is undef for unknown outcomes. Also, seems like that could use a rename.
+
+Put actual items in excluded_data
 
 Note that datacap won't take effect until next round of data adding
 
 Make a shortcut for making new items
+
+Increase reference count on data_classes array (search 'save_this' in AM)
+
+Make a standalone app for classifying projects
 
 Excluded data isn't quite reported properly if the test item is given, more than once.
 
