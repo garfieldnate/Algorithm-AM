@@ -40,6 +40,7 @@ sub import {
     my $target = caller;
     Algorithm::AM::BigInt->import::into($target, 'bigcmp');
     Algorithm::AM::DataSet->import::into($target, 'dataset_from_file');
+    Algorithm::AM::DataSet::Item->import::into($target, 'new_item');
     return;
 }
 
