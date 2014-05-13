@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Change total_pointers to total_score in Result
-
 change variables to features in Result
 
 Import other stuff when batch is imported?

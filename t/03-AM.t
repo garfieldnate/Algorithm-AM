@@ -88,8 +88,8 @@ sub test_quadratic_classification {
     my ($result) = @_;
     subtest 'quadratic calculation' => sub {
         plan tests => 3;
-        is($result->total_pointers, 13, 'total pointers')
-            or note $result->total_pointers;
+        is($result->total_points, 13, 'total pointers')
+            or note $result->total_points;
         is($result->count_method, 'squared',
             'counting configured to quadratic');
         is_deeply($result->scores, {'e' => 4, 'r' => 9},
@@ -108,8 +108,8 @@ sub test_linear_classification {
             linear => 1
         );
         my ($result) = $am->classify($test);
-        is($result->total_pointers, 7, 'total pointers')
-            or note $result->total_pointers;;
+        is($result->total_points, 7, 'total pointers')
+            or note $result->total_points;;
         is($result->count_method, 'linear',
             'counting configured to quadratic');
         is_deeply($result->scores, {'e' => 2, 'r' => 5}, 'outcome scores')
@@ -134,8 +134,8 @@ sub test_nulls {
         plan tests => 3;
         $am->exclude_nulls(1);
         my ($result) = $am->classify($test);
-        is($result->total_pointers, 10, 'total pointers')
-            or note $result->total_pointers;
+        is($result->total_points, 10, 'total pointers')
+            or note $result->total_points;
         ok($result->exclude_nulls, 'exclude nulls is true');
         is_deeply($result->scores, {'e' => 3, 'r' => 7},
             'outcome scores')
@@ -146,8 +146,8 @@ sub test_nulls {
         plan tests => 3;
         $am->exclude_nulls(0);
         my ($result) = $am->classify($test);
-        is($result->total_pointers, 5, 'total pointers')
-            or note $result->total_pointers;
+        is($result->total_points, 5, 'total pointers')
+            or note $result->total_points;
         ok(!$result->exclude_nulls, 'exclude nulls is false');
         is_deeply($result->scores, {'r' => 5}, 'outcome scores')
             or note explain $result->scores;
@@ -172,8 +172,8 @@ sub test_given {
     subtest 'exclude given' => sub {
         plan tests => 3;
         my ($result) = $am->classify($test);
-        is($result->total_pointers, 13, 'total pointers')
-            or note $result->total_pointers;
+        is($result->total_points, 13, 'total pointers')
+            or note $result->total_points;
         ok($result->given_excluded, 'given item was excluded');
         is_deeply($result->scores, {'e' => 4, 'r' => 9}, 'outcome scores')
             or note explain $result->scores;
@@ -183,8 +183,8 @@ sub test_given {
         plan tests => 3;
         $am->exclude_given(0);
         my ($result) = $am->classify($test);
-        is($result->total_pointers, 15, 'total pointers')
-            or note $result->total_pointers;
+        is($result->total_points, 15, 'total pointers')
+            or note $result->total_points;
         ok(!$result->given_excluded, 'given was not excluded');
         is_deeply($result->scores, {'r' => 15}, 'outcome scores')
             or note explain $result->scores;
