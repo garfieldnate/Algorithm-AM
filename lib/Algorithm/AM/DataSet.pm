@@ -243,7 +243,7 @@ separating characters, so here the features are f, e, a, t, u, r,
 e, and s.
 
 =cut
-sub dataset_from_file {
+sub dataset_from_file {## no critic (RequireArgUnpacking)
     my (%opts) = (
         unknown => 'UNK',
         null => '=',

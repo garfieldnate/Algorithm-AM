@@ -90,22 +90,32 @@ sub test_data {
 # test the dataset_from_file function
 sub test_dataset_from_file {
     subtest 'read nocommas data set' => sub {
-        plan tests => 2;
+        plan tests => 5;
         my $dataset = dataset_from_file(
             path => path($data_dir, 'chapter_3_no_commas.txt'),
             format => 'nocommas'
         );
         is($dataset->cardinality, 3, 'cardinality');
         is($dataset->size, 5, 'size');
+        my $item = $dataset->get_item(0);
+        is($item->class, 'e', 'item class');
+        is_deeply($item->features, ['3', '1', '0'],
+            'item features');
+        is($item->comment, 'myFirstCommentHere');
     };
     subtest 'read commas data set' => sub {
-        plan tests => 2;
+        plan tests => 5;
         my $dataset = dataset_from_file(
             path => path($data_dir, 'chapter_3_commas.txt'),
             format => 'commas'
         );
         is($dataset->cardinality, 3, 'cardinality');
         is($dataset->size, 5, 'size');
+        my $item = $dataset->get_item(0);
+        is($item->class, 'e', 'item class');
+        is_deeply($item->features, ['3', '1', '0'],
+            'item features');
+        is($item->comment, 'myFirstCommentHere');
     };
 
     throws_ok {

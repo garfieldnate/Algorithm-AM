@@ -47,21 +47,19 @@ use Class::Tiny qw(
     cardinality
     test_in_data
     test_item
-    probability
     count_method
-    total_points
 
     start_time
     end_time
 
     training_set
 
+    scores
     high_score
+    total_points
     winners
     is_tie
     result
-
-    scores
 );
 use Carp 'croak';
 use Algorithm::AM::BigInt 'bigcmp';
@@ -80,7 +78,6 @@ following accessors is included:
     cardinality
     test_in_data
     test_item
-    probability
     count_method
 
 =cut
@@ -98,10 +95,6 @@ sub config_info {
         #     ($self->{given_excluded} ? 1 : 0)],
         [ "Number of data items", $self->training_set->size ],
         [ "Number of active variables", $self->{cardinality} ],
-        (defined $self->{probability} ?
-            [ "Data Inclusion Probability", $self->{probability} ] :
-            ()
-        ),
     );
     my @table = _make_table(\@headers, \@rows);
     my $info = join '', @table;
@@ -611,7 +604,7 @@ Returns the L<item|Algorithm::AM::DataSet::Item> which was classified.
 Returns either "linear" or "squared", indicating the setting used
 for computing analogical sets. See L<Algorithm::AM/linear>.
 
-=head2 C<training_data>
+=head2 C<training_set>
 
 Returns the L<data set|Algorithm::AM::DataSet> which was the
 source of classification data.
@@ -627,17 +620,13 @@ If the class of the test item was known before classification, this
 returns "tie", "correct", or "incorrect", depending on the outcome of
 the classification. Otherwise this returns C<undef>.
 
-=head2 C<start_time>
-
-Returns the start time of the classification.
-
-=head2 C<end_time>
-
-Returns the end time of the classification.
-
 =head2 C<high_score>
 
 Returns the highest score assigned to any of the class labels.
+
+=head2 C<scores>
+
+Returns a hash mapping all predicted classes to their scores.
 
 =head2 C<winners>
 
@@ -648,10 +637,15 @@ score.
 =head2 C<is_tie>
 
 Returns true if more than one class was assigned the high score.
-=head2 C<scores>
-
-Returns a hash mapping all predicted classes to their scores.
 
 =head2 C<total_points>
 
 The sum total number of points assigned as a score to any contexts.
+
+=head2 C<start_time>
+
+Returns the start time of the classification.
+
+=head2 C<end_time>
+
+Returns the end time of the classification.

@@ -97,7 +97,7 @@ sub _initialize {
 }
 
 sub classify {
-    my ($self, $test_item, @args) = @_;
+    my ($self, $test_item) = @_;
 
     my $training_set = $self->training_set;
     if($training_set->cardinality != $test_item->cardinality){
@@ -353,6 +353,8 @@ Also imports the L<Algorithm::AM::BigInt/bigcmp> function.
 =back
 
 =head1 METHODS
+
+=for Pod::Coverage BUILD
 
 =head2 C<new>
 

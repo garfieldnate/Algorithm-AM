@@ -36,6 +36,10 @@ This class represents a single item contained in a data set. Each
 item has a feature vector and possibly a class label and comment
 string.
 
+=head1 METHODS
+
+=for Pod::Coverage BUILD
+
 =head2 C<new>
 
 Creates a new Item object. The only required argument is

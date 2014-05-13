@@ -1,5 +1,9 @@
 Algorithm::AM
 
+Several setters in Result should be private: score, high_score, etc.
+
+Bug reports: OverridePkgVersion doesn't work with numerical versions, RequireArgUnpacking doesn't work with hash assignment.
+
 Explain linear/quadratic in algorithm.pod
 
 Rename result->result when you can think of something better.

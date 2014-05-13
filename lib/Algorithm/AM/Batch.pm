@@ -53,7 +53,7 @@ sub BUILD {
     if(!exists $args->{training_set}){
         croak "Missing required parameter 'training_set'";
     }
-    if(!(ref $args) or !$args->{training_set}->isa(
+    if(!(ref $args) || !$args->{training_set}->isa(
             'Algorithm::AM::DataSet')){
         croak 'Parameter training_set should be an ' .
             'Algorithm::AM::DataSet';
@@ -71,6 +71,7 @@ sub BUILD {
             croak "Input $_ should be a subroutine";
         }
     }
+    return;
 }
 
 sub classify_all {
@@ -256,6 +257,7 @@ sub test_set {
 sub _set_test_set {
     my ($self, $test_set) = @_;
     $self->{test_set} = $test_set;
+    return;
 }
 
 1;
@@ -309,6 +311,10 @@ Also imports the L<Algorithm::AM::BigInt/bigcmp> function.
 
 =back
 
+=head1 METHODS
+
+=for Pod::Coverage BUILD
+
 =head2 C<new>
 
 Creates a new object instance. This method takes named parameters
@@ -325,6 +331,8 @@ accepted parameters are listed below:
 =item L</repeat>
 
 =item L</probability>
+
+=item L</max_training_items>
 
 =item L</exclude_nulls>
 
@@ -357,6 +365,13 @@ default value is 1.
 Get/set the probabibility that any one data item would be included
 among the training items used during classification, which is 1 by
 default.
+
+=head2 C<max_training_items>
+
+Get/set the maximum number of items considered for addition to the
+training set. Note that this is the number I<considered>, not actually
+added, so combined with L</probability> or I</training_item_hook> your
+training set could be smaller than the amount specified.
 
 =head2 C<exclude_nulls>
 
@@ -412,7 +427,7 @@ to change settings such as L</probability> or L</max_training_items>, or
 even at training data, at any point. Other information is passed to
 these hooks as well, as detailed in the method documentation.
 
-=head2C<begin_hook>
+=head2 C<begin_hook>
 
   $batch->begin_hook(sub {
     my ($batch) = @_;
@@ -422,7 +437,7 @@ these hooks as well, as detailed in the method documentation.
 This hook is called first thing in the L</classify_all> method, and is
 given the Batch object instance.
 
-=head2C<begin_test_hook>
+=head2 C<begin_test_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item) = @_;
@@ -434,7 +449,7 @@ This hook is called by L</classify_all> before any iterations of
 classification start for each test item. It is provided with the Batch
 object instance and the test item.
 
-=head2C<begin_repeat_hook>
+=head2 C<begin_repeat_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item, $iteration) = @_;
@@ -448,7 +463,7 @@ iteration of classification of a test item. It is provided with
 the Batch object instance, the test item, and the iteration number,
 which will vary between 1 and the setting for L</repeat>.
 
-=head2C<training_item_hook>
+=head2 C<training_item_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item, $iteration, $training_item) = @_;
@@ -469,7 +484,7 @@ an item which may be included in the training set. If the return value
 is true, then the item will be included in the training set; otherwise,
 it will not.
 
-=head2C<end_repeat_hook>
+=head2 C<end_repeat_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item, $iteration, $excluded_items, $result) = @_;
@@ -485,9 +500,9 @@ This hook is called during L</classify_all> at the end of each
 iteration of classification of a test item. It is provided with
 the Batch object instance, the test item, the iteration number, an
 array ref containing training items excluded from the training set, and
-the result object returned by L<classify|Algorithm::AM::Classify>.
+the result object returned by L<classify|Algorithm::AM/classify>.
 
-=head2C<end_test_hook>
+=head2 C<end_test_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item, @results) = @_;
@@ -506,9 +521,9 @@ This hook is called by L</classify_all> after all classifications
 of a single item are  finished. It is provided with the Batch
 object instance as well as a list of the
 L<Result|Algorithm::AM::Result> objects returned by
-L<Algorithm::AM::Classify> during each iteration of classification.
+L<Algorithm::AM/classify> during each iteration of classification.
 
-=head2C<end_hook>
+=head2 C<end_hook>
 
   $batch->end_hook(sub {
     my ($batch, @results) = @_;
@@ -520,4 +535,4 @@ L<Algorithm::AM::Classify> during each iteration of classification.
 This hook is called after all classifications are finished. It is
 provided with the Batch object instance as well as a list of all of
 the L<Result|Algorithm::AM::Result> objects returned by
-L<Algorithm::AM::Classify>.
+L<Algorithm::AM/classify>.
