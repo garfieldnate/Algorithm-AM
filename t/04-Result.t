@@ -62,7 +62,6 @@ END_INFO
             cardinality => 3,
             test_item => $item,
             exclude_nulls => 0,
-            probability => .5,
             count_method => 'squared',
             # datacap => 40,
             test_in_data => 0,
@@ -81,11 +80,10 @@ END_INFO
 | Test item excluded         | no             |
 | Number of data items       |  5             |
 | Number of active variables |  3             |
-| Data Inclusion Probability |  0.5           |
 +----------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
-            'given/nulls included, linear, item not in data, probability')
+            'given/nulls included, linear, item not in data')
             or note $info;
     };
     return;

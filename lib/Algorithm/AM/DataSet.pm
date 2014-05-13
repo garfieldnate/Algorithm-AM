@@ -333,7 +333,8 @@ sub _read_data_sub {
 
         return Algorithm::AM::DataSet::Item->new(
             features=> \@data_vars,
-            class => $class
+            class => $class,
+            comment => $comment
         );
     };
 }
