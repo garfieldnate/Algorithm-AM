@@ -1,7 +1,5 @@
 Algorithm::AM
 
-Document which values are big ints when returned from Result.
-
 Explain linear/quadratic in algorithm.pod
 
 Rename result->result when you can think of something better.

@@ -28,6 +28,11 @@ whatever count is assigned by analogical modeling during
 classification. This can be either pointers or occurrences. For an
 explanation of this, see L<Algorithm::AM::algorithm>.
 
+All of the scores returned by the methods here are scalars with
+special PV and NV values. You should excercise caution when doing
+calculations with them. See L<Algorithm::AM::BigInt> for more
+information.
+
 =cut
 
 ## TODO: variables consider exporting someday
