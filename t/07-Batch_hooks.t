@@ -16,7 +16,7 @@ my %hook_calls = (
 	begin_test_hook => 2,
 	begin_repeat_hook => 4,
 	end_repeat_hook => 4,
-	training_data_hook => 20,
+	training_item_hook => 20,
 	end_test_hook => 2,
 	end_hook => 1,
 );
@@ -33,7 +33,7 @@ my %tests_per_sub = (
 	test_beginning_vars => 5,
 	test_item_vars => 4,
 	test_iter_vars => 1,
-	test_training_data_hook_vars => 2,
+	test_training_item_hook_vars => 2,
 	test_end_iter_vars => 2,
 	test_end_test_vars => 3,
 	test_end_vars => 4
@@ -43,7 +43,7 @@ my %test_subs = (
 	test_beginning_vars => \&test_beginning_vars,
 	test_item_vars => \&test_item_vars,
 	test_iter_vars => \&test_iter_vars,
-	test_training_data_hook_vars => \&test_training_data_hook_vars,
+	test_training_item_hook_vars => \&test_training_item_hook_vars,
 	test_end_iter_vars => \&test_end_iter_vars,
 	test_end_test_vars => \&test_end_test_vars,
 	test_end_vars => \&test_end_vars
@@ -75,12 +75,12 @@ my $batch = Algorithm::AM::Batch->new(
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars'),
-	training_data_hook => make_hook(
-		'training_data_hook',
+	training_item_hook => make_hook(
+		'training_item_hook',
 		'test_beginning_vars',
 		'test_item_vars',
 		'test_iter_vars',
-		'test_training_data_hook_vars'),
+		'test_training_item_hook_vars'),
 	end_repeat_hook => make_hook(
 		'end_repeat_hook',
 		'test_beginning_vars',
@@ -123,7 +123,7 @@ sub make_hook {
 			plan tests => $plan;
 			$test_subs{$_}->(@args) for @subs;
 		};
-		# true return value is needed by training_data_hook to signal
+		# true return value is needed by training_item_hook to signal
 		# that data should be considered during classification
 		return 1;
 	};
@@ -182,7 +182,7 @@ sub test_iter_vars {
 	return;
 }
 
-sub test_training_data_hook_vars {
+sub test_training_item_hook_vars {
 	my ($batch, $test_item, $iteration, $train_item) = @_;
 	isa_ok($train_item, 'Algorithm::AM::DataSet::Item');
 	ok($train_item->comment =~ /my.*CommentHere/,
@@ -233,18 +233,18 @@ sub test_defaults {
 	return;
 }
 
-# test that training_data_hook excludes items via false return value
+# test that training_item_hook excludes items via false return value
 sub test_data_hook {
 	my $batch = Algorithm::AM::Batch->new(
 		training_set => chapter_3_train(),
-		training_data_hook 	=> sub {
+		training_item_hook 	=> sub {
 			# false return value indicates that item should be excluded
 			return 0;
 		},
 		end_repeat_hook => sub {
 			my $excluded_items = $_[3];
 			is(scalar @$excluded_items, 5,
-				'training_data_hook excluded all items');
+				'training_item_hook excluded all items');
 			isa_ok($excluded_items->[0],
 				'Algorithm::AM::DataSet::Item');
 		},

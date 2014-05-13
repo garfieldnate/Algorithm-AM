@@ -20,7 +20,7 @@ use Class::Tiny qw(
     begin_hook
     begin_test_hook
     begin_repeat_hook
-    training_data_hook
+    training_item_hook
     end_repeat_hook
     end_test_hook
     end_hook
@@ -49,7 +49,7 @@ sub BUILD {
         begin_hook
         begin_test_hook
         begin_repeat_hook
-        training_data_hook
+        training_item_hook
         end_repeat_hook
         end_test_hook
         end_hook
@@ -182,7 +182,7 @@ sub _log_result {
     return;
 }
 
-# create the training set for this iteration, calling training_data_hook and
+# create the training set for this iteration, calling training_item_hook and
 # updating excluded_items along the way
 sub _make_training_set {
     my ($self, $test_item, $iteration) = @_;
@@ -197,7 +197,7 @@ sub _make_training_set {
 
     # use the original DataSet object if there are no settings
     # that would trim items from it
-    if(!$self->training_data_hook &&
+    if(!$self->training_item_hook &&
             ($self->probability == 1) &&
             $max >= $self->training_set->size){
         $training_set = $self->training_set;
@@ -214,9 +214,9 @@ sub _make_training_set {
         for my $data_index ( 0 .. $num_items - 1 ) {
             my $training_item =
                 $self->training_set->get_item($data_index);
-            # skip this data item if the training_data_hook returns false
-            if($self->training_data_hook &&
-                    !$self->training_data_hook->($self,
+            # skip this data item if the training_item_hook returns false
+            if($self->training_item_hook &&
+                    !$self->training_item_hook->($self,
                         $test_item, $iteration, $training_item)
                     ){
                 push @excluded_items, $training_item;
@@ -312,7 +312,7 @@ so is only useful when called from inside one of the hook subroutines.
 Determines how many times each individual test item will be analyzed.
 As the analogical modeling algorithm is deterministics, it only makes
 sense to use this if the training set is modifed somehow during each
-iteration, i.e. via L</probability> or L</training_data_hook>. The
+iteration, i.e. via L</probability> or L</training_item_hook>. The
 default value is 1.
 
 =head2 C<probability>
@@ -364,7 +364,7 @@ Batch classification proceeds as follows:
           - for each item in the provided training set,
           up to max_training_items
         exclude the item with probability 1 - probability
-        exclude the item if specified via training_data_hook
+        exclude the item if specified via training_item_hook
       classify the item with the given training set
       call end_repeat_hook
     call end_test_hook
@@ -411,7 +411,7 @@ iteration of classification of a test item. It is provided with
 the Batch object instance, the test item, and the iteration number,
 which will vary between 1 and the setting for L</repeat>.
 
-=head2C<training_data_hook>
+=head2C<training_item_hook>
 
   $batch->begin_repeat_hook(sub {
     my ($batch, $test_item, $iteration, $training_item) = @_;
