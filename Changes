@@ -3,11 +3,12 @@ Revision history for AM-Algorithm
 {{$NEXT}}
     Stopped printing to amcpresults and terminal
     Switched to Log::Any
+    Removed format variables and used Text::Table for reports
     Added Algorithm::AM::Result module
     Removed separate support for "short" and "long" outcomes
-    Changed add_test and add_data to accept spec last
-    Required user to input Project objection to AM constructor
-    Removed format variables and changed to Text::Table
+    Replaced Project with DataSet and Item
+        - resulted in complete reorganization of everything
+    Updated/rewrote all documentation
 2.45      2014-02-11 21:27:02 America/Los_Angeles
     Fixed gang/grandtotal calculation bugs
     removed debug print statements!

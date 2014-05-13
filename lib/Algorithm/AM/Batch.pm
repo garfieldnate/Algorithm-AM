@@ -18,11 +18,11 @@ use Class::Tiny qw(
     max_training_items
 
     begin_hook
-    begin_repeat_hook
     begin_test_hook
+    begin_repeat_hook
     training_data_hook
-    end_test_hook
     end_repeat_hook
+    end_test_hook
     end_hook
 ), {
     exclude_nulls     => 1,
@@ -47,11 +47,11 @@ sub BUILD {
     }
     for(qw(
         begin_hook
-        begin_repeat_hook
         begin_test_hook
+        begin_repeat_hook
         training_data_hook
-        end_test_hook
         end_repeat_hook
+        end_test_hook
         end_hook
     )){
         if(exists $args->{$_} and 'CODE' ne ref $args->{$_}){
@@ -60,25 +60,6 @@ sub BUILD {
     }
 }
 
-=head2 C<training_set>
-
-Returns the dataset used for training.
-
-=head2 C<test_set>
-
-Returns the dataset used for testing.
-
-=head2 C<classify_all>
-
-Using the analogical modeling algorithm, this method classifies
-the test items in the project and returns a list of
-L<Result|Algorithm::AM::Result> objects. Information about the current
-progress, configuration and timing is logged at the debug level.
-The statistical summary, analogical set, and gang summary (without
-items listed) are logged at the info level, and the full gang summary
-with items listed is logged at the debug level.
-
-=cut
 sub classify_all {
     my ($self, $test_set) = @_;
 
@@ -116,7 +97,7 @@ sub classify_all {
             my ( $sec, $min, $hour ) = localtime();
             $log->info(
                 sprintf( "Time: %2s:%02s:%02s\n", $hour, $min, $sec) .
-                (join ' ', @{$test_item->features}) . "\n" .
+                $test_item->comment . "\n" .
                 sprintf( "0/$self->{repeat}  %2s:%02s:%02s",
                     $hour, $min, $sec ) );
         }
@@ -141,6 +122,9 @@ sub classify_all {
                 linear => $self->linear,
             );
             my $result = $am->classify($test_item);
+
+            _log_result($result)
+                if($log->is_info);
 
             if($log->is_info){
                 my ( $sec, $min, $hour ) = localtime();
@@ -180,6 +164,22 @@ sub classify_all {
     }
     $self->_set_test_set(undef);
     return @all_results;
+}
+
+# log the summary printouts from the input result object
+sub _log_result {
+    my ($result) = @_;
+
+    $log->info(${$result->statistical_summary});
+
+    $log->info(${$result->analogical_set_summary()});
+
+    if($log->is_debug){
+        $log->debug(${ $result->gang_summary(1) });
+    }elsif($log->is_info){
+        $log->info(${ $result->gang_summary(0) })
+    }
+    return;
 }
 
 # create the training set for this iteration, calling training_data_hook and
@@ -235,13 +235,6 @@ sub _make_training_set {
     return ($training_set, \@excluded_items);
 }
 
-=head2 C<test_set>
-
-Returns the test set currently providing the source of items to
-classify. Before and after classify_all, this returns undef, and so is
-only useful when called inside one of the hook subroutines.
-
-=cut
 sub test_set {
     my ($self) = @_;
     return $self->{test_set};
@@ -256,6 +249,72 @@ sub _set_test_set {
 
 __END__
 
+=head1 C<SYNOPSIS>
+
+  use Algorithm::AM;
+  use Algorithm::AM::Batch;
+  my $dataset = dataset_from_file('finnverb');
+  my $batch = Algorithm::AM::Batch->new(
+    training_set => $dataset,
+    # print the result of each classification as they are provided
+    end_test_hook => sub {
+      my ($batch, $test_item, $result) = @_;
+      print $test_item->comment . ' ' . $result->result . "\n";
+    }
+  );
+  my @results = $batch->classify_all($dataset);
+
+=head1 C<DESCRIPTION>
+
+Batch provides a way to classify entire data sets by repeatedly calling
+L<classify|Algorithm::AM/classify> with the provided configuration.
+Hooks are also provided so that the training set and classification
+parameters can be changed over time. All of the action happens in
+L</classify_all>.
+
+=head2 C<new>
+
+Creates a new object instance. This method takes named parameters
+which call the methods described in the relevant documentation sections.
+The only required parameter is L</training_set>, which should be an
+instance of L<Algorithm::AM::DataSet>, and which provides a pool of
+items to be used for training during classification. All of the
+accepted parameters are listed below:
+
+=over
+
+=item L</training_set>
+
+=item L</repeat>
+
+=item L</probability>
+
+=item L</exclude_nulls>
+
+=item L</exclude_given>
+
+=item L</linear>
+
+=back
+
+=head2 C<training_set>
+
+Returns the dataset used for training.
+
+=head2 C<test_set>
+
+Returns the test set currently providing the source of items to
+L</classify_all>. Before and after classify_all, this returns undef, and
+so is only useful when called from inside one of the hook subroutines.
+
+=head2 C<repeat>
+
+Determines how many times each individual test item will be analyzed.
+As the analogical modeling algorithm is deterministics, it only makes
+sense to use this if the training set is modifed somehow during each
+iteration, i.e. via L</probability> or L</training_data_hook>. The
+default value is 1.
+
 =head2 C<probability>
 
 Get/set the probabibility that any one data item would be included
@@ -264,10 +323,164 @@ default.
 
 =head2 C<exclude_nulls>
 
-Get/set true if features that are unknown in the test item should
-be ignored.
+This is passed directly to the L<new|Algorithm::AM/new> method of
+L<Algorithm::AM> during each classification in the L</classify_all>
+method.
 
 =head2 C<exclude_given>
 
-Get/set true if the test item should be removed from the training set
-if found there.
+This is passed directly to the L<new|Algorithm::AM/new> method of
+L<Algorithm::AM> during each classification in the L</classify_all>
+method.
+
+=head2 C<linear>
+
+This is passed directly to the L<new|Algorithm::AM/new> method of
+L<Algorithm::AM> during each classification in the L</classify_all>
+method.
+
+=head2 C<classify_all>
+
+Using the analogical modeling algorithm, this method classifies
+the test items in the project and returns a list of
+L<Result|Algorithm::AM::Result> objects.
+
+L<Log::Any> is used to log information about the current progress and
+timing. The statistical summary, analogical set, and gang summary
+(without items listed) are logged at the info level, and the full
+gang summary with items listed is logged at the debug level.
+
+Hooks are provided to the user for monitoring or modifying
+classification configuration. These hooks may be passed into the
+object constructor or set via one of the accessor methods.
+Batch classification proceeds as follows:
+
+  call begin_hook
+  loop all test set items
+    call begin_test_hook
+    repeat X times, where X is specified by the "repeat" setting
+      call begin_repeat_hook
+      create a training set;
+          - for each item in the provided training set,
+          up to max_training_items
+        exclude the item with probability 1 - probability
+        exclude the item if specified via training_data_hook
+      classify the item with the given training set
+      call end_repeat_hook
+    call end_test_hook
+  call end_hook
+
+The Batch object itself is passed to these hooks, so the user is free
+to change settings such as L</probability> or L</max_training_items>, or
+even at training data, at any point. Other information is passed to
+these hooks as well, as detailed in the method documentation.
+
+=head2C<begin_hook>
+
+  $batch->begin_hook(sub {
+    my ($batch) = @_;
+    $batch->probability(.5);
+  });
+
+This hook is called first thing in the L</classify_all> method, and is
+given the Batch object instance.
+
+=head2C<begin_test_hook>
+
+  $batch->begin_repeat_hook(sub {
+    my ($batch, $test_item) = @_;
+    $batch->probability(.5);
+    print $test_item->comment . "\n";
+  });
+
+This hook is called by L</classify_all> before any iterations of
+classification start for each test item. It is provided with the Batch
+object instance and the test item.
+
+=head2C<begin_repeat_hook>
+
+  $batch->begin_repeat_hook(sub {
+    my ($batch, $test_item, $iteration) = @_;
+    $batch->probability(.5);
+    print $test_item->comment . "\n";
+    print "I'm on iteration $iteration\n";
+  });
+
+This hook is called during L</classify_all> at the beginning of each
+iteration of classification of a test item. It is provided with
+the Batch object instance, the test item, and the iteration number,
+which will vary between 1 and the setting for L</repeat>.
+
+=head2C<training_data_hook>
+
+  $batch->begin_repeat_hook(sub {
+    my ($batch, $test_item, $iteration, $training_item) = @_;
+    $batch->probability(.5);
+    print $test_item->comment . "\n";
+    print "I'm on iteration $iteration\n";
+    if($training_item->comment eq 'include me!'){
+      return 1;
+    }else{
+      return 0;
+    }
+  });
+
+This hook is called by L</classify_all> while populating a training
+set during each iteration of classification.  It is provided with
+the Batch object instance, the test item, the iteration number, and
+an item which may be included in the training set. If the return value
+is true, then the item will be included in the training set; otherwise,
+it will not.
+
+=head2C<end_repeat_hook>
+
+  $batch->begin_repeat_hook(sub {
+    my ($batch, $test_item, $iteration, $excluded_items, $result) = @_;
+    $batch->probability(.5);
+    print $test_item->comment . "\n";
+    print "I finished iteration $iteration\n";
+    print 'I excluded ' . scalar @$excluded_items .
+      " items from training\n";
+    print ${$result->statistical_summary};
+  });
+
+This hook is called during L</classify_all> at the end of each
+iteration of classification of a test item. It is provided with
+the Batch object instance, the test item, the iteration number, an
+array ref containing training items excluded from the training set, and
+the result object returned by L<classify|Algorithm::AM::Classify>.
+
+=head2C<end_test_hook>
+
+  $batch->begin_repeat_hook(sub {
+    my ($batch, $test_item, @results) = @_;
+    $batch->probability(.5);
+    print $test_item->comment . "\n";
+    my $iterations = @results;
+    my $correct = 0;
+    for my $result (@result){
+      $correct++ if $result->result ne 'incorrect';
+    }
+    print 'Item ' . $item->comment .
+      " correct $correct/$iterations times\n";
+  });
+
+This hook is called by L</classify_all> after all classifications
+of a single item are  finished. It is provided with the Batch
+object instance as well as a list of the
+L<Result|Algorithm::AM::Result> objects returned by
+L<Algorithm::AM::Classify> during each iteration of classification.
+
+=head2C<end_hook>
+
+  $batch->end_hook(sub {
+    my ($batch, @results) = @_;
+    for my $result(@results){
+      print ${$result->statistical_summary};
+    }
+  });
+
+This hook is called after all classifications are finished. It is
+provided with the Batch object instance as well as a list of all of
+the L<Result|Algorithm::AM::Result> objects returned by
+L<Algorithm::AM::Classify>.

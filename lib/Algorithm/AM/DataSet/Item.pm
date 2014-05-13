@@ -20,6 +20,22 @@ use Exporter::Easy (
 # ABSTRACT: A single data item for classification
 # VERSION;
 
+=head1 SYNOPSIS
+
+  use Algorithm::AM::DataSet::Item 'new_item';
+
+  my $item = new_item(
+    features => ['a', 'b', 'c'],
+    class => 'x',
+    comment => 'a sample, meaningless item'
+  );
+
+=head1 DESCRIPTION
+
+This class represents a single item contained in a data set. Each
+item has a feature vector and possibly a class label and comment
+string.
+
 =head2 C<new>
 
 Creates a new Item object. The only required argument is

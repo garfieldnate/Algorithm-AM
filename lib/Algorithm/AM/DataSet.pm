@@ -10,6 +10,24 @@ use Exporter::Easy (
 # ABSTRACT: Manage data used by Algorithm::AM
 # VERSION;
 
+=head1 SYNOPSIS
+
+ use Algorithm::AM::DataSet 'dataset_from_file';
+ use Algorithm::AM::DataSet::Item 'new_item';
+ my $dataset = Algorithm::AM::DataSet->new(cardinality => 10);
+ # or
+ $dataset = dataset_from_file('finnverb');
+ $dataset->add_item(
+   new_item(features => [qw(a b c d e f g h i)]));
+ my $item = $dataset->get_item(2);
+
+=head1 DESCRIPTION
+
+This package contains a list of items that can be used by
+L<Algorithm::AM> or L<Algorithm::AM::Batch> for classification.
+DataSets can be made one item at a time via the L</add_item> method,
+or they can be read from files via the L</dataset_from_file> function.
+
 =head2 C<new>
 
 Creates a new DataSet object. You must provide a C<cardinality> argument
@@ -196,7 +214,7 @@ sub _class_for_index {
     return $self->{class_list}->[$index - 1];
 }
 
-=head2 C<read_data>
+=head2 C<dataset_from_file>
 
 This function may be exported. Given 'path' and 'format' arguments,
 it reads a file containing a dataset and returns a new DataSet object
@@ -204,7 +222,25 @@ with the given data. The 'path' argument should be the path to the
 file. The 'format' argument should be 'commas' or 'nocommas',
 indicating one of the following formats. You may also specify an
 'unknown' argument to indicate the string meant to represent an unknown
-class value. By default this is 'UNK';
+class value. By default this is 'UNK'; traditionally for AM it has been
+'='.
+
+The 'commas' file format is shown below:
+
+ class , f eat u re s , your comment here
+
+The commas separate the class label, feature values, and comments,
+and the whitespace around the commas is optional. Each feature value
+is separated with whitespace.
+
+The 'nocommas' file format is shown below:
+
+ class   features  your comment here
+
+Here the class, feature values, and comments are separated by
+whitespace. Each feature value must be a single character with no
+separating characters, so here the features are f, e, a, t, u, r,
+e, and s.
 
 =cut
 sub dataset_from_file {
@@ -301,3 +337,14 @@ sub _read_data_sub {
 }
 
 1;
+
+__END__
+
+=head1 SEE ALSO
+
+For information on creating data sets, see the appendices in
+the "red book", I<Analogical Modeling: An exemplar-based approach to
+language>. See also the "green book",
+I<Analogical Modeling of Language>, for an explanation of the method
+in general, and the "blue book", I<Analogy and Structure>, for its
+mathematical basis.
