@@ -7,7 +7,6 @@ use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 use Class::Tiny qw(
-    training_set
     exclude_nulls
     exclude_given
     linear
@@ -20,14 +19,15 @@ use Class::Tiny qw(
 sub BUILD {
     my ($self, $args) = @_;
 
-    if(!exists $args->{'training_set'}){
+    if(!exists $args->{training_set}){
         croak "Missing required parameter 'training_set'";
     }
-    if('Algorithm::AM::DataSet' ne ref $args->{'training_set'}){
+    if('Algorithm::AM::DataSet' ne ref $args->{training_set}){
         croak 'Parameter training_set should ' .
             'be an Algorithm::AM::DataSet';
     }
-    $self->_initialize();
+    $self->_initialize($args->{training_set});
+    delete $args->{training_set};
     return;
 }
 
@@ -302,6 +302,13 @@ sub _context_label {
     return $context;
 }
 
+# don't use Class::Tiny for this one because we don't want a
+# setter method
+sub training_set {
+    my ($self) = @_;
+    return $self->{training_set};
+}
+
 1;
 __END__
 
@@ -371,8 +378,8 @@ are listed below:
 
 =head2 C<training_set>
 
-Get (not set) the dataset used for training. This is an instance
-of L<Algorithm::AM::DataSet>.
+Returns (but will not set) the dataset used for training. This is
+an instance of L<Algorithm::AM::DataSet>.
 
 =head2 C<exclude_nulls>
 

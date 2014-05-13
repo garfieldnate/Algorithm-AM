@@ -4,8 +4,6 @@ Document which values are big ints when returned from Result.
 
 Explain linear/quadratic in algorithm.pod
 
-Make training_set not settable via method in AM.pm
-
 Rename result->result when you can think of something better.
 
 Add method to remove Item from a DataSet.
