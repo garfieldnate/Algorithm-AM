@@ -574,7 +574,7 @@ sub _make_table {
 1;
 
 __END__
-=head1 Configuration Information
+=head1 CONFIGURATION INFORMATION
 
 The following methods provide information about the configuration
 of AM at the time of classification.
@@ -611,6 +611,22 @@ Returns the L<item|Algorithm::AM::DataSet::Item> which was classified.
 Returns either "linear" or "squared", indicating the setting used
 for computing analogical sets. See L<Algorithm::AM/linear>.
 
+=head2 C<training_data>
+
+Returns the L<data set|Algorithm::AM::DataSet> which was the
+source of classification data.
+
+=head1 CLASSIFICATION INFORMATION
+
+The following methods provide information about the results of
+the classification.
+
+=head2 C<result>
+
+If the class of the test item was known before classification, this
+returns "tie", "correct", or "incorrect", depending on the outcome of
+the classification. Otherwise this returns C<undef>.
+
 =head2 C<start_time>
 
 Returns the start time of the classification.
@@ -618,11 +634,6 @@ Returns the start time of the classification.
 =head2 C<end_time>
 
 Returns the end time of the classification.
-
-=head2 C<training_data>
-
-Returns the L<data set|Algorithm::AM::DataSet> which was the
-source of classification data.
 
 =head2 C<high_score>
 
@@ -637,13 +648,6 @@ score.
 =head2 C<is_tie>
 
 Returns true if more than one class was assigned the high score.
-
-=head2 C<result>
-
-If the class of the test item was known before classification, this
-returns "tie", "correct", or "incorrect", depending on the outcome of
-the classification. Otherwise this returns C<undef>.
-
 =head2 C<scores>
 
 Returns a hash mapping all predicted classes to their scores.
