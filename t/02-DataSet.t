@@ -144,10 +144,10 @@ sub test_dataset_from_file {
     } qr/Couldn't read data at line 2 in .*bad_data_line/,
     'fail with malformed data file';
 
-    subtest 'data set with default unknown labels' => sub {
+    subtest 'data set with default unknown/null labels' => sub {
         plan tests => 3;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'no_labels_unk.txt'),
+            path => path($data_dir, 'no_labels_default.txt'),
             format => 'commas'
         );
         is($dataset->size, 2, 'size');
@@ -157,12 +157,13 @@ sub test_dataset_from_file {
             'third feature is unknown')
     };
 
-    subtest 'data set with = unknown labels' => sub {
+    subtest 'data set with custom unknown/null labels' => sub {
         plan tests => 3;
         my $dataset = dataset_from_file(
-            path => path($data_dir, 'no_labels_eq.txt'),
+            path => path($data_dir, 'no_labels_custom.txt'),
             format => 'commas',
-            unknown => '='
+            unknown => '?',
+            null => 'NUL',
         );
         is($dataset->size, 2, 'size');
         my $item = $dataset->get_item(0);

@@ -1,8 +1,5 @@
 Algorithm::AM
 
-change 'null' to 'unknown' everywhere.
-Rename exclude_nulls to exclude_unknowns
-
 Import other stuff when batch is imported?
 
 Rename training_data_hook to training_item_hook.

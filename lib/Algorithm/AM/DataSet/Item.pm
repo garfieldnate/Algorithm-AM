@@ -46,7 +46,7 @@ arguments are also accepted, where 'class' is the classification
 label and 'comment' can be any string to be associated with the item.
 A missing or undefined 'class' value is assumed to mean that the item
 classification is unknown. For the feature vector, empty strings are
-taken to indicate unknown values.
+taken to indicate null values.
 
 =cut
 sub BUILD {
@@ -81,7 +81,8 @@ is unknown.
 
 Returns the feature vector for this item. This is an arrayref
 containing the string value for each feature. An empty string
-indicates that the feature value is unknown.
+indicates that the feature value is null (meaning that it has
+no value).
 
 =head2 C<comment>
 

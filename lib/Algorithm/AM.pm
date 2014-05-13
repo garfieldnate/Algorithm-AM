@@ -286,7 +286,7 @@ sub _context_label {
         # assign 0 if variables match, 1 if they do not
         for ( ; $a ; --$a ) {
 
-            # skip unknown variables if indicated
+            # skip null variables if indicated
             if($skip_nulls){
                 ++$index while $test_feats->[$index] eq '';
             }
@@ -376,9 +376,10 @@ of L<Algorithm::AM::DataSet>.
 
 =head2 C<exclude_nulls>
 
-Get/set a boolean value indicating whether features with unknown
+Get/set a boolean value indicating whether features with null
 values in the test item should be ignored. If false, they will be
-treated as having the specific value of 'unknown'. Defaults to true.
+treated as having a specific value representing null.
+Defaults to true.
 
 =head2 C<exclude_given>
 

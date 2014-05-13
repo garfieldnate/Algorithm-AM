@@ -220,10 +220,10 @@ This function may be exported. Given 'path' and 'format' arguments,
 it reads a file containing a dataset and returns a new DataSet object
 with the given data. The 'path' argument should be the path to the
 file. The 'format' argument should be 'commas' or 'nocommas',
-indicating one of the following formats. You may also specify an
-'unknown' argument to indicate the string meant to represent an unknown
-class value. By default this is 'UNK'; traditionally for AM it has been
-'='.
+indicating one of the following formats. You may also specify 'unknown'
+and 'null' arguments to indicate the strings meant to represent an
+unknown class value and null feature values. By default these are
+'UNK' and '='.
 
 The 'commas' file format is shown below:
 
@@ -246,6 +246,7 @@ e, and s.
 sub dataset_from_file {
     my (%opts) = (
         unknown => 'UNK',
+        null => '=',
         @_
     );
 
@@ -254,8 +255,8 @@ sub dataset_from_file {
     croak q[Failed to provide 'format' parameter]
         unless exists $opts{format};
 
-    my ($path, $format, $unknown) = (
-        path($opts{path}), $opts{format}, $opts{unknown});
+    my ($path, $format, $unknown, $null) = (
+        path($opts{path}), @opts{'format', 'unknown', 'null'});
 
     croak "Could not find file $path"
         unless $path->exists;
@@ -281,7 +282,7 @@ sub dataset_from_file {
     }
 
     my $reader = _read_data_sub(
-        $path, $unknown, $field_sep, $feature_sep);
+        $path, $unknown, $null, $field_sep, $feature_sep);
     my $item = $reader->();
     if(!$item){
         croak "No data found in file $path";
@@ -300,7 +301,8 @@ sub dataset_from_file {
 # Input is file (Path::Tiny), string representing unknown class,
 # field separator (class, features, comment) and feature separator
 sub _read_data_sub {
-    my ($data_file, $unknown, $field_sep, $feature_sep) = @_;
+    my ($data_file, $unknown, $null,
+        $field_sep, $feature_sep) = @_;
     my $data_fh = $data_file->openr_utf8;
     my $line_num = 0;
     return sub {
@@ -327,7 +329,7 @@ sub _read_data_sub {
 
         my @data_vars = split /$feature_sep/, $feats;
         # set unknown variables to ''
-        @data_vars = map {$_ eq $unknown ? '' : $_} @data_vars;
+        @data_vars = map {$_ eq $null ? '' : $_} @data_vars;
 
         return Algorithm::AM::DataSet::Item->new(
             features=> \@data_vars,

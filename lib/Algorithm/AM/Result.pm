@@ -589,7 +589,7 @@ classification.
 =head2 C<cardinality>
 
 The number of features used during classification. If there
-were unknown feature values and L</exclude_nulls> was set to true,
+were null feature values and L</exclude_nulls> was set to true,
 then this number will be lower than the cardinality of the utilized
 data sets.
 
