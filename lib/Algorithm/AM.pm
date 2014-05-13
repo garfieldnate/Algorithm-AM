@@ -201,7 +201,7 @@ sub classify {
     # info.
     my $result = Algorithm::AM::Result->new(
         given_excluded => $given_excluded,
-        num_variables => $num_variables,
+        cardinality => $num_variables,
         exclude_nulls => $self->exclude_nulls,
         count_method => $self->linear ? 'linear' : 'squared',
         training_set => $training_set,

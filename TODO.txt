@@ -1,6 +1,7 @@
 Algorithm::AM
 
-change variables to features in Result
+change 'null' to 'unknown' everywhere.
+Rename exclude_nulls to exclude_unknowns
 
 Import other stuff when batch is imported?
 
@@ -9,8 +10,6 @@ Rename training_data_hook to training_item_hook.
 Explain linear/quadratic in algorithm.pod
 
 Make training_set not settable via method in AM.pm
-
-Rename exclude_nulls to exclude_unknowns
 
 Rename result->result when you can think of something better.
 

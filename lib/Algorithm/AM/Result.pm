@@ -39,7 +39,7 @@ explanation of this, see L<Algorithm::AM::algorithm>.
 use Class::Tiny qw(
     exclude_nulls
     given_excluded
-    num_variables
+    cardinality
     test_in_data
     test_item
     probability
@@ -72,7 +72,7 @@ following accessors is included:
 
     exclude_nulls
     given_excluded
-    num_variables
+    cardinality
     test_in_data
     test_item
     probability
@@ -92,7 +92,7 @@ sub config_info {
         # [ "Total excluded items", scalar @{$self->excluded_data} +
         #     ($self->{given_excluded} ? 1 : 0)],
         [ "Number of data items", $self->training_set->size ],
-        [ "Number of active variables", $self->{num_variables} ],
+        [ "Number of active variables", $self->{cardinality} ],
         (defined $self->{probability} ?
             [ "Data Inclusion Probability", $self->{probability} ] :
             ()
@@ -339,7 +339,7 @@ sub gang_summary {
     #   Score
     #   Num
     #   Outcome
-    #   Data variables
+    #   Features
     #   (if $print_list is true) Data comment
     my @rows;
     # first row is a header with test item for easy reference
@@ -586,9 +586,9 @@ Set to the value given by the same method of
 L<Algorithm::AM|Algorithm::AM/exclude_nulls> at the time of
 classification.
 
-=head2 C<num_variables>
+=head2 C<cardinality>
 
-The number of variables used in the classification data. If there
+The number of features used during classification. If there
 were unknown feature values and L</exclude_nulls> was set to true,
 then this number will be lower than the cardinality of the utilized
 data sets.

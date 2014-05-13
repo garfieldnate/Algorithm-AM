@@ -34,7 +34,7 @@ sub test_config_info {
         my $result = Algorithm::AM::Result->new(
             test_item => $item,
             given_excluded => 1,
-            num_variables => 3,
+            cardinality => 3,
             exclude_nulls => 1,
             count_method => 'linear',
             # datacap => 50,
@@ -59,7 +59,7 @@ END_INFO
             'given/nulls excluded, linear, item in data') or note $info;
         $result = Algorithm::AM::Result->new(
             given_excluded => 0,
-            num_variables => 3,
+            cardinality => 3,
             test_item => $item,
             exclude_nulls => 0,
             probability => .5,
