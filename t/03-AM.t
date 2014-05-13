@@ -4,7 +4,6 @@
 use strict;
 use warnings;
 use Algorithm::AM;
-use Algorithm::AM::Batch;
 use Test::More 0.88;
 plan tests => 14;
 use Test::NoWarnings;

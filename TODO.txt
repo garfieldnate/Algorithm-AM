@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Import other stuff when batch is imported?
+Document which values are big ints when returned from Result.
 
 Explain linear/quadratic in algorithm.pod
 

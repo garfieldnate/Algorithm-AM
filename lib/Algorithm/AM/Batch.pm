@@ -6,7 +6,6 @@ use warnings;
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM::Batch);
-use Algorithm::AM;
 use Class::Tiny qw(
     training_set
 
@@ -31,6 +30,20 @@ use Class::Tiny qw(
     probability => 1,
     repeat      => 1,
 };
+
+use Algorithm::AM;
+use Algorithm::AM::Result;
+use Algorithm::AM::BigInt 'bigcmp';
+use Algorithm::AM::DataSet;
+use Import::Into;
+# Use Import::Into to export classes into caller
+sub import {
+    my $target = caller;
+    Algorithm::AM::BigInt->import::into($target, 'bigcmp');
+    Algorithm::AM::DataSet->import::into($target, 'dataset_from_file');
+    Algorithm::AM::DataSet::Item->import::into($target, 'new_item');
+    return;
+}
 
 use Log::Any qw($log);
 
@@ -271,6 +284,30 @@ L<classify|Algorithm::AM/classify> with the provided configuration.
 Hooks are also provided so that the training set and classification
 parameters can be changed over time. All of the action happens in
 L</classify_all>.
+
+=head1 EXPORTS
+
+When this module is imported, it also imports the following:
+
+=over
+
+=item L<Algorithm::AM>
+
+=item L<Algorithm::AM::Result>
+
+=item L<Algorithm::AM::DataSet>
+
+Also imports the L<Algorithm::AM::DataSet/dataset_from_file> function.
+
+=item L<Algorithm::AM::DataSet::Item>
+
+Also imports the L<Algorithm::AM::DataSet::Item/new_item> function.
+
+=item L<Algorithm::AM::BigInt>
+
+Also imports the L<Algorithm::AM::BigInt/bigcmp> function.
+
+=back
 
 =head2 C<new>
 
