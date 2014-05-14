@@ -171,7 +171,7 @@ typedef struct AM_guts {
   /* array ref containing class labels for whole data set;
    * array index is data item index in data set.
    */
-  SV **outcome;
+  SV **classes;
   /* ??? */
   SV **itemcontextchain;
   /* ??? */
@@ -360,7 +360,7 @@ _xs_initialize(...)
   project = (HV *) SvRV(ST(0));
   /* For explanations on these, see the comments on AM_guts */
   guts.activeVar = AvARRAY((AV *) SvRV(ST(1)));
-  guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
+  guts.classes = AvARRAY((AV *) SvRV(ST(2)));
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
   guts.context_to_class = (HV *) SvRV(ST(5));
@@ -407,8 +407,8 @@ _fillandcount(...)
   AM_SHORT nptr[4];/* this helps us manage the free list in sptr[i] */
   AM_SHORT subcontextnumber;
   AM_SHORT *subcontext;
-  AM_SHORT *suboutcome;
-  SV **outcome, **itemcontextchain, **sum;
+  AM_SHORT *subcontext_class;
+  SV **classes, **itemcontextchain, **sum;
   HV *itemcontextchainhead, *context_to_class, *contextsize, *pointers, *gang;
   IV num_classes;
   HE *he;
@@ -455,7 +455,7 @@ _fillandcount(...)
    *
    * The index into the array is called subcontextnumber.
    *
-   * The array of matching classes is called suboutcome.
+   * The array of matching classes is called subcontext_class.
    *
    */
 
@@ -463,8 +463,8 @@ _fillandcount(...)
   subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
   Newz(0, subcontext, 4 * (subcontextnumber + 1), AM_SHORT);
   subcontext += 4 * subcontextnumber;
-  Newz(0, suboutcome, subcontextnumber + 1, AM_SHORT);
-  suboutcome += subcontextnumber;
+  Newz(0, subcontext_class, subcontextnumber + 1, AM_SHORT);
+  subcontext_class += subcontextnumber;
   Newz(0, intersectlist, subcontextnumber + 1, AM_SHORT);
   Newz(0, intersectlist2, subcontextnumber + 1, AM_SHORT);
   ilist2top = intersectlist2 + subcontextnumber;
@@ -474,7 +474,7 @@ _fillandcount(...)
   hv_iterinit(context_to_class);
   while (he = hv_iternext(context_to_class)) {
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
-    AM_SHORT outcome = (AM_SHORT) SvUVX(HeVAL(he));
+    AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < 4; ++chunk, ++contextptr) {
       AM_SHORT active = activeVar[chunk];
       AM_SHORT *lattice = lptr[chunk];
@@ -663,8 +663,8 @@ _fillandcount(...)
       nptr[chunk] = nextsupra;
     }
     subcontext -= 4;
-    *suboutcome = outcome;
-    --suboutcome;
+    *subcontext_class = class;
+    --subcontext_class;
     --subcontextnumber;
   }
 
@@ -693,7 +693,7 @@ _fillandcount(...)
   if (linear_flag) {
     /* squared */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT outcome;
+    AM_SHORT class;
     AM_SHORT length;
     unsigned short *temp, *i, *j, *k;
 
@@ -744,7 +744,7 @@ _fillandcount(...)
 	  *k = 0;
 
 	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
-	    outcome = 0;
+	    class = 0;
 	    length = 0;
 	    intersect = intersectlist;
 
@@ -764,15 +764,15 @@ _fillandcount(...)
 	      ++length;
 
          /* determine heterogeneity */
-	      if (outcome == 0) {
+	      if (class == 0) {
 		if (length > 1) {
 		  length = 0;
 		  break;
 		} else {
-		  outcome = suboutcome[*i];
+		  class = subcontext_class[*i];
 		}
 	      } else {
-		if (outcome != suboutcome[*i]) {
+		if (class != subcontext_class[*i]) {
 		  length = 0;
 		  break;
 		}
@@ -885,7 +885,7 @@ _fillandcount(...)
   {
     /* linear */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT outcome;
+    AM_SHORT class;
     AM_SHORT length;
     unsigned short *temp, *i, *j, *k;
 
@@ -936,7 +936,7 @@ _fillandcount(...)
 	  *k = 0;
 
 	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
-	    outcome = 0;
+	    class = 0;
 	    length = 0;
 	    intersect = intersectlist;
 
@@ -956,15 +956,15 @@ _fillandcount(...)
 	      ++length;
 
          /* determine heterogeneity */
-	      if (outcome == 0) {
+	      if (class == 0) {
 		if (length > 1) {
 		  length = 0;
 		  break;
 		} else {
-		  outcome = suboutcome[*i];
+		  class = subcontext_class[*i];
 		}
 	      } else {
-		if (outcome != suboutcome[*i]) {
+		if (class != subcontext_class[*i]) {
 		  length = 0;
 		  break;
 		}
@@ -1048,7 +1048,7 @@ _fillandcount(...)
    */
 
   gang = guts->gang;
-  outcome = guts->outcome;
+  classes = guts->classes;
   itemcontextchain = guts->itemcontextchain;
   itemcontextchainhead = guts->itemcontextchainhead;
   sum = guts->sum;
@@ -1111,7 +1111,7 @@ _fillandcount(...)
       dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
       while (SvIOK(dataitem)) {
       	IV datanum = SvIVX(dataitem);
-      	IV ocnum = SvIVX(outcome[datanum]);
+      	IV ocnum = SvIVX(classes[datanum]);
       	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
       	for (i = 0; i < 7; ++i) {
       	  *(s + i) += p[i];
@@ -1128,7 +1128,7 @@ _fillandcount(...)
   normalize(tempsv);
 
   Safefree(subcontext);
-  Safefree(suboutcome);
+  Safefree(subcontext_class);
   Safefree(intersectlist);
   Safefree(intersectlist2);
   Safefree(intersectlist3);
