@@ -1,6 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+
+3.00      2014-05-14 12:02:05 Asia/Seoul
     Stopped printing to amcpresults and terminal
     Switched to Log::Any
     Removed format variables and used Text::Table for reports
