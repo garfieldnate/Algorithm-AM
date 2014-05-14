@@ -177,7 +177,7 @@ typedef struct AM_guts {
   /* ??? */
   HV *itemcontextchainhead;
   /* Maps subcontext binary labels to outcome indices */
-  HV *context_to_outcome;
+  HV *context_to_class;
   /* Maps binary context labels to the number of exemplars contained
    * in that subcontext
    */
@@ -202,7 +202,7 @@ typedef struct AM_guts {
    * contains the total number of possible outcomes;
    * used for computing gang effects.
    */
-  IV numoutcomes;
+  IV num_classes;
 } AM_GUTS;
 
 /*
@@ -363,12 +363,12 @@ _xs_initialize(...)
   guts.outcome = AvARRAY((AV *) SvRV(ST(2)));
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
-  guts.context_to_outcome = (HV *) SvRV(ST(5));
+  guts.context_to_class = (HV *) SvRV(ST(5));
   guts.contextsize = (HV *) SvRV(ST(6));
   guts.pointers = (HV *) SvRV(ST(7));
   guts.gang = (HV *) SvRV(ST(8));
   guts.sum = AvARRAY((AV *) SvRV(ST(9)));
-  guts.numoutcomes = av_len((AV *) SvRV(ST(9)));
+  guts.num_classes = av_len((AV *) SvRV(ST(9)));
 
   /*
    * Since the sublattices are small, we just take a chunk of memory
@@ -409,8 +409,8 @@ _fillandcount(...)
   AM_SHORT *subcontext;
   AM_SHORT *suboutcome;
   SV **outcome, **itemcontextchain, **sum;
-  HV *itemcontextchainhead, *context_to_outcome, *contextsize, *pointers, *gang;
-  IV numoutcomes;
+  HV *itemcontextchainhead, *context_to_class, *contextsize, *pointers, *gang;
+  IV num_classes;
   HE *he;
   AM_BIG_INT grandtotal = {0, 0, 0, 0, 0, 0, 0, 0};
   SV *tempsv;
@@ -459,8 +459,8 @@ _fillandcount(...)
    *
    */
 
-  context_to_outcome = guts->context_to_outcome;
-  subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_outcome);
+  context_to_class = guts->context_to_class;
+  subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
   Newz(0, subcontext, 4 * (subcontextnumber + 1), AM_SHORT);
   subcontext += 4 * subcontextnumber;
   Newz(0, suboutcome, subcontextnumber + 1, AM_SHORT);
@@ -471,8 +471,8 @@ _fillandcount(...)
   Newz(0, intersectlist3, subcontextnumber + 1, AM_SHORT);
   ilist3top = intersectlist3 + subcontextnumber;
 
-  hv_iterinit(context_to_outcome);
-  while (he = hv_iternext(context_to_outcome)) {
+  hv_iterinit(context_to_class);
+  while (he = hv_iternext(context_to_class)) {
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
     AM_SHORT outcome = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < 4; ++chunk, ++contextptr) {
@@ -1052,14 +1052,14 @@ _fillandcount(...)
   itemcontextchain = guts->itemcontextchain;
   itemcontextchainhead = guts->itemcontextchainhead;
   sum = guts->sum;
-  numoutcomes = guts->numoutcomes;
+  num_classes = guts->num_classes;
   hv_iterinit(pointers);
   while (he = hv_iternext(pointers)) {
     AM_LONG count;
     AM_SHORT counthi, countlo;
     AM_BIG_INT p;
     AM_BIG_INT gangcount;
-    AM_SHORT thisoutcome;
+    AM_SHORT this_class;
     SV *dataitem;
     Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
 
@@ -1099,10 +1099,10 @@ _fillandcount(...)
     normalize(tempsv);
     normalize(HeVAL(he));
 
-    tempsv = *hv_fetch(context_to_outcome, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
-    thisoutcome = (AM_SHORT) SvUVX(tempsv);
-    if (thisoutcome) {
-      AM_LONG *s = (AM_LONG *) SvPVX(sum[thisoutcome]);
+    tempsv = *hv_fetch(context_to_class, HeKEY(he), 4 * sizeof(AM_SHORT), 0);
+    this_class = (AM_SHORT) SvUVX(tempsv);
+    if (this_class) {
+      AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
       for (i = 0; i < 7; ++i) {
       	*(s + i) += gangcount[i];
         carry_pointer(s + i);
@@ -1121,7 +1121,7 @@ _fillandcount(...)
       }
     }
   }
-  for (i = 1; i <= numoutcomes; ++i) normalize(sum[i]);
+  for (i = 1; i <= num_classes; ++i) normalize(sum[i]);
   tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
   SvUPGRADE(tempsv, SVt_PVNV);
   sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
