@@ -168,7 +168,7 @@ typedef struct AM_guts {
    * each lattice (currently we us four lattices)
    */
   SV **activeVar;
-  /* array ref containing "short" outcomes for whole data set;
+  /* array ref containing class labels for whole data set;
    * array index is data item index in data set.
    */
   SV **outcome;
@@ -176,16 +176,16 @@ typedef struct AM_guts {
   SV **itemcontextchain;
   /* ??? */
   HV *itemcontextchainhead;
-  /* Maps subcontext binary labels to outcome indices */
+  /* Maps subcontext binary labels to class indices */
   HV *context_to_class;
   /* Maps binary context labels to the number of exemplars contained
    * in that subcontext
    */
   HV *contextsize;
   /* Maps binary context labels to the number of pointers to each,
-   * or to the number of pointers to each outcome if heterogenous.
-   * The key 'grandtotal' maps to the total number
-   * of pointers. */
+   * or to the number of pointers to class label if heterogenous.
+   * The key 'grandtotal' maps to the total number of pointers.
+   */
   HV *pointers;
   /* Maps binary context labels to the size of the gang effect of
    * that context. A gang effect is the number of pointers in
@@ -193,13 +193,13 @@ typedef struct AM_guts {
    * in the context.
    */
   HV *gang;
-  /* number of pointers to each outcome;
-   * keys are outcome indices and values are numbers
+  /* number of pointers to each class label;
+   * keys are class indices and values are numbers
    * of pointers (AM_BIG_INT).
    */
   SV **sum;
   /*
-   * contains the total number of possible outcomes;
+   * contains the total number of possible class labels;
    * used for computing gang effects.
    */
   IV num_classes;
@@ -455,7 +455,7 @@ _fillandcount(...)
    *
    * The index into the array is called subcontextnumber.
    *
-   * The array of matching outcomes is called suboutcome.
+   * The array of matching classes is called suboutcome.
    *
    */
 
