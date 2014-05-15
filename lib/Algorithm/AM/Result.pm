@@ -228,11 +228,14 @@ sub statistical_summary {
 
 =head2 C<analogical_set>
 
-Returns the analogical set in the form of a hash ref mapping exemplar
-indices to score contributed by the item towards a classification
-matching its own class label. Further information about each
-exemplar can be retrieved from the project object using
-C<get_exemplar_(data|spec|outcome)> methods.
+Returns the analogical set in the form of a hash ref containing
+its items and the scores contributed by each towards a classification
+matching its own class label. The hash structure is like so:
+
+ { 'item_id' => {'item' => item, 'score' => score}
+
+where C<item> is the actual item object. The item_id is used so that
+the analogical effect of a particular item can be found quickly.
 
 =cut
 sub analogical_set {
@@ -264,11 +267,12 @@ sub analogical_set_summary {
     # exemplar with its outcome, spec, score, and the percentage
     # of total score contributed.
     my @rows;
-    foreach my $data_index (sort keys %$set){
-        my $score = $set->{$data_index};
+    foreach my $id (sort keys %$set){
+        my $entry = $set->{$id};
+        my $score = $entry->{score};
         push @rows, [
-            $train->get_item($data_index)->class,
-            $train->get_item($data_index)->comment,
+            $entry->{item}->class,
+            $entry->{item}->comment,
             $score,
             sprintf($percentage_format, 100 * $score / $total_pointers)
         ];
@@ -283,17 +287,22 @@ sub analogical_set_summary {
 # calculate and store analogical effects in $self->{_analogical_set}
 sub _calculate_analogical_set {
     my ($self) = @_;
+    my $train = $self->training_set;
     my %set;
     foreach my $context ( keys %{$self->{pointers}} ) {
         next unless
             exists $self->{itemcontextchainhead}->{$context};
         for (
-            my $data_index = $self->{itemcontextchainhead}->{$context};
-            defined $data_index;
-            $data_index = $self->{itemcontextchain}->[$data_index]
+            my $index = $self->{itemcontextchainhead}->{$context};
+            defined $index;
+            $index = $self->{itemcontextchain}->[$index]
         )
         {
-            $set{$data_index} = $self->{pointers}->{$context};
+            my $item = $train->get_item($index);
+            $set{$item->id} = {
+                item => $item,
+                score => $self->{pointers}->{$context}
+            };
         }
     }
     $self->{_analogical_set} = \%set;

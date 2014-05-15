@@ -198,8 +198,54 @@ sub test_analogical_set {
         plan tests => 5;
         my $set = $result->analogical_set();
 
-        is_deeply($set, {0 => 4, 2 => 2, 3 => 3, 4 => 4},
-            'data indices and pointer values') or note explain $set;
+        cmp_deeply([values %$set],
+          # use bag() and values so we can ignore the keys, which
+          # are id strings that might change
+          bag({
+            'item' => all(
+              isa('Algorithm::AM::DataSet::Item'),
+              methods(
+                features => [qw(3 1 0)],
+                class => 'e',
+                comment => 'myFirstCommentHere'
+              )
+            ),
+            'score' => '4'
+          },
+          {
+            'item' => all(
+              isa('Algorithm::AM::DataSet::Item'),
+              methods(
+                features => [qw(0 3 2)],
+                class => 'r',
+                comment => 'myThirdCommentHere'
+              )
+            ),
+            'score' => '2'
+          },
+          {
+            'item' => all(
+              isa('Algorithm::AM::DataSet::Item'),
+              methods(
+                features => [qw(2 1 2)],
+                class => 'r',
+                comment => 'myFourthCommentHere'
+              )
+            ),
+            'score' => '3'
+          },
+          {
+            'item' => all(
+              isa('Algorithm::AM::DataSet::Item'),
+              methods(
+                features => [qw(3 1 1)],
+                class => 'r',
+                comment => 'myFifthCommentHere'
+              )
+            ),
+            'score' => '4'
+          }),
+          'data indices and pointer values') or note explain $set;
         # now confirm that the referenced data really are what we think
         is($train->get_item(0)->comment, 'myFirstCommentHere',
             'confirm first item')
