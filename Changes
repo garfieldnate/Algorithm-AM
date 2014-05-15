@@ -1,6 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+
+3.01      2014-05-15 21:18:29 Asia/Seoul
     Gang and analogical set structures changed to contain Item objects
     Unique id field added to Item
     analogical set structure changed to index on Item id for easy searching
