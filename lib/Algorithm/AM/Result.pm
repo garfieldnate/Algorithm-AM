@@ -260,7 +260,6 @@ set.
 sub analogical_set_summary {
     my ($self) = @_;
     my $set = $self->analogical_set;
-    my $train = $self->training_set;
     my $total_pointers = $self->total_points;
 
     # Make a table for the analogical set. Each row contains an

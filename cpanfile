@@ -8,7 +8,7 @@ requires "Text::Table" => "0";
 requires "XSLoader" => "0";
 requires "feature" => "0";
 requires "integer" => "0";
-requires "perl" => "5.014";
+requires "perl" => "5.010";
 requires "strict" => "0";
 requires "warnings" => "0";
 
@@ -16,6 +16,7 @@ on 'test' => sub {
   requires "File::Find" => "0";
   requires "File::Temp" => "0";
   requires "FindBin" => "0";
+  requires "Test::Deep" => "0";
   requires "Test::Exception" => "0";
   requires "Test::LongString" => "0";
   requires "Test::More" => "0.88";

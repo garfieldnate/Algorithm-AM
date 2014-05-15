@@ -4,7 +4,7 @@ Algorithm::AM - Classify data with Analogical Modeling
 
 # VERSION
 
-version 3.00
+version 3.01
 
 # SYNOPSIS
 
