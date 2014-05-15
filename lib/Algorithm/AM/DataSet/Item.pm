@@ -6,6 +6,11 @@ our @CARP_NOT = qw(Algorithm::AM::DataSet);
 use Exporter::Easy (
     OK => ['new_item']
 );
+
+# use to assign unique ids to new items; not meant to be secure
+# or anything, just unique.
+my $current_id = 'a';
+
 # ABSTRACT: A single data item for classification
 # VERSION;
 
@@ -54,6 +59,8 @@ sub new {
     if(my $extra_keys = join ',', sort keys %args){
         croak "Unknown parameters: $extra_keys";
     }
+    $self->{id} = $current_id;
+    $current_id++;
     bless $self, $class;
     return $self;
 }
@@ -120,4 +127,16 @@ sub cardinality {
     my ($self) = @_;
     return scalar @{$self->features};
 }
+
+=head2 C<id>
+
+Returns a unique string id for this item, for use as a hash key or
+similar situations.
+
+=cut
+sub id {
+    my ($self) = @_;
+    return $self->{id};
+}
+
 1;
