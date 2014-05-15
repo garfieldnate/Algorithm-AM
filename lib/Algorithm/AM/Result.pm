@@ -355,8 +355,7 @@ sub gang_summary {
     my $current_row = -1;
     # add information for each gang; sort by order of highest to
     # lowest effect
-    foreach my $gang (
-            sort {bigcmp($b->{score}, $a->{score})} values %$gangs){
+    foreach my $gang (sort _sort_gangs values %$gangs){
         $current_row++;
         $gang_rows[$current_row]++;
         my $variables = $gang->{vars};
@@ -371,7 +370,7 @@ sub gang_summary {
         ];
         # add each outcome in the gang, along with the total number
         # and effect of the gang items supporting it
-        for my $outcome (keys %{ $gang->{outcome} }){
+        for my $outcome (sort keys %{ $gang->{outcome} }){
             $gang_rows[$current_row]++;
             push @rows, [
                 sprintf($percentage_format,
@@ -436,6 +435,15 @@ sub gang_summary {
     }
     $return .= $table->rule(@rule);
     return \$return;
+}
+
+# for sorting gangs during report printing;
+# sort first by score and then by class labels
+sub _sort_gangs {## no critic (RequireArgUnpacking)
+    return bigcmp($b->{score}, $a->{score}) ||
+        (join '', sort keys %{ $b->{outcome} })
+        cmp
+        (join '', sort keys %{ $a->{outcome} });
 }
 
 sub _calculate_gangs {
