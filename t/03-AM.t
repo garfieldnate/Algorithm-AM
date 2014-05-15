@@ -8,6 +8,7 @@ use Test::More 0.88;
 plan tests => 14;
 use Test::NoWarnings;
 use Test::Exception;
+use Test::Deep;
 use t::TestAM qw(chapter_3_train chapter_3_test);
 
 use FindBin qw($Bin);
@@ -218,56 +219,56 @@ sub test_analogical_set {
 
 sub test_gang_effects {
     my ($result) = @_;
-    my $expected_effects = {
-      '- - 2' => {
-        'data' => {'r' => [2]},
-        'effect' => '0.153846153846154',
-        'homogenous' => 'r',
-        'outcome' => {
-          'r' => {
-            'effect' => '0.153846153846154',
-            'score' => '2'
-          }
-        },
-        'score' => 2,
-        'size' => 1,
-        'vars' => ['','','2']
-      },
-      '- 1 2' => {
-        'data' => {'r' => [3]},
-        'effect' => '0.230769230769231',
-        'homogenous' => 'r',
-        'outcome' => {
-          'r' => {
-            'effect' => '0.230769230769231',
-            'score' => '3'
-          }
-        },
-        'score' => 3,
-        'size' => 1,
-        'vars' => ['','1','2']
-      },
-      '3 1 -' => {
-        'data' => {'e' => [0], 'r' => [4]},
-        'effect' => '0.615384615384615',
-        'homogenous' => 0,
-        'outcome' => {
-          'e' => {
-            'effect' => '0.307692307692308',
-            'score' => 4
+    cmp_deeply($result->gang_effects,
+        {
+          '- - 2' => {
+            'data' => {'r' => [2]},
+            'effect' => num(.1538, 0.001),
+            'homogenous' => 'r',
+            'outcome' => {
+              'r' => {
+                'effect' => num(0.1538, 0.001),
+                'score' => '2'
+              }
+            },
+            'score' => 2,
+            'size' => 1,
+            'vars' => ['','','2']
           },
-          'r' => {
-            'effect' => '0.307692307692308',
-            'score' => 4
+          '- 1 2' => {
+            'data' => {'r' => [3]},
+            'effect' => num(0.2307, 0.001),
+            'homogenous' => 'r',
+            'outcome' => {
+              'r' => {
+                'effect' => num(0.2307, 0.001),
+                'score' => '3'
+              }
+            },
+            'score' => 3,
+            'size' => 1,
+            'vars' => ['','1','2']
+          },
+          '3 1 -' => {
+            'data' => {'e' => [0], 'r' => [4]},
+            'effect' => num(0.6154, 0.001),
+            'homogenous' => 0,
+            'outcome' => {
+              'e' => {
+                'effect' => num(0.3077, 0.001),
+                'score' => 4
+              },
+              'r' => {
+                'effect' => num(0.3077, 0.001),
+                'score' => 4
+              }
+            },
+            'score' => 8,
+            'size' => 2,
+            'vars' => ['3','1', '']
           }
         },
-        'score' => 8,
-        'size' => 2,
-        'vars' => ['3','1', '']
-      }
-    };
-    is_deeply($result->gang_effects, $expected_effects,
-        'correct reported gang effects') or
+    'correct reported gang effects') or
         note explain $result->gang_effects;
 
     return;

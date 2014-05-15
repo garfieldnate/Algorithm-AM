@@ -1,5 +1,9 @@
 Algorithm::AM
 
+Put actual data in gangs instead of just indices
+
+Check/document how one must be careful about changing data items after it has already been included in a result or somewhere else.
+
 Several setters in Result should be private: score, high_score, etc.
 
 Bug reports: OverridePkgVersion doesn't work with numerical versions, RequireArgUnpacking doesn't work with hash assignment.
