@@ -166,7 +166,7 @@ END_STATS
         # remove the class label and test printing for unlabeled item
         my $item = new_item(
             features => [qw(3 1 2)],
-            comment => 'test item spec'
+            comment => 'test item comment'
         );
         $result = $am->classify($item);
         $stats = ${$result->statistical_summary};
@@ -276,7 +276,7 @@ sub test_undefined_result {
     my ($am) = @_;
     my $item = new_item(
         features => [qw(3 1 2)],
-        comment => 'test item spec'
+        comment => 'test item comment'
     );
     my $result = $am->classify($item);
     is($result->result, undef, 'result is undef for unlabeled item');

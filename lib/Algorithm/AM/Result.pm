@@ -263,7 +263,7 @@ sub analogical_set_summary {
     my $total_pointers = $self->total_points;
 
     # Make a table for the analogical set. Each row contains an
-    # item with its class, spec, score, and the percentage
+    # item with its class, comment, score, and the percentage
     # of total score contributed.
     my @rows;
     foreach my $id (sort keys %$set){

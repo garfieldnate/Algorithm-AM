@@ -145,7 +145,7 @@ sub test_beginning_vars {
 
 # Check variables provided before each test
 # There are two items, 312 and 313, marked with
-# different specs and class labels. Check each one.
+# different comments and class labels. Check each one.
 sub test_item_vars {
 	my ($batch, $test_item) = @_;
 
@@ -157,15 +157,15 @@ sub test_item_vars {
 		like(
 			$test_item->comment,
 			qr/second test item$/,
-			'test spec'
+			'test comment'
 		);
 		is_deeply($test_item->features, [3,1,3], 'test variables')
 			or note explain $test_item->features;
 	}else{
 		like(
 			$test_item->comment,
-			qr/test item spec$/,
-			'test spec'
+			qr/test item comment$/,
+			'test comment'
 		);
 		is_deeply($test_item->features, [3,1,2], 'test variables')
 			or note explain $test_item->features;

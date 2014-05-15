@@ -193,7 +193,7 @@ sub test_private_data {
         "empty data set has empty classes");
 
     my @data = chapter_3_data();
-    # get rid of one of the specs to test that it is filled in
+    # get rid of one of the comments to test that it is filled in
     $data[1][2] = '';
     for my $datum(@data){
         $dataset->add_item(

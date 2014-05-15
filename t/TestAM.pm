@@ -31,7 +31,7 @@ sub chapter_3_test {
     $test->add_item(
         features => [qw(3 1 2)],
         class => 'r',
-        comment => 'test item spec'
+        comment => 'test item comment'
     );
     return $test;
 }
@@ -42,7 +42,7 @@ sub chapter_3_project {
     for my $datum(chapter_3_data()){
         $project->add_data(@$datum);
     }
-    $project->add_test([qw(3 1 2)], 'r', 'test item spec');
+    $project->add_test([qw(3 1 2)], 'r', 'test item comment');
     return $project;
 }
 
