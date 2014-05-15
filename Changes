@@ -2,6 +2,8 @@ Revision history for AM-Algorithm
 
 {{$NEXT}}
     Gang and analogical set structures changed to contain Item objects
+    Unique id field added to Item
+    analogical set structure changed to index on Item id for easy searching
 3.00      2014-05-14 12:02:05 Asia/Seoul
     Stopped printing to amcpresults and terminal
     Switched to Log::Any
