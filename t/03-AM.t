@@ -224,10 +224,13 @@ sub test_gang_effects {
           '- - 2' => {
             'data' => {
               'r' => [
-                new_item(
-                  features => [qw(0 3 2)],
-                  class => 'r',
-                  comment => 'myThirdCommentHere'
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(0 3 2)],
+                    class => 'r',
+                    comment => 'myThirdCommentHere'
+                  )
                 )
               ]
             },
@@ -246,10 +249,13 @@ sub test_gang_effects {
           '- 1 2' => {
             'data' => {
               'r' => [
-                new_item(
-                  features => [qw(2 1 2)],
-                  class => 'r',
-                  comment => 'myFourthCommentHere'
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(2 1 2)],
+                    class => 'r',
+                    comment => 'myFourthCommentHere'
+                  )
                 )
               ]
             },
@@ -268,17 +274,23 @@ sub test_gang_effects {
           '3 1 -' => {
             'data' => {
               'r' => [
-                new_item(
-                  features => [qw(3 1 1)],
-                  class => 'r',
-                  comment => 'myFifthCommentHere'
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(3 1 1)],
+                    class => 'r',
+                    comment => 'myFifthCommentHere'
+                  )
                 )
               ],
               'e' => [
-                new_item(
-                  features => [qw(3 1 0)],
-                  class => 'e',
-                  comment => 'myFirstCommentHere'
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(3 1 0)],
+                    class => 'e',
+                    comment => 'myFirstCommentHere'
+                  )
                 )
               ]
             },
