@@ -382,15 +382,15 @@ sub gang_summary {
             ];
             if($print_list){
                 # add the list of items in the given context
-                for my $data_index (@{ $gang->{data}->{$outcome} }){
+                for my $item (@{ $gang->{data}->{$outcome} }){
                     $gang_rows[$current_row]++;
                     push @rows, [
                         undef,
                         undef,
                         undef,
                         undef,
-                        @{ $train->get_item($data_index)->features },
-                        $train->get_item($data_index)->comment,
+                        @{ $item->features },
+                        $item->comment,
                     ];
                 }
             }
@@ -471,12 +471,12 @@ sub _calculate_gangs {
             $gangs->{$key}->{homogenous} = $outcome;
             my @data;
             for (
-                my $i = $self->{itemcontextchainhead}->{$context};
-                defined $i;
-                $i = $self->{itemcontextchain}->[$i]
+                my $index = $self->{itemcontextchainhead}->{$context};
+                defined $index;
+                $index = $self->{itemcontextchain}->[$index]
               )
             {
-                push @data, $i;
+                push @data, $train->get_item($index);
             }
             $gangs->{$key}->{data}->{$outcome} = \@data;
             $gangs->{$key}->{size} = scalar @data;
@@ -493,12 +493,13 @@ sub _calculate_gangs {
             my $size = 0;
             my %data;
             for (
-                my $i = $self->{itemcontextchainhead}->{$context};
-                defined $i;
-                $i = $self->{itemcontextchain}->[$i]
+                my $index = $self->{itemcontextchainhead}->{$context};
+                defined $index;
+                $index = $self->{itemcontextchain}->[$index]
               )
             {
-                push @{ $data{$train->get_item($i)->class} }, $i;
+                my $item = $train->get_item($index);
+                push @{ $data{$item->class} }, $item;
                 $size++;
             }
             $gangs->{$key}->{data} = \%data;

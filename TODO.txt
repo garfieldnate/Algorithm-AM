@@ -1,6 +1,6 @@
 Algorithm::AM
 
-Put actual data in gangs instead of just indices
+Put actual data in analogical sets instead of just indices
 
 Check/document how one must be careful about changing data items after it has already been included in a result or somewhere else.
 

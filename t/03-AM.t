@@ -222,7 +222,15 @@ sub test_gang_effects {
     cmp_deeply($result->gang_effects,
         {
           '- - 2' => {
-            'data' => {'r' => [2]},
+            'data' => {
+              'r' => [
+                new_item(
+                  features => [qw(0 3 2)],
+                  class => 'r',
+                  comment => 'myThirdCommentHere'
+                )
+              ]
+            },
             'effect' => num(.1538, 0.001),
             'homogenous' => 'r',
             'outcome' => {
@@ -236,7 +244,15 @@ sub test_gang_effects {
             'vars' => ['','','2']
           },
           '- 1 2' => {
-            'data' => {'r' => [3]},
+            'data' => {
+              'r' => [
+                new_item(
+                  features => [qw(2 1 2)],
+                  class => 'r',
+                  comment => 'myFourthCommentHere'
+                )
+              ]
+            },
             'effect' => num(0.2307, 0.001),
             'homogenous' => 'r',
             'outcome' => {
@@ -250,7 +266,22 @@ sub test_gang_effects {
             'vars' => ['','1','2']
           },
           '3 1 -' => {
-            'data' => {'e' => [0], 'r' => [4]},
+            'data' => {
+              'r' => [
+                new_item(
+                  features => [qw(3 1 1)],
+                  class => 'r',
+                  comment => 'myFifthCommentHere'
+                )
+              ],
+              'e' => [
+                new_item(
+                  features => [qw(3 1 0)],
+                  class => 'e',
+                  comment => 'myFirstCommentHere'
+                )
+              ]
+            },
             'effect' => num(0.6154, 0.001),
             'homogenous' => 0,
             'outcome' => {
