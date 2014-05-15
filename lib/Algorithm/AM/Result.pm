@@ -356,7 +356,7 @@ sub gang_summary {
     # add information for each gang; sort by order of highest to
     # lowest effect
     foreach my $gang (
-            sort {bigcmp($b->{score}, $a->{score})} values $gangs){
+            sort {bigcmp($b->{score}, $a->{score})} values %$gangs){
         $current_row++;
         $gang_rows[$current_row]++;
         my $variables = $gang->{vars};
