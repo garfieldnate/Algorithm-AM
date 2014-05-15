@@ -229,8 +229,8 @@ sub statistical_summary {
 =head2 C<analogical_set>
 
 Returns the analogical set in the form of a hash ref mapping exemplar
-indices to score contributed by the item towards
-the final classification outcome. Further information about each
+indices to score contributed by the item towards a classification
+matching its own class label. Further information about each
 exemplar can be retrieved from the project object using
 C<get_exemplar_(data|spec|outcome)> methods.
 
