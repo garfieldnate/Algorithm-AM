@@ -162,7 +162,7 @@ sub test_given {
     $train->add_item(
         features => [qw(3 1 2)],
         class => 'r',
-        comment => 'same as the test exemplar'
+        comment => 'same as the test item'
     );
     my $am = Algorithm::AM->new(
         training_set => $train,

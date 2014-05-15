@@ -178,8 +178,8 @@ typedef struct AM_guts {
   HV *itemcontextchainhead;
   /* Maps subcontext binary labels to class indices */
   HV *context_to_class;
-  /* Maps binary context labels to the number of exemplars contained
-   * in that subcontext
+  /* Maps binary context labels to the number of training items
+   * contained in that subcontext
    */
   HV *contextsize;
   /* Maps binary context labels to the number of pointers to each,
@@ -189,8 +189,8 @@ typedef struct AM_guts {
   HV *pointers;
   /* Maps binary context labels to the size of the gang effect of
    * that context. A gang effect is the number of pointers in
-   * the given context multiplied by the number exemplars contained
-   * in the context.
+   * the given context multiplied by the number training items
+   * contained in the context.
    */
   HV *gang;
   /* number of pointers to each class label;

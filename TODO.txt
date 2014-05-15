@@ -48,9 +48,10 @@ Instead of passing around the "activeVars" variable and skipping nulls if needed
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
     - class (X)
+    - exemplar (X)
     - data ()
-    - exemplar ()
     - spec ()
+    - variables ()
 
 do something better than just calling rand() for the probability/skip function.
 

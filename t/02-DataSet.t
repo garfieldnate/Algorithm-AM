@@ -48,7 +48,7 @@ sub test_constructor {
 sub test_data {
     # first check empty DataSet
     my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
-    is($dataset->size, 0, 'new data set has 0 exemplars');
+    is($dataset->size, 0, 'new data set has 0 items');
     is($dataset->num_classes, 0, 'new data set has 0 classes');
 
     $dataset->add_item(

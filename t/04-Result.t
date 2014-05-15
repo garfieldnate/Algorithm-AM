@@ -197,7 +197,7 @@ sub test_aset_summary {
 Analogical Set
 Total Frequency = 13
 +-------+---------------------+-------+------------+
-| Class | Exemplar            | Score | Percentage |
+| Class | Item                | Score | Percentage |
 +-------+---------------------+-------+------------+
 | e     | myFirstCommentHere  | 4     |  30.769%   |
 | r     | myThirdCommentHere  | 2     |  15.385%   |

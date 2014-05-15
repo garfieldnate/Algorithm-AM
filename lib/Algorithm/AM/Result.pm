@@ -263,7 +263,7 @@ sub analogical_set_summary {
     my $total_pointers = $self->total_points;
 
     # Make a table for the analogical set. Each row contains an
-    # exemplar with its class, spec, score, and the percentage
+    # item with its class, spec, score, and the percentage
     # of total score contributed.
     my @rows;
     foreach my $id (sort keys %$set){
@@ -277,7 +277,7 @@ sub analogical_set_summary {
         ];
     }
     my @table = _make_table(
-        ['Class', 'Exemplar', 'Score', 'Percentage'], \@rows);
+        ['Class', 'Item', 'Score', 'Percentage'], \@rows);
     my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
     $info .= join '', @table;
     return \$info;

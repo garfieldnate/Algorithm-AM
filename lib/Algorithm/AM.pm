@@ -270,7 +270,7 @@ sub _compute_lattice_sizes {
 sub _context_label {
     # inputs:
     # number of active variables in each lattice,
-    # exemplar (data) variables, item variables,
+    # training item features, test item features,
     # and boolean indicating if nulls should be excluded
     my ($active_vars, $train_feats, $test_feats, $skip_nulls) = @_;
 
