@@ -47,6 +47,10 @@ Add other bigint helper methods into BigInt and test them, as well.
 Instead of passing around the "activeVars" variable and skipping nulls if needed, it might make more sense to create an array containing all of the active indices, i.e. [0,1,2,4,6,7] if 3 and 5 are null and exclude nulls is on. This would make it easier to simplify things via `map` or whatever.
 
 Scrub the code for consistent naming. "Data" should be given, or training, or exemplar. Everything is data, so why call anything "data"?
+    - class (X)
+    - data ()
+    - exemplar ()
+    - spec ()
 
 do something better than just calling rand() for the probability/skip function.
 

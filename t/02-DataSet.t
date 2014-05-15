@@ -49,7 +49,7 @@ sub test_data {
     # first check empty DataSet
     my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
     is($dataset->size, 0, 'new data set has 0 exemplars');
-    is($dataset->num_classes, 0, 'new data set has 0 outcomes');
+    is($dataset->num_classes, 0, 'new data set has 0 classes');
 
     $dataset->add_item(
         features => ['a','b','c'],
@@ -58,14 +58,14 @@ sub test_data {
     );
     is($dataset->size, 1,
         'add_item adds 1 item to data set');
-    is($dataset->num_classes, 1, 'data set has 1 outcome');
+    is($dataset->num_classes, 1, 'data set has 1 class');
 
     $dataset->add_item(
         features => ['a','b','d'],
         class => 'c',
         comment => 'stuff'
     );
-    is($dataset->num_classes, 2, 'data set has 2 outcomes');
+    is($dataset->num_classes, 2, 'data set has 2 classes');
 
     is($dataset->get_item(1)->comment, 'stuff', 'get_item');
 
@@ -190,7 +190,7 @@ sub test_dataset_from_file {
 sub test_private_data {
     my $dataset = Algorithm::AM::DataSet->new(cardinality => 3);
     is_deeply($dataset->_data_classes, [],
-        "empty data set has empty outcomes");
+        "empty data set has empty classes");
 
     my @data = chapter_3_data();
     # get rid of one of the specs to test that it is filled in

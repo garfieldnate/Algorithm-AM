@@ -93,7 +93,7 @@ sub test_quadratic_classification {
         is($result->count_method, 'squared',
             'counting configured to quadratic');
         is_deeply($result->scores, {'e' => 4, 'r' => 9},
-            'outcome scores') or
+            'class scores') or
             note explain $result->scores;
     };
     return;
@@ -112,7 +112,7 @@ sub test_linear_classification {
             or note $result->total_points;;
         is($result->count_method, 'linear',
             'counting configured to quadratic');
-        is_deeply($result->scores, {'e' => 2, 'r' => 5}, 'outcome scores')
+        is_deeply($result->scores, {'e' => 2, 'r' => 5}, 'class scores')
             or note explain $result->scores;
     };
     return;
@@ -138,7 +138,7 @@ sub test_nulls {
             or note $result->total_points;
         ok($result->exclude_nulls, 'exclude nulls is true');
         is_deeply($result->scores, {'e' => 3, 'r' => 7},
-            'outcome scores')
+            'class scores')
             or note explain $result->scores;
     };
 
@@ -149,7 +149,7 @@ sub test_nulls {
         is($result->total_points, 5, 'total pointers')
             or note $result->total_points;
         ok(!$result->exclude_nulls, 'exclude nulls is false');
-        is_deeply($result->scores, {'r' => 5}, 'outcome scores')
+        is_deeply($result->scores, {'r' => 5}, 'class scores')
             or note explain $result->scores;
     };
 
@@ -175,7 +175,7 @@ sub test_given {
         is($result->total_points, 13, 'total pointers')
             or note $result->total_points;
         ok($result->given_excluded, 'given item was excluded');
-        is_deeply($result->scores, {'e' => 4, 'r' => 9}, 'outcome scores')
+        is_deeply($result->scores, {'e' => 4, 'r' => 9}, 'class scores')
             or note explain $result->scores;
     };
 
@@ -186,7 +186,7 @@ sub test_given {
         is($result->total_points, 15, 'total pointers')
             or note $result->total_points;
         ok(!$result->given_excluded, 'given was not excluded');
-        is_deeply($result->scores, {'r' => 15}, 'outcome scores')
+        is_deeply($result->scores, {'r' => 15}, 'class scores')
             or note explain $result->scores;
     };
     return;
@@ -282,7 +282,7 @@ sub test_gang_effects {
             },
             'effect' => num(.1538, 0.001),
             'homogenous' => 'r',
-            'outcome' => {
+            'class' => {
               'r' => {
                 'effect' => num(0.1538, 0.001),
                 'score' => '2'
@@ -307,7 +307,7 @@ sub test_gang_effects {
             },
             'effect' => num(0.2307, 0.001),
             'homogenous' => 'r',
-            'outcome' => {
+            'class' => {
               'r' => {
                 'effect' => num(0.2307, 0.001),
                 'score' => '3'
@@ -342,7 +342,7 @@ sub test_gang_effects {
             },
             'effect' => num(0.6154, 0.001),
             'homogenous' => 0,
-            'outcome' => {
+            'class' => {
               'e' => {
                 'effect' => num(0.3077, 0.001),
                 'score' => 4

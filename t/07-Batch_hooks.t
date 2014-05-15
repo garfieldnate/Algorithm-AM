@@ -145,14 +145,14 @@ sub test_beginning_vars {
 
 # Check variables provided before each test
 # There are two items, 312 and 313, marked with
-# different specs and outcomes. Check each one.
+# different specs and class labels. Check each one.
 sub test_item_vars {
 	my ($batch, $test_item) = @_;
 
 	isa_ok($test_item, 'Algorithm::AM::DataSet::Item');
 
 	ok($test_item->class eq 'r' || $test_item->class eq 'e',
-		'test outcome');
+		'test class');
 	if($test_item->class eq 'e'){
 		like(
 			$test_item->comment,
@@ -195,10 +195,10 @@ sub test_end_iter_vars {
 
 	if($test_item->class eq 'e'){
 		is_deeply($result->scores, {e => '4', r => '4'},
-			'outcome scores');
+			'class scores');
 	}else{
 		is_deeply($result->scores, {e => '4', r => '9'},
-			'outcomes scores');
+			'classes scores');
 	}
 	is_deeply($excluded_items, [], 'no items excluded');
 	return;
