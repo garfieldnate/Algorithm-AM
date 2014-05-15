@@ -164,8 +164,10 @@ END_STATS
         }
 
         # remove the class label and test printing for unlabeled item
-        my $item = chapter_3_test()->get_item(0);
-        $item->class(undef);
+        my $item = new_item(
+            features => [qw(3 1 2)],
+            comment => 'test item spec'
+        );
         $result = $am->classify($item);
         $stats = ${$result->statistical_summary};
         $expected = <<'END_STATS';
@@ -272,8 +274,10 @@ END_GANG
 # unlabeled item
 sub test_undefined_result {
     my ($am) = @_;
-    my $item = chapter_3_test()->get_item(0);
-    $item->class(undef);
+    my $item = new_item(
+        features => [qw(3 1 2)],
+        comment => 'test item spec'
+    );
     my $result = $am->classify($item);
     is($result->result, undef, 'result is undef for unlabeled item');
 }

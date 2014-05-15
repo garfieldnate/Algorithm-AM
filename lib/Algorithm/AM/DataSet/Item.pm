@@ -3,17 +3,6 @@ use strict;
 use warnings;
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM::DataSet);
-use Class::Tiny qw(
-    features
-    class
-    comment
-), {
-    comment => sub {
-        # by default, the comment is just the data in a string, with
-        # empty strings for unknown values
-        join ',', @{ $_[0]->{features} }
-    },
-};
 use Exporter::Easy (
     OK => ['new_item']
 );
@@ -34,11 +23,9 @@ use Exporter::Easy (
 
 This class represents a single item contained in a data set. Each
 item has a feature vector and possibly a class label and comment
-string.
+string. Once created, the item is immutable.
 
 =head1 METHODS
-
-=for Pod::Coverage BUILD
 
 =head2 C<new>
 
@@ -53,13 +40,22 @@ classification is unknown. For the feature vector, empty strings are
 taken to indicate null values.
 
 =cut
-sub BUILD {
-    my ($self, $args) = @_;
-    if(!exists $args->{features} ||
-        'ARRAY' ne ref $args->{features}){
+sub new {
+    my ($class, %args) = @_;
+    if(!exists $args{features} ||
+        'ARRAY' ne ref $args{features}){
         croak q[Must provide 'features' parameter of type array ref];
     }
-    return;
+    my $self = {};
+    for(qw(features class comment)){
+        $self->{$_} = $args{$_};
+        delete $args{$_};
+    }
+    if(my $extra_keys = join ',', sort keys %args){
+        croak "Unknown parameters: $extra_keys";
+    }
+    bless $self, $class;
+    return $self;
 }
 
 =head2 C<new_item>
@@ -81,6 +77,12 @@ sub new_item {
 Returns the classification label for this item, or undef if the class
 is unknown.
 
+=cut
+sub class {
+    my ($self) = @_;
+    return $self->{class};
+}
+
 =head2 C<features>
 
 Returns the feature vector for this item. This is an arrayref
@@ -88,9 +90,26 @@ containing the string value for each feature. An empty string
 indicates that the feature value is null (meaning that it has
 no value).
 
+=cut
+sub features {
+    my ($self) = @_;
+    # make a safe copy
+    return [@{ $self->{features} }];
+}
+
 =head2 C<comment>
 
-Returns the comment for this item.
+Returns the comment for this item. By default, the comment is
+just a comma-separated list of the feature values.
+
+=cut
+sub comment {
+    my ($self) = @_;
+    if(!defined $self->{comment}){
+        $self->{comment} = join ',', @{ $self->{features} };
+    }
+    return $self->{comment};
+}
 
 =head2 C<cardinality>
 

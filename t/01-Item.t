@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 11;
+plan tests => 12;
 use Test::NoWarnings;
 use Test::Exception;
 use Algorithm::AM::DataSet::Item 'new_item';
@@ -16,13 +16,22 @@ sub test_constructor {
     # not from DataSet (tests that @CARP_NOT is working properly).
     throws_ok {
         Algorithm::AM::DataSet::Item->new();
-    } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
+    } qr/Must provide 'features' parameter of type array ref.*Item.t/,
     'constructor dies with missing features parameter';
 
     throws_ok {
         Algorithm::AM::DataSet::Item->new(features => 'hello');
-    } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
+    } qr/Must provide 'features' parameter of type array ref.*Item.t/,
     'constructor dies with incorrect features parameter';
+
+    throws_ok {
+        Algorithm::AM::DataSet::Item->new(
+            features => ['a'],
+            foo => 'baz',
+            bar => 'qux'
+        );
+    } qr/Unknown parameters: bar,foo.*Item.t/,
+    'constructor dies with unknown parameters';
 
     my $item = Algorithm::AM::DataSet::Item->new(features => ['a','b']);
     isa_ok($item, 'Algorithm::AM::DataSet::Item');

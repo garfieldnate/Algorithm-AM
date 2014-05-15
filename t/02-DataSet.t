@@ -82,7 +82,7 @@ sub test_data {
     # not from DataSet (tests that @CARP_NOT is working cardinalityperly).
     throws_ok {
         $dataset->add_item();
-    } qr/Must provide 'features' parameter of type array ref.*Tiny.pm/,
+    } qr/Must provide 'features' parameter of type array ref.*DataSet.t/,
     'add_item fails with missing features parameter';
     return;
 }

@@ -1,7 +1,7 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    Gang and analogical set structures changed to contain Item objects
 3.00      2014-05-14 12:02:05 Asia/Seoul
     Stopped printing to amcpresults and terminal
     Switched to Log::Any
