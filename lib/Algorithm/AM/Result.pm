@@ -336,7 +336,6 @@ meaning gang items items are printed. This is false (off) by default.
 =cut
 sub gang_summary {
     my ($self, $print_list) = @_;
-    my $train = $self->training_set;
     my $test_item = $self->test_item;
 
     my $gangs = $self->gang_effects;
