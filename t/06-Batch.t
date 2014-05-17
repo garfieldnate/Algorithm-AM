@@ -70,41 +70,41 @@ sub test_input_checking {
 sub test_accessors {
     subtest 'Constructor saves data sets' => sub {
         plan tests => 4;
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
             test_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
         );
-        isa_ok($am->training_set, 'Algorithm::AM::DataSet',
+        isa_ok($batch->training_set, 'Algorithm::AM::DataSet',
             'training_set returns correct object type');
-        isa_ok($am->test_set, 'Algorithm::AM::DataSet',
+        isa_ok($batch->test_set, 'Algorithm::AM::DataSet',
             'test_set returns correct object type');
 
-        is($am->training_set->cardinality, 3,
+        is($batch->training_set->cardinality, 3,
             'training set saved');
-        is($am->test_set->cardinality, 3,
+        is($batch->test_set->cardinality, 3,
             'test set saved');
     };
 
     subtest 'default configuration' => sub {
         plan tests => 5;
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
             test_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
         );
-        ok($am->exclude_nulls, 'exclude nulls by default');
-        ok($am->exclude_given, 'exclude given by default');
-        ok(!$am->linear, 'pointer counting is quadratic by default');
-        is($am->probability, 1, 'probability is 1 by default');
-        is($am->repeat, 1, 'repeat is 1 by default');
+        ok($batch->exclude_nulls, 'exclude nulls by default');
+        ok($batch->exclude_given, 'exclude given by default');
+        ok(!$batch->linear, 'pointer counting is quadratic by default');
+        is($batch->probability, 1, 'probability is 1 by default');
+        is($batch->repeat, 1, 'repeat is 1 by default');
     };
 
     subtest 'configuration via constructor' => sub {
         plan tests => 5;
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
             test_set => Algorithm::AM::DataSet->new(
@@ -115,31 +115,31 @@ sub test_accessors {
             probability => .5,
             repeat => 2
         );
-        ok(!$am->exclude_nulls, 'exclude nulls turned off');
-        ok(!$am->exclude_given, 'exclude given turned off');
-        ok($am->linear, 'pointer counting set to linear');
-        is($am->probability, .5, 'probability set to .5');
-        is($am->repeat, 2, 'repeat set to 2');
+        ok(!$batch->exclude_nulls, 'exclude nulls turned off');
+        ok(!$batch->exclude_given, 'exclude given turned off');
+        ok($batch->linear, 'pointer counting set to linear');
+        is($batch->probability, .5, 'probability set to .5');
+        is($batch->repeat, 2, 'repeat set to 2');
     };
 
     subtest 'configuration via accessors' => sub {
         plan tests => 5;
-        my $am = Algorithm::AM::Batch->new(
+        my $batch = Algorithm::AM::Batch->new(
             training_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
             test_set => Algorithm::AM::DataSet->new(
                 cardinality => 3),
         );
-        $am->exclude_nulls(0);
-        $am->exclude_given(0);
-        $am->linear(1);
-        $am->probability(.5);
-        $am->repeat(2);
-        ok(!$am->exclude_nulls, 'exclude nulls turned off');
-        ok(!$am->exclude_given, 'exclude given turned off');
-        ok($am->linear, 'pointer counting set to linear');
-        is($am->probability, .5, 'probability set to .5');
-        is($am->repeat, 2, 'repeat set to 2');
+        $batch->exclude_nulls(0);
+        $batch->exclude_given(0);
+        $batch->linear(1);
+        $batch->probability(.5);
+        $batch->repeat(2);
+        ok(!$batch->exclude_nulls, 'exclude nulls turned off');
+        ok(!$batch->exclude_given, 'exclude given turned off');
+        ok($batch->linear, 'pointer counting set to linear');
+        is($batch->probability, .5, 'probability set to .5');
+        is($batch->repeat, 2, 'repeat set to 2');
     };
     return;
 }

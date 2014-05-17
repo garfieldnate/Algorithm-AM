@@ -14,12 +14,10 @@ use Path::Tiny;
 my $finnverb_data = dataset_from_file(
     path => path($Bin, 'data', 'finnverb.txt'),
     format => 'nocommas',
-    unknown => '='
 );
 my $count = 0;
 my $batch = Algorithm::AM::Batch->new(
     training_set => $finnverb_data,
-    exclude_given => 1,
     end_test_hook => sub {
         my ($am, $test_item, $result) = @_;
         ++$count if $result->result ne 'incorrect';

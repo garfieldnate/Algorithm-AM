@@ -166,7 +166,6 @@ sub test_given {
     );
     my $am = Algorithm::AM->new(
         training_set => $train,
-        exclude_given => 1
     );
 
     subtest 'exclude given' => sub {

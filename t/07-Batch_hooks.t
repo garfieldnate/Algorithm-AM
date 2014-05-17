@@ -60,7 +60,6 @@ $test->add_item(
 my $batch = Algorithm::AM::Batch->new(
 	training_set => $train,
 	repeat => 2,
-	probability => 1,
 	max_training_items => 10,
 	begin_hook => make_hook(
 		'begin_hook',

@@ -37,7 +37,6 @@ sub test_config_info {
             cardinality => 3,
             exclude_nulls => 1,
             count_method => 'linear',
-            # datacap => 50,
             test_in_data => 1,
             training_set => $train
         );
@@ -63,7 +62,6 @@ END_INFO
             test_item => $item,
             exclude_nulls => 0,
             count_method => 'squared',
-            # datacap => 40,
             test_in_data => 0,
             training_set => $train,
         );
