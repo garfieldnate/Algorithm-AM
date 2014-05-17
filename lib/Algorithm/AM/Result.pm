@@ -86,14 +86,12 @@ sub config_info {
     my @rows = (
         [ "Given context", (join ' ', @{$self->test_item->features}) .
             ', ' . $self->test_item->comment],
-        [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
-        [ "Gang",  $self->{count_method}],
-        [ "Test item in training set", ($self->{test_in_train} ? 'yes' : 'no')],
-        [ "Test item excluded", ($self->{given_excluded} ? 'yes' : 'no')],
-        # [ "Total excluded items", scalar @{$self->excluded_data} +
-        #     ($self->{given_excluded} ? 1 : 0)],
+        [ "Nulls", ($self->exclude_nulls ? 'exclude' : 'include')],
+        [ "Gang",  $self->count_method],
+        [ "Test item in training set", ($self->test_in_train ? 'yes' : 'no')],
+        [ "Test item excluded", ($self->given_excluded ? 'yes' : 'no')],
         [ "Size of training set", $self->training_set->size ],
-        [ "Number of active variables", $self->{cardinality} ],
+        [ "Number of active variables", $self->cardinality ],
     );
     my @table = _make_table(\@headers, \@rows);
     my $info = join '', @table;
@@ -531,14 +529,15 @@ sub _calculate_gangs {
 # wich have ('a' 'b' whatever) as variable values.
 sub _unpack_supracontext {
     my ($self, $context) = @_;
-    my (@variables) = @{ $self->test_item->features };
     my @context_list   = unpack "S!4", $context;
     my @alist   = @{$self->{active_vars}};
+    my (@variables) = @{ $self->test_item->features };
+    my $exclude_nulls = $self->exclude_nulls;
     my $j       = 1;
     foreach my $a (reverse @alist) {
         my $partial_context = pop @context_list;
         for ( ; $a ; --$a ) {
-            if($self->{exclude_nulls}){
+            if($exclude_nulls){
                 ++$j while !defined $variables[ -$j ];
             }
             $variables[ -$j ] = '' if $partial_context & 1;
