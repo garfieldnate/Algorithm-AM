@@ -2,7 +2,7 @@ package Algorithm::AM;
 use strict;
 use warnings;
 # ABSTRACT: Classify data with Analogical Modeling
-our $VERSION = '2.45'; # VERSION
+our $VERSION = '3.02'; # VERSION
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
@@ -55,9 +55,11 @@ sub _initialize {
     my ($self) = @_;
 
     my $train = $self->training_set;
-    # compute active_feats here so that lattice space can be allocated in the
-    # _initialize method
-    $self->{active_feats} = _compute_lattice_sizes($train->cardinality);
+    # compute sub-lattices sizes here so that lattice space can be
+    # allocated in the _xs_initialize method. If certain features are
+    # thrown out later, each sub-lattice can only get smaller, so
+    # this is safe to do once here.
+    my $lattice_sizes = _compute_lattice_sizes($train->cardinality);
 
     # sum is intitialized to a list of zeros
     @{$self->{sum}} = (0.0) x ($train->num_classes + 1);
@@ -81,7 +83,7 @@ sub _initialize {
     # must not be increasing the reference count
     $self->{save_this} = $train->_data_classes;
     $self->_xs_initialize(
-        $self->{active_feats},
+        $lattice_sizes,
         $self->{save_this},
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
@@ -115,19 +117,8 @@ sub classify {
             $test_item->features };
     }
 
-    # recalculate the lattice sizes with new number of active features;
-    # must edit active_feats instead of assigning it a new arrayref because
-    # the XS code only has the existing arrayref and will not be given
-    # a new one. This must be done for every test item because active_feats
-    # is a global that could have been edited during classification of the
-    # last test item.
-    # TODO: pass active_feats into fill_and_count instead of doing this
-    {
-        my $lattice_sizes = _compute_lattice_sizes($num_feats);
-        for(0 .. $#$lattice_sizes){
-            $self->{active_feats}->[$_] = $lattice_sizes->[$_];
-        }
-    }
+    # recalculate the lattice sizes with new number of active features
+    my $lattice_sizes = _compute_lattice_sizes($num_feats);
 ##  $activeContexts = 1 << $activeVar;
 
     my $nullcontext = pack "b64", '0' x 64;
@@ -159,7 +150,7 @@ sub classify {
         my $context = _context_label(
             # Note: this must be copied to prevent infinite loop;
             # see todo note for _context_label
-            [@{$self->{active_feats}}],
+            [@{$lattice_sizes}],
             $training_set->get_item($index)->features,
             $test_item->features,
             $self->exclude_nulls
@@ -210,7 +201,8 @@ sub classify {
         if($log->is_debug);
 
     $result->start_time([ (localtime)[0..2] ]);
-    $self->_fillandcount($self->linear ? 0 : 1);
+    $self->_fillandcount(
+        $lattice_sizes, $self->linear ? 0 : 1);
     $result->end_time([ (localtime)[0..2] ]);
 
     unless ($self->{pointers}->{'grandtotal'}) {
@@ -231,7 +223,7 @@ sub classify {
         $self->{itemcontextchain},
         $self->{context_to_class},
         $self->{gang},
-        $self->{active_feats},
+        $lattice_sizes,
         $self->{contextsize}
     );
     return $result;
@@ -245,14 +237,14 @@ sub _compute_lattice_sizes {
     my ($num_feats) = @_;
 
     use integer;
-    my @active_feats;
+    my @lattice_sizes;
     my $half = $num_feats / 2;
-    $active_feats[0] = $half / 2;
-    $active_feats[1] = $half - $active_feats[0];
+    $lattice_sizes[0] = $half / 2;
+    $lattice_sizes[1] = $half - $lattice_sizes[0];
     $half         = $num_feats - $half;
-    $active_feats[2] = $half / 2;
-    $active_feats[3] = $half - $active_feats[2];
-    return \@active_feats;
+    $lattice_sizes[2] = $half / 2;
+    $lattice_sizes[3] = $half - $lattice_sizes[2];
+    return \@lattice_sizes;
 }
 
 # Create binary context labels for a training item
@@ -262,21 +254,21 @@ sub _compute_lattice_sizes {
 # single scalar representing an array of 4 shorts (this
 # format is used in the XS side).
 
-# TODO: we have to copy active_feats out of $self in order to
+# TODO: we have to copy lattice_sizes out of $self in order to
 # iterate it. Otherwise it goes on forever. Why?
 sub _context_label {
     # inputs:
     # number of active features in each lattice,
     # training item features, test item features,
     # and boolean indicating if nulls should be excluded
-    my ($active_feats, $train_feats, $test_feats, $skip_nulls) = @_;
+    my ($lattice_sizes, $train_feats, $test_feats, $skip_nulls) = @_;
 
     # feature index
     my $index        = 0;
     # the binary context labels for each separate lattice
     my @context_list    = ();
 
-    for my $a (@$active_feats) {
+    for my $a (@$lattice_sizes) {
         # binary context label for a single sublattice
         my $context = 0;
         # loop through all features in the sublattice

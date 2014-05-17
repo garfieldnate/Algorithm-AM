@@ -6,6 +6,10 @@ Several setters in Result should be private: score, high_score, etc.
 
 Bug reports: OverridePkgVersion doesn't work with numerical versions, RequireArgUnpacking doesn't work with hash assignment.
 
+Initialize size in XS to reduce pack logic in Perl code
+
+What are the /* CHANGED */ comments in AM.xs?
+
 Explain linear/quadratic in algorithm.pod
 
 Rename result->result when you can think of something better.

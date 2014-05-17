@@ -167,7 +167,7 @@ typedef struct AM_guts {
   /* array ref containing number of active features in
    * each lattice (currently we us four lattices)
    */
-  SV **active_feats;
+  SV **lattice_sizes;
   /* array ref containing class labels for whole data set;
    * array index is data item index in data set.
    */
@@ -351,6 +351,7 @@ _xs_initialize(...)
  PREINIT:
   HV *project;
   AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
+  SV **lattice_sizes;
   SV *svguts;
   MAGIC *mg;
   int i;
@@ -359,7 +360,7 @@ _xs_initialize(...)
   /* $self, the AM object */
   project = (HV *) SvRV(ST(0));
   /* For explanations on these, see the comments on AM_guts */
-  guts.active_feats = AvARRAY((AV *) SvRV(ST(1)));
+  lattice_sizes = AvARRAY((AV *) SvRV(ST(1)));
   guts.classes = AvARRAY((AV *) SvRV(ST(2)));
   guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
   guts.itemcontextchainhead = (HV *) SvRV(ST(4));
@@ -379,7 +380,7 @@ _xs_initialize(...)
    */
 
   for (i = 0; i < 4; ++i) {
-    UV v = SvUVX(guts.active_feats[i]);
+    UV v = SvUVX(lattice_sizes[i]);
     Newz(0, guts.lptr[i], 1 << v, AM_SHORT);
     Newz(0, guts.sptr[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */
     Newz(0, guts.sptr[i][0].data, 2, AM_SHORT);
@@ -401,7 +402,8 @@ _fillandcount(...)
   UV linear_flag;
   AM_GUTS *guts;
   MAGIC *mg;
-  AM_SHORT active_feats[4];
+  SV **lattice_sizes_input;
+  AM_SHORT lattice_sizes[4];
   AM_SHORT **lptr;
   AM_SUPRA **sptr;
   AM_SHORT nptr[4];/* this helps us manage the free list in sptr[i] */
@@ -419,12 +421,13 @@ _fillandcount(...)
   AM_SHORT *intersect, *intersectlist;
   AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
-  /* Input args are the AM object ($self) and a flag
-   * to indicate whether to count pointers linearly or
-   * quadratically.
+  /* Input args are the AM object ($self), number of features
+   * perl lattice, and a flag to indicate whether to count pointers
+   * linearly or quadratically.
    */
   project = (HV *) SvRV(ST(0));
-  linear_flag = SvUVX(ST(1));
+  lattice_sizes_input = AvARRAY((AV *) SvRV(ST(1)));
+  linear_flag = SvUVX(ST(2));
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
 
@@ -437,11 +440,13 @@ _fillandcount(...)
   lptr = guts->lptr;
   sptr = guts->sptr;
   for (chunk = 0; chunk < 4; ++chunk) {
-    active_feats[chunk] = (AM_SHORT) SvUVX(guts->active_feats[chunk]);
-    Zero(lptr[chunk], 1 << active_feats[chunk], AM_SHORT);
+    /* Extract numeric values for the specified lattice_sizes */
+    lattice_sizes[chunk] = (AM_SHORT) SvUVX(lattice_sizes_input[chunk]);
+    /* TODO: explain the lines below */
+    Zero(lptr[chunk], 1 << lattice_sizes[chunk], AM_SHORT);
     sptr[chunk][0].next = 0;
     nptr[chunk] = 1;
-    for (i = 1; i < 1 << (active_feats[chunk] + 1); ++i) /* CHANGED */
+    for (i = 1; i < 1 << (lattice_sizes[chunk] + 1); ++i) /* CHANGED */
       sptr[chunk][i].next = (AM_SHORT) i + 1;
   }
 
@@ -476,7 +481,7 @@ _fillandcount(...)
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
     AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < 4; ++chunk, ++contextptr) {
-      AM_SHORT active = active_feats[chunk];
+      AM_SHORT active = lattice_sizes[chunk];
       AM_SHORT *lattice = lptr[chunk];
       AM_SUPRA *supralist = sptr[chunk];
       AM_SHORT nextsupra = nptr[chunk];
