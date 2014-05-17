@@ -65,8 +65,6 @@ sub _initialize {
     # preemptively allocate memory
     # TODO: not sure what this does
     @{$self->{itemcontextchain}} = (0) x $train->size;
-    # maps data indices to context labels
-    @{$self->{datatocontext}} = ( pack "S!4", 0, 0, 0, 0 ) x $train->size;
 
     $self->{$_} = {} for (
         qw(
@@ -148,7 +146,6 @@ sub classify {
     %{$self->{context_to_class}}      = ();
     %{$self->{pointers}}                = ();
     %{$self->{gang}}                    = ();
-    @{$self->{datatocontext}}           = ();
     @{$self->{itemcontextchain}}        = ();
     # big ints are used in AM.xs; these consist of an
     # array of 8 unsigned longs
@@ -168,7 +165,6 @@ sub classify {
             $self->exclude_nulls
         );
         $self->{contextsize}->{$context}++;
-        $self->{datatocontext}->[$data_index] = $context;
         # TODO: explain itemcontextchain and itemcontextchainhead
         $self->{itemcontextchain}->[$data_index] =
             $self->{itemcontextchainhead}->{$context};
