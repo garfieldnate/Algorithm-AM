@@ -21,8 +21,6 @@ on 'test' => sub {
   requires "Test::LongString" => "0";
   requires "Test::More" => "0.88";
   requires "Test::NoWarnings" => "0";
-  requires "subs" => "0";
-  requires "vars" => "0";
 };
 
 on 'configure' => sub {
