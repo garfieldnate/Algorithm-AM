@@ -142,7 +142,7 @@ sub test_beginning_vars {
 	return;
 }
 
-# Check variables provided before each test
+# Check variables set before each test
 # There are two items, 312 and 313, marked with
 # different comments and class labels. Check each one.
 sub test_item_vars {
@@ -158,7 +158,7 @@ sub test_item_vars {
 			qr/second test item$/,
 			'test comment'
 		);
-		is_deeply($test_item->features, [3,1,3], 'test variables')
+		is_deeply($test_item->features, [3,1,3], 'test item features')
 			or note explain $test_item->features;
 	}else{
 		like(
@@ -166,7 +166,7 @@ sub test_item_vars {
 			qr/test item comment$/,
 			'test comment'
 		);
-		is_deeply($test_item->features, [3,1,2], 'test variables')
+		is_deeply($test_item->features, [3,1,2], 'test item features')
 			or note explain $test_item->features;
 	}
 	return;

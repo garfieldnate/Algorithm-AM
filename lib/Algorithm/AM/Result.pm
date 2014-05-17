@@ -91,7 +91,7 @@ sub config_info {
         [ "Test item in training set", ($self->test_in_train ? 'yes' : 'no')],
         [ "Test item excluded", ($self->given_excluded ? 'yes' : 'no')],
         [ "Size of training set", $self->training_set->size ],
-        [ "Number of active variables", $self->cardinality ],
+        [ "Number of active features", $self->cardinality ],
     );
     my @table = _make_table(\@headers, \@rows);
     my $info = join '', @table;
@@ -108,7 +108,7 @@ sub config_info {
 sub _process_stats {
     my ($self, $sum, $pointers,
         $itemcontextchainhead, $itemcontextchain, $context_to_class,
-        $gang, $active_vars, $contextsize) = @_;
+        $gang, $active_feats, $contextsize) = @_;
     my $total_pointers = $pointers->{grandtotal};
     my $max = '';
     my @winners;
@@ -165,7 +165,7 @@ sub _process_stats {
     $self->{itemcontextchain} = $itemcontextchain;
     $self->{context_to_class} = $context_to_class;
     $self->{gang} = $gang;
-    $self->{active_vars} = $active_vars;
+    $self->{active_feats} = $active_feats;
     $self->{contextsize} = $contextsize;
     return;
 }
@@ -363,15 +363,15 @@ sub gang_summary {
     foreach my $gang (sort _sort_gangs values %$gangs){
         $current_row++;
         $gang_rows[$current_row]++;
-        my $variables = $gang->{vars};
+        my $features = $gang->{features};
         # add the gang supracontext, effect and score
         push @rows, [
             sprintf($percentage_format, 100 * $gang->{effect}),
             $gang->{score},
             undef,
             undef,
-            # print undefined variable slots as asterisks
-            map {$_ || '*'} @$variables
+            # print undefined feature slots as asterisks
+            map {$_ || '*'} @$features
         ];
         # add each class in the gang, along with the total number
         # and effect of the gang items supporting it
@@ -460,12 +460,12 @@ sub _calculate_gangs {
 
     foreach my $context (keys %{$raw_gang})
     {
-        my @variables = $self->_unpack_supracontext($context);
+        my @features = $self->_unpack_supracontext($context);
         # for now, store gangs by the supracontext printout
-        my $key = join ' ', map {$_ || '-'} @variables;
+        my $key = join ' ', map {$_ || '-'} @features;
         $gangs->{$key}->{score} = $raw_gang->{$context};
         $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_pointers;
-        $gangs->{$key}->{vars} = \@variables;
+        $gangs->{$key}->{features} = \@features;
 
         my $p = $self->{pointers}->{$context};
         # if the supracontext is homogenous
@@ -523,29 +523,29 @@ sub _calculate_gangs {
     return;
 }
 
-# Unpack and return the supracontext variables.
+# Unpack and return the supracontext features.
 # Blank entries mean the variable may be anything, e.g.
 # ('a' 'b' '') means a supracontext containing items
 # wich have ('a' 'b' whatever) as variable values.
 sub _unpack_supracontext {
     my ($self, $context) = @_;
     my @context_list   = unpack "S!4", $context;
-    my @alist   = @{$self->{active_vars}};
-    my (@variables) = @{ $self->test_item->features };
+    my @alist   = @{$self->{active_feats}};
+    my (@features) = @{ $self->test_item->features };
     my $exclude_nulls = $self->exclude_nulls;
     my $j       = 1;
     foreach my $a (reverse @alist) {
         my $partial_context = pop @context_list;
         for ( ; $a ; --$a ) {
             if($exclude_nulls){
-                ++$j while !defined $variables[ -$j ];
+                ++$j while !defined $features[ -$j ];
             }
-            $variables[ -$j ] = '' if $partial_context & 1;
+            $features[ -$j ] = '' if $partial_context & 1;
             $partial_context >>= 1;
             ++$j;
         }
     }
-    return @variables;
+    return @features;
 }
 
 # mostly by Ovid:

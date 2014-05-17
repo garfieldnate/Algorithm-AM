@@ -118,9 +118,9 @@ sub test_linear_classification {
     return;
 }
 
-# test with null variables, using both exclude_nulls
+# test with null features, using both exclude_nulls
 # and include_nulls
-# TODO: test for the correct number of active variables
+# TODO: test for the correct number of active features
 sub test_nulls {
     my $test = Algorithm::AM::DataSet::Item->new(
         features => ['', '1', '2'],
@@ -273,7 +273,7 @@ sub test_gang_effects {
             },
             'score' => 2,
             'size' => 1,
-            'vars' => ['','','2']
+            'features' => ['','','2']
           },
           '- 1 2' => {
             'data' => {
@@ -298,7 +298,7 @@ sub test_gang_effects {
             },
             'score' => 3,
             'size' => 1,
-            'vars' => ['','1','2']
+            'features' => ['','1','2']
           },
           '3 1 -' => {
             'data' => {
@@ -337,7 +337,7 @@ sub test_gang_effects {
             },
             'score' => 8,
             'size' => 2,
-            'vars' => ['3','1', '']
+            'features' => ['3','1', '']
           }
         },
     'correct reported gang effects') or

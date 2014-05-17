@@ -75,8 +75,8 @@ sub test_data {
             class => 'c',
             comment => 'comment'
         );
-    } qr/Expected 3 variables, but found 2 in 3 1 \(comment\)/,
-    'add_item fails with wrong number of variables';
+    } qr/Expected 3 features, but found 2 in 3 1 \(comment\)/,
+    'add_item fails with wrong number of features';
 
     # The error should be thrown from Tiny.pm, the caller of DataSet,
     # not from DataSet (tests that @CARP_NOT is working cardinalityperly).

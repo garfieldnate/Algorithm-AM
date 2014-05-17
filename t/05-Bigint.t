@@ -1,4 +1,4 @@
-#test exported variables and methods
+# test bigint-related methods
 use strict;
 use warnings;
 use Test::More 0.88;
@@ -6,9 +6,6 @@ plan tests => 6;
 use Test::NoWarnings;
 use Algorithm::AM;
 use t::TestAM qw(chapter_3_train chapter_3_test);
-
-use vars qw(@sum);
-use subs qw(bigcmp);
 
 my $train = chapter_3_train();
 my $test = chapter_3_test();

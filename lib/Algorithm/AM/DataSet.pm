@@ -49,10 +49,9 @@ sub new {
     return $self;
 }
 
-# check the project path and the options for validity
-# Return an option hash to initialize $self with, containing the
-# project path object, number of variables, and field_sep and var_sep,
-# which are used to parse lines of data
+# check the options for validity
+# Return an option hash to initialize $self with
+# For now only 'cardinality' is allowed/required.
 sub _check_opts {
     my (%opts) = @_;
 
@@ -142,7 +141,7 @@ sub add_item {
 
     if($self->cardinality != $item->cardinality){
         croak 'Expected ' . $self->cardinality .
-            ' variables, but found ' . (scalar $item->cardinality) .
+            ' features, but found ' . (scalar $item->cardinality) .
             ' in ' . (join ' ', @{$item->features}) .
             ' (' . $item->comment . ')';
     }
@@ -266,12 +265,12 @@ sub dataset_from_file {## no critic (RequireArgUnpacking)
     if($format eq 'commas'){
         # class/features/comment separated by a comma
         $field_sep   = qr{\s*,\s*};
-        # variables separated by space
+        # features separated by space
         $feature_sep = qr{\s+};
     }elsif($format eq 'nocommas'){
         # class/features/comment separated by space
         $field_sep   = qr{\s+};
-        # no seps for variables; each is a single character
+        # no seps for features; each is a single character
         $feature_sep = qr{};
     }else{
         croak "Unknown value $format for format parameter " .
@@ -330,7 +329,7 @@ sub _read_data_sub {
         }
 
         my @data_vars = split /$feature_sep/, $feats;
-        # set unknown variables to ''
+        # set null features to ''
         @data_vars = map {$_ eq $null ? '' : $_} @data_vars;
 
         return Algorithm::AM::DataSet::Item->new(

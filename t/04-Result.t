@@ -42,17 +42,17 @@ sub test_config_info {
         );
         my $info = ${$result->config_info};
         my $expected = <<'END_INFO';
-+----------------------------+----------------+
-| Option                     | Setting        |
-+----------------------------+----------------+
-| Given context              | a b c, comment |
-| Nulls                      | exclude        |
-| Gang                       | linear         |
-| Test item in training set  | yes            |
-| Test item excluded         | yes            |
-| Size of training set       |  5             |
-| Number of active variables |  3             |
-+----------------------------+----------------+
++---------------------------+----------------+
+| Option                    | Setting        |
++---------------------------+----------------+
+| Given context             | a b c, comment |
+| Nulls                     | exclude        |
+| Gang                      | linear         |
+| Test item in training set | yes            |
+| Test item excluded        | yes            |
+| Size of training set      | 5              |
+| Number of active features | 3              |
++---------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
             'given/nulls excluded, linear, test in train')
@@ -69,17 +69,17 @@ END_INFO
 
         $info = ${$result->config_info};
         $expected = <<'END_INFO';
-+----------------------------+----------------+
-| Option                     | Setting        |
-+----------------------------+----------------+
-| Given context              | a b c, comment |
-| Nulls                      | include        |
-| Gang                       | squared        |
-| Test item in training set  | no             |
-| Test item excluded         | no             |
-| Size of training set       |  5             |
-| Number of active variables |  3             |
-+----------------------------+----------------+
++---------------------------+----------------+
+| Option                    | Setting        |
++---------------------------+----------------+
+| Given context             | a b c, comment |
+| Nulls                     | include        |
+| Gang                      | squared        |
+| Test item in training set | no             |
+| Test item excluded        | no             |
+| Size of training set      | 5              |
+| Number of active features | 3              |
++---------------------------+----------------+
 END_INFO
         is_string_nows($info, $expected,
             'given/nulls included, linear, test not in train')

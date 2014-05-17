@@ -55,9 +55,9 @@ sub _initialize {
     my ($self) = @_;
 
     my $train = $self->training_set;
-    # compute activeVars here so that lattice space can be allocated in the
+    # compute active_feats here so that lattice space can be allocated in the
     # _initialize method
-    $self->{activeVars} = _compute_lattice_sizes($train->cardinality);
+    $self->{active_feats} = _compute_lattice_sizes($train->cardinality);
 
     # sum is intitialized to a list of zeros
     @{$self->{sum}} = (0.0) x ($train->num_classes + 1);
@@ -81,7 +81,7 @@ sub _initialize {
     # must not be increasing the reference count
     $self->{save_this} = $train->_data_classes;
     $self->_xs_initialize(
-        $self->{activeVars},
+        $self->{active_feats},
         $self->{save_this},
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
@@ -104,28 +104,28 @@ sub classify {
                 $test_item->cardinality . ')';
     }
 
-    # num_variables is the number of active variables; if we
-    # exclude nulls, then we need to minus the number of '=' found in
-    # this test item; otherwise, it's just the number of columns in a
-    # single item vector
-    my $num_variables = $training_set->cardinality;
+    # num_feats is the number of features to be used in classification;
+    # if we exclude nulls, then we need to minus the number of '='
+    # found in this test item; otherwise, it's just the number of
+    # columns in a single item vector
+    my $num_feats = $training_set->cardinality;
 
     if($self->exclude_nulls){
-        $num_variables -= grep {$_ eq ''} @{
+        $num_feats -= grep {$_ eq ''} @{
             $test_item->features };
     }
 
-    # recalculate the lattice sizes with new number of active variables;
-    # must edit activeVars instead of assigning it a new arrayref because
+    # recalculate the lattice sizes with new number of active features;
+    # must edit active_feats instead of assigning it a new arrayref because
     # the XS code only has the existing arrayref and will not be given
-    # a new one. This must be done for every test item because activeVars
+    # a new one. This must be done for every test item because active_feats
     # is a global that could have been edited during classification of the
     # last test item.
-    # TODO: pass activeVars into fill_and_count instead of doing this
+    # TODO: pass active_feats into fill_and_count instead of doing this
     {
-        my $lattice_sizes = _compute_lattice_sizes($num_variables);
+        my $lattice_sizes = _compute_lattice_sizes($num_feats);
         for(0 .. $#$lattice_sizes){
-            $self->{activeVars}->[$_] = $lattice_sizes->[$_];
+            $self->{active_feats}->[$_] = $lattice_sizes->[$_];
         }
     }
 ##  $activeContexts = 1 << $activeVar;
@@ -159,7 +159,7 @@ sub classify {
         my $context = _context_label(
             # Note: this must be copied to prevent infinite loop;
             # see todo note for _context_label
-            [@{$self->{activeVars}}],
+            [@{$self->{active_feats}}],
             $training_set->get_item($index)->features,
             $test_item->features,
             $self->exclude_nulls
@@ -198,7 +198,7 @@ sub classify {
     # info.
     my $result = Algorithm::AM::Result->new(
         given_excluded => $given_excluded,
-        cardinality => $num_variables,
+        cardinality => $num_feats,
         exclude_nulls => $self->exclude_nulls,
         count_method => $self->linear ? 'linear' : 'squared',
         training_set => $training_set,
@@ -231,28 +231,28 @@ sub classify {
         $self->{itemcontextchain},
         $self->{context_to_class},
         $self->{gang},
-        $self->{activeVars},
+        $self->{active_feats},
         $self->{contextsize}
     );
     return $result;
 }
 
-# since we split the lattice in four, we have to decide which variables
-# go where. Given the number of variables being used, return an arrayref
-# containing the number of variables to be used in each of the the four
+# since we split the lattice in four, we have to decide which features
+# go where. Given the number of features being used, return an arrayref
+# containing the number of features to be used in each of the the four
 # lattices.
 sub _compute_lattice_sizes {
     my ($num_feats) = @_;
 
     use integer;
-    my @active_vars;
+    my @active_feats;
     my $half = $num_feats / 2;
-    $active_vars[0] = $half / 2;
-    $active_vars[1] = $half - $active_vars[0];
+    $active_feats[0] = $half / 2;
+    $active_feats[1] = $half - $active_feats[0];
     $half         = $num_feats - $half;
-    $active_vars[2] = $half / 2;
-    $active_vars[3] = $half - $active_vars[2];
-    return \@active_vars;
+    $active_feats[2] = $half / 2;
+    $active_feats[3] = $half - $active_feats[2];
+    return \@active_feats;
 }
 
 # Create binary context labels for a training item
@@ -262,28 +262,28 @@ sub _compute_lattice_sizes {
 # single scalar representing an array of 4 shorts (this
 # format is used in the XS side).
 
-# TODO: we have to copy activeVars out of $self in order to
+# TODO: we have to copy active_feats out of $self in order to
 # iterate it. Otherwise it goes on forever. Why?
 sub _context_label {
     # inputs:
-    # number of active variables in each lattice,
+    # number of active features in each lattice,
     # training item features, test item features,
     # and boolean indicating if nulls should be excluded
-    my ($active_vars, $train_feats, $test_feats, $skip_nulls) = @_;
+    my ($active_feats, $train_feats, $test_feats, $skip_nulls) = @_;
 
-    # variable index
+    # feature index
     my $index        = 0;
     # the binary context labels for each separate lattice
     my @context_list    = ();
 
-    for my $a (@$active_vars) {
+    for my $a (@$active_feats) {
         # binary context label for a single sublattice
         my $context = 0;
-        # loop through all variables in the sublattice
-        # assign 0 if variables match, 1 if they do not
+        # loop through all features in the sublattice
+        # assign 0 if features match, 1 if they do not
         for ( ; $a ; --$a ) {
 
-            # skip null variables if indicated
+            # skip null features if indicated
             if($skip_nulls){
                 ++$index while $test_feats->[$index] eq '';
             }
@@ -423,7 +423,7 @@ while the parsing, printing, and statistical routines remained in C;
 this was accomplished by embedding a Perl interpreter into the C code.
 
 In 2004, the algorithm was again rewritten, this time in order to
-handle more variables and large data sets. The algorithm breaks the
+handle more features and large data sets. The algorithm breaks the
 supracontextual lattice into the direct product of four smaller ones,
 which the algorithm manipulates individually before recombining.
 These lattices can be manipulated in parallel when using the right
