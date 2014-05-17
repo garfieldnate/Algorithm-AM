@@ -2,6 +2,8 @@ Algorithm::AM
 
 Check/document how one must be careful about changing data sets after they have already been included in a result or somewhere else.
 
+Use accessors in Result
+
 Several setters in Result should be private: score, high_score, etc.
 
 Bug reports: OverridePkgVersion doesn't work with numerical versions, RequireArgUnpacking doesn't work with hash assignment.
@@ -50,7 +52,7 @@ Scrub the code for consistent naming. "Data" should be given, or training, or ex
     - class (X)
     - exemplar (X)
     - spec (X)
-    - data ()
+    - data (X)
     - variables ()
 
 do something better than just calling rand() for the probability/skip function.

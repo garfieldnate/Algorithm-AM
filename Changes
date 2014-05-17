@@ -1,7 +1,7 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    test_in_data in Result changed to test_in_train
 3.01      2014-05-15 21:18:29 Asia/Seoul
     Gang and analogical set structures changed to contain Item objects
     Unique id field added to Item

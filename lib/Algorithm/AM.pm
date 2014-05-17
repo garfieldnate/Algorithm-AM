@@ -133,7 +133,7 @@ sub classify {
     my $nullcontext = pack "b64", '0' x 64;
 
     my $given_excluded = 0;
-    my $testindata   = 0;
+    my $test_in_training   = 0;
 
     # initialize classification-related variables
     # it is important to dereference rather than just
@@ -155,26 +155,26 @@ sub classify {
 
     # calculate context labels and associated structures for
     # the entire data set
-    for my $data_index ( 0 .. $training_set->size - 1 ) {
+    for my $index ( 0 .. $training_set->size - 1 ) {
         my $context = _context_label(
             # Note: this must be copied to prevent infinite loop;
             # see todo note for _context_label
             [@{$self->{activeVars}}],
-            $training_set->get_item($data_index)->features,
+            $training_set->get_item($index)->features,
             $test_item->features,
             $self->exclude_nulls
         );
         $self->{contextsize}->{$context}++;
         # TODO: explain itemcontextchain and itemcontextchainhead
-        $self->{itemcontextchain}->[$data_index] =
+        $self->{itemcontextchain}->[$index] =
             $self->{itemcontextchainhead}->{$context};
-        $self->{itemcontextchainhead}->{$context} = $data_index;
+        $self->{itemcontextchainhead}->{$context} = $index;
 
         # store the class for the subcontext; if there
         # is already a different class for this subcontext,
         # then store 0, signifying heterogeneity.
         my $class = $training_set->_index_for_class(
-            $training_set->get_item($data_index)->class);
+            $training_set->get_item($index)->class);
         if ( defined $self->{context_to_class}->{$context} ) {
             $self->{context_to_class}->{$context} = 0
               if $self->{context_to_class}->{$context} != $class;
@@ -184,10 +184,11 @@ sub classify {
         }
     }
     # $nullcontext is all 0's, which is a context label for
-    # a data item that exactly matches the test item. Take note
-    # of the item, and exclude it if required.
+    # a training item that exactly matches the test item. Exclude
+    # the item if required, and set a flag that the test item was
+    # found in the training set.
     if ( exists $self->{context_to_class}->{$nullcontext} ) {
-        $testindata = 1;
+        $test_in_training = 1;
         if($self->exclude_given){
            delete $self->{context_to_class}->{$nullcontext};
            $given_excluded = 1;
@@ -202,7 +203,7 @@ sub classify {
         count_method => $self->linear ? 'linear' : 'squared',
         training_set => $training_set,
         test_item => $test_item,
-        test_in_data => $testindata,
+        test_in_train => $test_in_training,
     );
 
     $log->debug(${$result->config_info})
@@ -215,7 +216,7 @@ sub classify {
     unless ($self->{pointers}->{'grandtotal'}) {
         #TODO: is this tested yet?
         if($log->is_warn){
-            $log->warn('No data items considered. ' .
+            $log->warn('No training items considered. ' .
                 'No prediction possible.');
         }
         return;
@@ -254,8 +255,8 @@ sub _compute_lattice_sizes {
     return \@active_vars;
 }
 
-# Create binary context labels for a data item
-# by comparing it with a test item. Each data item
+# Create binary context labels for a training item
+# by comparing it with a test item. Each training item
 # needs one binary label for each sublattice (of which
 # there are currently four), but this is packed into a
 # single scalar representing an array of 4 shorts (this

@@ -12,7 +12,7 @@ use Exporter::Easy (
         chapter_3_test)]
 );
 
-# return a dataset containing training data from chapter 3
+# return a dataset containing training items from chapter 3
 sub chapter_3_train {
     my $train = Algorithm::AM::DataSet->new(cardinality => 3);
     for my $datum(chapter_3_data()){
@@ -46,7 +46,7 @@ sub chapter_3_project {
     return $project;
 }
 
-# return a list of array refs containing the data from chapter 3
+# return a list of array refs containing the items from chapter 3
 sub chapter_3_data {
     return (
         [[qw(3 1 0)], 'e', 'myFirstCommentHere'],

@@ -52,7 +52,7 @@ sub new {
 # check the project path and the options for validity
 # Return an option hash to initialize $self with, containing the
 # project path object, number of variables, and field_sep and var_sep,
-# which are used to parse data lines
+# which are used to parse lines of data
 sub _check_opts {
     my (%opts) = @_;
 
@@ -94,7 +94,8 @@ sub _init {
 
 =head2 C<cardinality>
 
-Returns the number of features contained in a single data vector.
+Returns the number of features contained in the feature vector of a
+single item.
 
 =cut
 sub cardinality {
@@ -150,12 +151,12 @@ sub add_item {
         $self->_update_class_vars($item->class);
     }
 
-    # store the new data item
+    # store the new item
     push @{$self->{items}}, $item;
     return;
 }
 
-# keep track of classes; needs updating for every data/test item.
+# keep track of classes; needs updating for new item
 sub _update_class_vars {
     my ($self, $class) = @_;
 
@@ -263,12 +264,12 @@ sub dataset_from_file {## no critic (RequireArgUnpacking)
 
     my ($field_sep, $feature_sep);
     if($format eq 'commas'){
-        # class/data/comment separated by a comma
+        # class/features/comment separated by a comma
         $field_sep   = qr{\s*,\s*};
         # variables separated by space
         $feature_sep = qr{\s+};
     }elsif($format eq 'nocommas'){
-        # class/data/comment separated by space
+        # class/features/comment separated by space
         $field_sep   = qr{\s+};
         # no seps for variables; each is a single character
         $feature_sep = qr{};
@@ -295,11 +296,12 @@ sub dataset_from_file {## no critic (RequireArgUnpacking)
     return $dataset;
 }
 
-# return a sub that returns one data vector per call from the given FH,
-# and returns undef once the data file is done being read. Throws errors
+# return a sub that returns one Item per call from the given FH,
+# and returns undef once the file is done being read. Throws errors
 # on bad file contents.
 # Input is file (Path::Tiny), string representing unknown class,
-# field separator (class, features, comment) and feature separator
+# string representing null feature, field separator (class,
+# features, comment) and feature separator
 sub _read_data_sub {
     my ($data_file, $unknown, $null,
         $field_sep, $feature_sep) = @_;

@@ -362,7 +362,7 @@ default value is 1.
 
 =head2 C<probability>
 
-Get/set the probabibility that any one data item would be included
+Get/set the probabibility that any one training item would be included
 among the training items used during classification, which is 1 by
 default.
 
@@ -423,8 +423,8 @@ Batch classification proceeds as follows:
   call end_hook
 
 The Batch object itself is passed to these hooks, so the user is free
-to change settings such as L</probability> or L</max_training_items>, or
-even at training data, at any point. Other information is passed to
+to change settings such as L</probability> or L</max_training_items>,
+or even add training data, at any point. Other information is passed to
 these hooks as well, as detailed in the method documentation.
 
 =head2 C<begin_hook>

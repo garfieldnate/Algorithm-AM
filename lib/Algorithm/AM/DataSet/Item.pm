@@ -11,7 +11,7 @@ use Exporter::Easy (
 # or anything, just unique.
 my $current_id = 'a';
 
-# ABSTRACT: A single data item for classification
+# ABSTRACT: A single item for classification training and testing
 # VERSION;
 
 =head1 SYNOPSIS

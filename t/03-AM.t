@@ -156,7 +156,7 @@ sub test_nulls {
     return;
 }
 
-# test case where test data is in given data
+# test case where test iitem is in training data
 sub test_given {
     my $train = chapter_3_train();
     $train->add_item(
@@ -193,72 +193,56 @@ sub test_given {
 
 sub test_analogical_set {
     my ($result) = @_;
-    subtest 'analogical set' => sub {
-        plan tests => 5;
-        my $set = $result->analogical_set();
+    my $set = $result->analogical_set();
 
-        cmp_deeply([values %$set],
-          # use bag() and values so we can ignore the keys, which
-          # are id strings that might change
-          bag({
-            'item' => all(
-              isa('Algorithm::AM::DataSet::Item'),
-              methods(
-                features => [qw(3 1 0)],
-                class => 'e',
-                comment => 'myFirstCommentHere'
-              )
-            ),
-            'score' => '4'
-          },
-          {
-            'item' => all(
-              isa('Algorithm::AM::DataSet::Item'),
-              methods(
-                features => [qw(0 3 2)],
-                class => 'r',
-                comment => 'myThirdCommentHere'
-              )
-            ),
-            'score' => '2'
-          },
-          {
-            'item' => all(
-              isa('Algorithm::AM::DataSet::Item'),
-              methods(
-                features => [qw(2 1 2)],
-                class => 'r',
-                comment => 'myFourthCommentHere'
-              )
-            ),
-            'score' => '3'
-          },
-          {
-            'item' => all(
-              isa('Algorithm::AM::DataSet::Item'),
-              methods(
-                features => [qw(3 1 1)],
-                class => 'r',
-                comment => 'myFifthCommentHere'
-              )
-            ),
-            'score' => '4'
-          }),
-          'data indices and pointer values') or note explain $set;
-        # now confirm that the referenced data really are what we think
-        is($train->get_item(0)->comment, 'myFirstCommentHere',
-            'confirm first item')
-            or note $train->get_item(0)->comment;
-        is($train->get_item(2)->comment, 'myThirdCommentHere',
-            'confirm third item')
-            or note $train->get_item(2)->comment;
-        is($train->get_item(3)->comment, 'myFourthCommentHere',
-            'confirm fourth item')
-            or note $train->get_item(3)->comment;
-        is($train->get_item(4)->comment, 'myFifthCommentHere',
-            'confirm fifth item')
-            or note $train->get_item(4)->comment;
-    };
+    cmp_deeply([values %$set],
+      # use bag() and values so we can ignore the keys, which
+      # are id strings that might change
+      bag({
+        'item' => all(
+          isa('Algorithm::AM::DataSet::Item'),
+          methods(
+            features => [qw(3 1 0)],
+            class => 'e',
+            comment => 'myFirstCommentHere'
+          )
+        ),
+        'score' => '4'
+      },
+      {
+        'item' => all(
+          isa('Algorithm::AM::DataSet::Item'),
+          methods(
+            features => [qw(0 3 2)],
+            class => 'r',
+            comment => 'myThirdCommentHere'
+          )
+        ),
+        'score' => '2'
+      },
+      {
+        'item' => all(
+          isa('Algorithm::AM::DataSet::Item'),
+          methods(
+            features => [qw(2 1 2)],
+            class => 'r',
+            comment => 'myFourthCommentHere'
+          )
+        ),
+        'score' => '3'
+      },
+      {
+        'item' => all(
+          isa('Algorithm::AM::DataSet::Item'),
+          methods(
+            features => [qw(3 1 1)],
+            class => 'r',
+            comment => 'myFifthCommentHere'
+          )
+        ),
+        'score' => '4'
+      }),
+      'analogical set') or note explain $set;
     return;
 }
 

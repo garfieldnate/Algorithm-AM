@@ -38,14 +38,13 @@ information.
 ## TODO: variables consider exporting someday
 ## @itemcontextchain
 ## %itemcontextchainhead
-## @datatocontext
 ## %context_to_class
 ## %contextsize
 use Class::Tiny qw(
     exclude_nulls
     given_excluded
     cardinality
-    test_in_data
+    test_in_train
     test_item
     count_method
 
@@ -76,7 +75,7 @@ following accessors is included:
     exclude_nulls
     given_excluded
     cardinality
-    test_in_data
+    test_in_train
     test_item
     count_method
 
@@ -89,11 +88,11 @@ sub config_info {
             ', ' . $self->test_item->comment],
         [ "Nulls", ($self->{exclude_nulls} ? 'exclude' : 'include')],
         [ "Gang",  $self->{count_method}],
-        [ "Test item in data", ($self->{test_in_data} ? 'yes' : 'no')],
+        [ "Test item in training set", ($self->{test_in_train} ? 'yes' : 'no')],
         [ "Test item excluded", ($self->{given_excluded} ? 'yes' : 'no')],
         # [ "Total excluded items", scalar @{$self->excluded_data} +
         #     ($self->{given_excluded} ? 1 : 0)],
-        [ "Number of data items", $self->training_set->size ],
+        [ "Size of training set", $self->training_set->size ],
         [ "Number of active variables", $self->{cardinality} ],
     );
     my @table = _make_table(\@headers, \@rows);
@@ -346,7 +345,7 @@ sub gang_summary {
     #   Num
     #   Class
     #   Features
-    #   (if $print_list is true) Data comment
+    #   item comment
     my @rows;
     # first row is a header with test item for easy reference
     push @rows, [
@@ -608,9 +607,9 @@ were null feature values and L</exclude_nulls> was set to true,
 then this number will be lower than the cardinality of the utilized
 data sets.
 
-=head2 C<test_in_data>
+=head2 C<test_in_train>
 
-True if the test item was present among the data items.
+True if the test item was present among the training items.
 
 =head2 C<test_item>
 
