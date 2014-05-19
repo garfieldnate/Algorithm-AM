@@ -319,6 +319,86 @@ normalize(SV *s) {
   SvNOK_on(s);
 }
 
+ /* Given 2 lists of training item indices sorted in descending order,
+  * fill a third list with the intersection of items in these lists.
+  * This is a simple intersection, and no check for heterogeneity is
+  * performed.
+  * Return the next empty (available) index address in the third list.
+  * If the two lists have no intersection, then the return value is
+  * just the same as the third input.
+  */
+unsigned short *intersect_supras(
+    AM_SHORT *i, AM_SHORT *j, AM_SHORT *k){
+  AM_SHORT *temp;
+  while (1) {
+    while (*i > *j)
+      --i;
+    if (*i == 0) break;
+    if (*i < *j) {
+      temp = i;
+      i = j;
+      j = temp;
+      continue;
+    }
+    *k = *i;
+    --i;
+    --j;
+    --k;
+  }
+  return k;
+}
+ /* The first three inputs are the same as for intersect_supra above,
+  * and the fourth paramater should be a list containing the class
+  * index for all of the training items. In addition to combining
+  * the first two lists into the third via intersection, the final
+  * list is checked for heterogeneity and the non-deterministic
+  * heterogeneous supracontexts are removed.
+  * The return value is the number of items contained in the resulting
+  * list.
+  */
+AM_SHORT intersect_supras_final(
+    AM_SHORT *i, AM_SHORT *j,
+    AM_SHORT *intersect, AM_SHORT *subcontext_class){
+  AM_SHORT class = 0;
+  AM_SHORT length = 0;
+  AM_SHORT *temp;
+  while (1) {
+    while (*i > *j)
+      --i;
+    if (*i == 0)
+      break;
+    if (*i < *j) {
+      temp = i;
+      i = j;
+      j = temp;
+      continue;
+    }
+    *intersect = *i;
+    ++intersect;
+    ++length;
+
+     /* is it heterogeneous? */
+    if (class == 0) {
+      /* is it not deterministic? */
+      if (length > 1) {
+        length = 0;
+        break;
+      } else {
+        class = subcontext_class[*i];
+      }
+    } else {
+      /* Do the classes not match? */
+      if (class != subcontext_class[*i]) {
+        length = 0;
+        break;
+      }
+    }
+    --i;
+    --j;
+  }
+  return length;
+}
+
 MODULE = Algorithm::AM		PACKAGE = Algorithm::AM
 
 BOOT:
@@ -701,97 +781,48 @@ _fillandcount(...)
   if (linear_flag) {
     /* squared */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT class;
     AM_SHORT length;
-    unsigned short *temp, *i, *j, *k;
+    AM_SHORT *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
       for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
 
-      	i = p0->data + p0->data[0] + 1;
-      	j = p1->data + p1->data[0] + 1;
-      	k = ilist2top;
-      	while (1) {
-      	  while (*i > *j) --i;
-      	  if (*i == 0) break;
-      	  if (*i < *j) {
-      	    temp = i;
-      	    i = j;
-      	    j = temp;
-      	    continue;
-      	  }
-      	  *k = *i;
-      	  --i;
-      	  --j;
-      	  --k;
-      	}
-      	if (k == ilist2top)
+        /*Find intersection between p0 and p1*/
+        k = intersect_supras(
+          p0->data + p0->data[0] + 1,
+          p1->data + p1->data[0] + 1,
+          ilist2top
+        );
+      	/* If k has not been increased then intersection was empty  */
+        if (k == ilist2top)
           continue; /* intersection is empty */
       	*k = 0;
 
       	for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
 
-      	  i = ilist2top;
-      	  j = p2->data + p2->data[0] + 1;
-      	  k = ilist3top;
-      	  while (1) {
-      	    while (*i > *j) --i;
-      	    if (*i == 0) break;
-      	    if (*i < *j) {
-      	      temp = i;
-      	      i = j;
-      	      j = temp;
-      	      continue;
-      	    }
-      	    *k = *i;
-      	    --i;
-      	    --j;
-      	    --k;
-      	  }
+          /*Find intersection between previous intersection and p2*/
+          k = intersect_supras(
+            ilist2top,
+            p2->data + p2->data[0] + 1,
+            ilist3top
+          );
+          /* If k has not been increased then intersection was empty  */
       	  if (k == ilist3top)
             continue; /* intersection is empty */
       	  *k = 0;
 
       	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
-      	    class = 0;
-      	    length = 0;
-      	    intersect = intersectlist;
 
-      	    i = ilist3top;
-      	    j = p3->data + p3->data[0] + 1;
-      	    while (1) {
-      	      while (*i > *j)
-                --i;
-      	      if (*i == 0)
-                break;
-      	      if (*i < *j) {
-            		temp = i;
-            		i = j;
-            		j = temp;
-            		continue;
-      	      }
-      	      *intersect = *i;
-      	      ++intersect;
-      	      ++length;
-
-               /* determine heterogeneity */
-      	      if (class == 0) {
-            		if (length > 1) {
-            		  length = 0;
-            		  break;
-            		} else {
-            		  class = subcontext_class[*i];
-            		}
-      	      } else {
-            		if (class != subcontext_class[*i]) {
-            		  length = 0;
-            		  break;
-            		}
-      	      }
-      	      --i;
-      	      --j;
-      	    }
+            /* Find intersection between previous intersection and p3;
+             * check for disqualified supras this time.
+             */
+      	    length = intersect_supras_final(
+              ilist3top,
+              p3->data + p3->data[0] + 1,
+              intersectlist,
+              subcontext_class
+            );
 
              /* count pointers */
       	    if (length) {
@@ -874,8 +905,8 @@ _fillandcount(...)
             		  *(p + j) += count[j];
                   carry_pointer(p + j);
             		}
-      	      }
-	          }/* end for (i = 0; i < length... */
+      	      }/* end for (i = 0; i < length... */
+	          }/* end if(length) */
 	        }/* end for (p3 = sptr[3]... */
 	      }/* end for (p2 = sptr[2]... */
       }/* end for (p1 = sptr[1]... */
@@ -893,96 +924,47 @@ _fillandcount(...)
   else {
     /* linear */
     AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT class;
     AM_SHORT length;
-    unsigned short *temp, *i, *j, *k;
+    AM_SHORT *k;
 
     /* find intersections */
     for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
       for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
-
-      	i = p0->data + p0->data[0] + 1;
-      	j = p1->data + p1->data[0] + 1;
-      	k = ilist2top;
-      	while (1) {
-      	  while (*i > *j) --i;
-      	  if (*i == 0) break;
-      	  if (*i < *j) {
-      	    temp = i;
-      	    i = j;
-      	    j = temp;
-      	    continue;
-      	  }
-      	  *k = *i;
-      	  --i;
-      	  --j;
-      	  --k;
-      	}
+      /*Find intersection between p0 and p2*/
+        k = intersect_supras(
+          p0->data + p0->data[0] + 1,
+          p1->data + p1->data[0] + 1,
+          ilist2top
+        );
+        /* If k has not been increased then intersection was empty */
       	if (k == ilist2top)
-          continue; /* intersection is empty */
+          continue;
       	*k = 0;
 
       	for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
 
-      	  i = ilist2top;
-      	  j = p2->data + p2->data[0] + 1;
-      	  k = ilist3top;
-      	  while (1) {
-      	    while (*i > *j) --i;
-      	    if (*i == 0) break;
-      	    if (*i < *j) {
-      	      temp = i;
-      	      i = j;
-      	      j = temp;
-      	      continue;
-      	    }
-      	    *k = *i;
-      	    --i;
-      	    --j;
-      	    --k;
-      	  }
+          /*Find intersection between previous intersection and p2*/
+          k = intersect_supras(
+            ilist2top,
+            p2->data + p2->data[0] + 1,
+            ilist3top
+          );
+          /* If k has not been increased then intersection was empty */
       	  if (k == ilist3top)
-            continue; /* intersection is empty */
+            continue;
       	  *k = 0;
 
       	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
-      	    class = 0;
-      	    length = 0;
-      	    intersect = intersectlist;
 
-      	    i = ilist3top;
-      	    j = p3->data + p3->data[0] + 1;
-      	    while (1) {
-      	      while (*i > *j)
-                --i;
-      	      if (*i == 0) break;
-      	      if (*i < *j) {
-            		temp = i;
-            		i = j;
-            		j = temp;
-            		continue;
-      	      }
-      	      *intersect = *i;
-      	      ++intersect;
-      	      ++length;
-
-               /* determine heterogeneity */
-      	      if (class == 0) {
-            		if (length > 1) {
-            		  length = 0;
-            		  break;
-            		} else {
-            		  class = subcontext_class[*i];
-            		}
-            	} else {
-            		if (class != subcontext_class[*i]) {
-            		  length = 0;
-            		  break;
-            		}
-      	      }
-      	      --i;
-      	      --j;
-      	    }
+            /* Find intersection between previous intersection and p3;
+             * check for disqualified supras this time.
+             */
+            length = intersect_supras_final(
+              ilist3top,
+              p3->data + p3->data[0] + 1,
+              intersectlist,
+              subcontext_class
+            );
 
             /* count occurrences */
       	    if (length) {
