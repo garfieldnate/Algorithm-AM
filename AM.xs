@@ -778,251 +778,146 @@ _fillandcount(...)
    *
    */
 
-  if (linear_flag) {
-    /* squared */
-    AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT length;
-    AM_SHORT *k;
+  AM_SUPRA *p0, *p1, *p2, *p3;
+  AM_SHORT length;
+  AM_SHORT *k;
 
-    /* find intersections */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
-      for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
+  /* find intersections */
+  for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
+    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
+    /*Find intersection between p0 and p2*/
+      k = intersect_supras(
+        p0->data + p0->data[0] + 1,
+        p1->data + p1->data[0] + 1,
+        ilist2top
+      );
+      /* If k has not been increased then intersection was empty */
+      if (k == ilist2top)
+        continue;
+      *k = 0;
 
-        /*Find intersection between p0 and p1*/
+      for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
+
+        /*Find intersection between previous intersection and p2*/
         k = intersect_supras(
-          p0->data + p0->data[0] + 1,
-          p1->data + p1->data[0] + 1,
-          ilist2top
+          ilist2top,
+          p2->data + p2->data[0] + 1,
+          ilist3top
         );
-      	/* If k has not been increased then intersection was empty  */
-        if (k == ilist2top)
-          continue; /* intersection is empty */
-      	*k = 0;
+        /* If k has not been increased then intersection was empty */
+        if (k == ilist3top)
+          continue;
+        *k = 0;
 
-      	for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
+        for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
 
-          /*Find intersection between previous intersection and p2*/
-          k = intersect_supras(
-            ilist2top,
-            p2->data + p2->data[0] + 1,
-            ilist3top
+          /* Find intersection between previous intersection and p3;
+           * check for disqualified supras this time.
+           */
+          length = intersect_supras_final(
+            ilist3top,
+            p3->data + p3->data[0] + 1,
+            intersectlist,
+            subcontext_class
           );
-          /* If k has not been increased then intersection was empty  */
-      	  if (k == ilist3top)
-            continue; /* intersection is empty */
-      	  *k = 0;
 
-      	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
+          /* count occurrences */
+          if (length) {
+            AM_SHORT i;
+            AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
+            AM_LONG mask = 0xffff;
 
-            /* Find intersection between previous intersection and p3;
-             * check for disqualified supras this time.
-             */
-      	    length = intersect_supras_final(
-              ilist3top,
-              p3->data + p3->data[0] + 1,
-              intersectlist,
-              subcontext_class
-            );
+            count[0]  = p0->count;
 
-             /* count pointers */
-      	    if (length) {
-      	      AM_SHORT i;
-      	      AM_LONG pointercount = 0;
-      	      AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
-      	      AM_LONG mask = 0xffff;
+            count[0] *= p1->count;
+            carry(count, 0);
 
-      	      count[0]  = p0->count;
+            count[0] *= p2->count;
+            count[1] *= p2->count;
+            carry(count, 0);
+            carry(count, 1);
 
-      	      count[0] *= p1->count;
-              carry(count, 0);
-
-      	      count[0] *= p2->count;
-      	      count[1] *= p2->count;
-              carry(count, 0);
-              carry(count, 1);
-
-      	      count[0] *= p3->count;
-      	      count[1] *= p3->count;
-      	      count[2] *= p3->count;
-              carry(count, 0);
-              carry(count, 1);
-              carry(count, 2);
-
-      	      for (i = 0; i < length; ++i)
-      		      pointercount += (AM_LONG) SvUV(*hv_fetch(contextsize,
-      				      (char *) (subcontext + (4 * intersectlist[i])), 8, 0));
-      	      if (pointercount & 0xffff0000) {
-            		AM_SHORT pchi = (AM_SHORT) (high_bits(pointercount));
-            		AM_SHORT pclo = (AM_SHORT) (low_bits(pointercount));
-            		AM_LONG hiprod[6];
-            		hiprod[1] = pchi * count[0];
-            		hiprod[2] = pchi * count[1];
-            		hiprod[3] = pchi * count[2];
-            		hiprod[4] = pchi * count[3];
-            		count[0] *= pclo;
-            		count[1] *= pclo;
-            		count[2] *= pclo;
-            		count[3] *= pclo;
+            count[0] *= p3->count;
+            count[1] *= p3->count;
+            count[2] *= p3->count;
+            carry(count, 0);
+            carry(count, 1);
+            carry(count, 2);
+            if(linear_flag){
+              /* If scoring is pointers (quadratic) instead of linear*/
+              AM_LONG pointercount = 0;
+              for (i = 0; i < length; ++i)
+                pointercount += (AM_LONG) SvUV(*hv_fetch(contextsize,
+                    (char *) (subcontext + (4 * intersectlist[i])), 8, 0));
+              if (pointercount & 0xffff0000) {
+                AM_SHORT pchi = (AM_SHORT) (high_bits(pointercount));
+                AM_SHORT pclo = (AM_SHORT) (low_bits(pointercount));
+                AM_LONG hiprod[6];
+                hiprod[1] = pchi * count[0];
+                hiprod[2] = pchi * count[1];
+                hiprod[3] = pchi * count[2];
+                hiprod[4] = pchi * count[3];
+                count[0] *= pclo;
+                count[1] *= pclo;
+                count[2] *= pclo;
+                count[3] *= pclo;
                 carry(count, 0);
                 carry(count, 1);
                 carry(count, 2);
                 carry(count, 3);
 
-            		count[1] += hiprod[1];
-            		count[2] += hiprod[2];
-            		count[3] += hiprod[3];
-            		count[4] += hiprod[4];
+                count[1] += hiprod[1];
+                count[2] += hiprod[2];
+                count[3] += hiprod[3];
+                count[4] += hiprod[4];
                 carry(count, 1);
                 carry(count, 2);
                 carry(count, 3);
                 carry(count, 4);
-      	      } else {
-            		count[0] *= pointercount;
-            		count[1] *= pointercount;
-            		count[2] *= pointercount;
-            		count[3] *= pointercount;
-                carry(count, 0);
-                carry(count, 1);
-                carry(count, 2);
-                carry(count, 3);
-      	      }
-      	      for (i = 0; i < length; ++i) {
-            		int j;
-            		SV *tempsv;
-            		AM_LONG *p;
-                /* TODO: explain this */
-            		tempsv = *hv_fetch(pointers,
-            	      (char *) (subcontext + (4 * intersectlist[i])), 8, 1);
-            		if (!SvPOK(tempsv)) {
-            		  SvUPGRADE(tempsv, SVt_PVNV);
-            		  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
-            		  Zero(SvPVX(tempsv), 8, AM_LONG);
-            		  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
-            		  SvPOK_on(tempsv);
-            		}
-            		p = (AM_LONG *) SvPVX(tempsv);
-            		for (j = 0; j < 7; ++j) {
-            		  *(p + j) += count[j];
-                  carry_pointer(p + j);
-            		}
-      	      }/* end for (i = 0; i < length... */
-	          }/* end if(length) */
-	        }/* end for (p3 = sptr[3]... */
-	      }/* end for (p2 = sptr[2]... */
-      }/* end for (p1 = sptr[1]... */
-    }/* end for (p0 = sptr[0]... */
-    /* clear out the supracontexts */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
-      Safefree(p0->data);
-    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
-      Safefree(p1->data);
-    for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
-      Safefree(p2->data);
-    for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
-      Safefree(p3->data);
-  }/* end if (linear_flag) */
-  else {
-    /* linear */
-    AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT length;
-    AM_SHORT *k;
-
-    /* find intersections */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
-      for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
-      /*Find intersection between p0 and p2*/
-        k = intersect_supras(
-          p0->data + p0->data[0] + 1,
-          p1->data + p1->data[0] + 1,
-          ilist2top
-        );
-        /* If k has not been increased then intersection was empty */
-      	if (k == ilist2top)
-          continue;
-      	*k = 0;
-
-      	for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
-
-          /*Find intersection between previous intersection and p2*/
-          k = intersect_supras(
-            ilist2top,
-            p2->data + p2->data[0] + 1,
-            ilist3top
-          );
-          /* If k has not been increased then intersection was empty */
-      	  if (k == ilist3top)
-            continue;
-      	  *k = 0;
-
-      	  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
-
-            /* Find intersection between previous intersection and p3;
-             * check for disqualified supras this time.
-             */
-            length = intersect_supras_final(
-              ilist3top,
-              p3->data + p3->data[0] + 1,
-              intersectlist,
-              subcontext_class
-            );
-
-            /* count occurrences */
-      	    if (length) {
-      	      AM_SHORT i;
-      	      AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
-      	      AM_LONG mask = 0xffff;
-
-      	      count[0]  = p0->count;
-
-      	      count[0] *= p1->count;
-              carry(count, 0);
-
-      	      count[0] *= p2->count;
-      	      count[1] *= p2->count;
-              carry(count, 0);
-              carry(count, 1);
-
-      	      count[0] *= p3->count;
-      	      count[1] *= p3->count;
-      	      count[2] *= p3->count;
-              carry(count, 0);
-              carry(count, 1);
-              carry(count, 2);
-
-      	      for (i = 0; i < length; ++i) {
-            		int j;
-            		SV *tempsv;
-            		AM_LONG *p;
-            		tempsv = *hv_fetch(pointers,
-      				      (char *) (subcontext + (4 * intersectlist[i])), 8, 1);
-            		if (!SvPOK(tempsv)) {
-            		  SvUPGRADE(tempsv, SVt_PVNV);
-            		  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
-            		  Zero(SvPVX(tempsv), 8, AM_LONG);
-            		  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
-            		  SvPOK_on(tempsv);
-            		}
-            		p = (AM_LONG *) SvPVX(tempsv);
-            		for (j = 0; j < 7; ++j) {
-            		  *(p + j) += count[j];
-                  carry_pointer(p + j);
-            		}
-      	      }/* end for (i = 0;... */
-      	    }/* end if (length) */
-      	  }/* end for (p3 = sptr[3]... */
-      	}/* end  for (p2 = sptr[2]... */
-      }/* end  for (p1 = sptr[1]... */
-    }/* end  for (p0 = sptr[0]... */
-    /* clear out the supracontexts */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
-      Safefree(p0->data);
-    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
-      Safefree(p1->data);
-    for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
-      Safefree(p2->data);
-    for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
-      Safefree(p3->data);
-  }/* end else of if(linear_flag)*/
+                } else {
+                  count[0] *= pointercount;
+                  count[1] *= pointercount;
+                  count[2] *= pointercount;
+                  count[3] *= pointercount;
+                  carry(count, 0);
+                  carry(count, 1);
+                  carry(count, 2);
+                  carry(count, 3);
+              }
+            }
+            for (i = 0; i < length; ++i) {
+              int j;
+              SV *tempsv;
+              AM_LONG *p;
+              tempsv = *hv_fetch(pointers,
+                  (char *) (subcontext + (4 * intersectlist[i])), 8, 1);
+              if (!SvPOK(tempsv)) {
+                SvUPGRADE(tempsv, SVt_PVNV);
+                SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
+                Zero(SvPVX(tempsv), 8, AM_LONG);
+                SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
+                SvPOK_on(tempsv);
+              }
+              p = (AM_LONG *) SvPVX(tempsv);
+              for (j = 0; j < 7; ++j) {
+                *(p + j) += count[j];
+                carry_pointer(p + j);
+              }
+            }/* end for (i = 0;... */
+          }/* end if (length) */
+        }/* end for (p3 = sptr[3]... */
+      }/* end  for (p2 = sptr[2]... */
+    }/* end  for (p1 = sptr[1]... */
+  }/* end  for (p0 = sptr[0]... */
+  /* clear out the supracontexts */
+  for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
+    Safefree(p0->data);
+  for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
+    Safefree(p1->data);
+  for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
+    Safefree(p2->data);
+  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
+    Safefree(p3->data);
 
   /*
    * compute analogical set and gang effects

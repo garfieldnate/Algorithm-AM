@@ -1,7 +1,8 @@
 Algorithm::AM
 
 Generalize to using any number of lattices
-Next: combine code in linear and non-linear blocks
+
+change linear_flag to quadratic_flag, which is what it actually represents, or change logic to treat it like an actual linear flag
 
 save active_feats instead of remaking it in AM.pm if exclude_nulls is not set
 
