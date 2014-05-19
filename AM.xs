@@ -502,8 +502,8 @@ _fillandcount(...)
   AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
   /* Input args are the AM object ($self), number of features
-   * perl lattice, and a flag to indicate whether to count pointers
-   * linearly or quadratically.
+   * perl lattice, and a flag to indicate whether to count occurrences
+   * (true) or pointers (false), also known as linear/quadratic.
    */
   project = (HV *) SvRV(ST(0));
   lattice_sizes_input = AvARRAY((AV *) SvRV(ST(1)));
@@ -843,7 +843,7 @@ _fillandcount(...)
             carry(count, 0);
             carry(count, 1);
             carry(count, 2);
-            if(linear_flag){
+            if(!linear_flag){
               /* If scoring is pointers (quadratic) instead of linear*/
               AM_LONG pointercount = 0;
               for (i = 0; i < length; ++i)

@@ -202,7 +202,7 @@ sub classify {
 
     $result->start_time([ (localtime)[0..2] ]);
     $self->_fillandcount(
-        $lattice_sizes, $self->linear ? 0 : 1);
+        $lattice_sizes, $self->linear ? 1 : 0);
     $result->end_time([ (localtime)[0..2] ]);
 
     unless ($self->{pointers}->{'grandtotal'}) {
