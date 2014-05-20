@@ -1,6 +1,9 @@
 Algorithm::AM
 
 Generalize to using any number of lattices
+    Next: generalize lattice intersection to any number
+
+Make some big int handling functions to reduce complexity
 
 save active_feats instead of remaking it in AM.pm if exclude_nulls is not set
 
