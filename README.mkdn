@@ -4,7 +4,7 @@ Algorithm::AM - Classify data with Analogical Modeling
 
 # VERSION
 
-version 3.02
+version 3.03
 
 # SYNOPSIS
 
@@ -20,7 +20,7 @@ version 3.02
 Analogical Modeling is an exemplar-based way to model language usage.
 This module analyzes data sets using Analogical Modeling, an
 exemplar-based approach to modeling language usage or other sticky
-phenomena. This module logs information using [Log::Any](http://search.cpan.org/perldoc?Log::Any), so if you
+phenomena. This module logs information using [Log::Any](https://metacpan.org/pod/Log::Any), so if you
 want automatic print-outs you need to set an adaptor. See the
 ["classify"](#classify) method for more information on logged data.
 
@@ -28,18 +28,18 @@ want automatic print-outs you need to set an adaptor. See the
 
 When this module is imported, it also imports the following:
 
-- [Algorithm::AM::Result](http://search.cpan.org/perldoc?Algorithm::AM::Result)
-- [Algorithm::AM::DataSet](http://search.cpan.org/perldoc?Algorithm::AM::DataSet)
+- [Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result)
+- [Algorithm::AM::DataSet](https://metacpan.org/pod/Algorithm::AM::DataSet)
 
-    Also imports the ["dataset\_from\_file" in Algorithm::AM::DataSet](http://search.cpan.org/perldoc?Algorithm::AM::DataSet#dataset\_from\_file) function.
+    Also imports the ["dataset\_from\_file" in Algorithm::AM::DataSet](https://metacpan.org/pod/Algorithm::AM::DataSet#dataset_from_file) function.
 
-- [Algorithm::AM::DataSet::Item](http://search.cpan.org/perldoc?Algorithm::AM::DataSet::Item)
+- [Algorithm::AM::DataSet::Item](https://metacpan.org/pod/Algorithm::AM::DataSet::Item)
 
-    Also imports the ["new\_item" in Algorithm::AM::DataSet::Item](http://search.cpan.org/perldoc?Algorithm::AM::DataSet::Item#new\_item) function.
+    Also imports the ["new\_item" in Algorithm::AM::DataSet::Item](https://metacpan.org/pod/Algorithm::AM::DataSet::Item#new_item) function.
 
-- [Algorithm::AM::BigInt](http://search.cpan.org/perldoc?Algorithm::AM::BigInt)
+- [Algorithm::AM::BigInt](https://metacpan.org/pod/Algorithm::AM::BigInt)
 
-    Also imports the ["bigcmp" in Algorithm::AM::BigInt](http://search.cpan.org/perldoc?Algorithm::AM::BigInt#bigcmp) function.
+    Also imports the ["bigcmp" in Algorithm::AM::BigInt](https://metacpan.org/pod/Algorithm::AM::BigInt#bigcmp) function.
 
 # METHODS
 
@@ -48,20 +48,20 @@ When this module is imported, it also imports the following:
 Creates a new instance of an analogical modeling classifier. This
 method takes named parameters which set set state described in the
 documentation for the relevant methods. The only required parameter
-is ["training\_set"](#training\_set), which should be an instance of
-[Algorithm::AM::DataSet](http://search.cpan.org/perldoc?Algorithm::AM::DataSet), and which defines the set of items used
+is ["training\_set"](#training_set), which should be an instance of
+[Algorithm::AM::DataSet](https://metacpan.org/pod/Algorithm::AM::DataSet), and which defines the set of items used
 for training during classification. All of the accepted parameters
 are listed below:
 
-- ["training\_set"](#training\_set)
-- ["exclude\_nulls"](#exclude\_nulls)
-- ["exclude\_given"](#exclude\_given)
+- ["training\_set"](#training_set)
+- ["exclude\_nulls"](#exclude_nulls)
+- ["exclude\_given"](#exclude_given)
 - ["linear"](#linear)
 
 ## `training_set`
 
 Returns (but will not set) the dataset used for training. This is
-an instance of [Algorithm::AM::DataSet](http://search.cpan.org/perldoc?Algorithm::AM::DataSet).
+an instance of [Algorithm::AM::DataSet](https://metacpan.org/pod/Algorithm::AM::DataSet).
 
 ## `exclude_nulls`
 
@@ -81,7 +81,7 @@ classification. Defaults to true.
 Get/set a boolean value indicating whether the analogical set should
 be computed using _occurrences_ (linearly) or _pointers_
 (quadratically). To understand what this means, you should read the
-[algorithm](http://search.cpan.org/perldoc?Algorithm::AM::algorithm) page. A false value indicates
+[algorithm](https://metacpan.org/pod/Algorithm::AM::algorithm) page. A false value indicates
 quadratic counting. Defaults to false.
 
 ## `classify`
@@ -89,10 +89,10 @@ quadratic counting. Defaults to false.
     $am->classify(new_item(features => ['a','b','c']));
 
 Using the analogical modeling algorithm, this method classifies
-the input test item and returns a [Result](http://search.cpan.org/perldoc?Algorithm::AM::Result)
+the input test item and returns a [Result](https://metacpan.org/pod/Algorithm::AM::Result)
 object.
 
-[Log::Any](http://search.cpan.org/perldoc?Log::Any) is used for logging. The full classification configuration
+[Log::Any](https://metacpan.org/pod/Log::Any) is used for logging. The full classification configuration
 is logged at the info level. A notice is printed at the warning
 level if no training items can be compared with the test item,
 preventing any classification.
@@ -127,7 +127,7 @@ The <home page|http://humanities.byu.edu/am/> for Analogical Modeling
 includes information about current research and publications, as well as
 sample data sets.
 
-The [Wikipedia article](http://en.wikipedia.org/wiki/Analogical\_modeling)
+The [Wikipedia article](http://en.wikipedia.org/wiki/Analogical_modeling)
 has details and even illustrations on analogical modeling.
 
 # AUTHOR
