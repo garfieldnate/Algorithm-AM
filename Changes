@@ -1,7 +1,7 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    Update to API of Test::Class 1.00000
 3.02      2014-05-17 16:06:25 Asia/Seoul
     test_in_data in Result changed to test_in_train
     'vars' in gang_effects return structure changed to 'features'

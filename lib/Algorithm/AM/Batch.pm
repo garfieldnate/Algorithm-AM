@@ -5,7 +5,16 @@ use warnings;
 # VERSION
 use feature 'state';
 use Carp;
+use Log::Any qw($log);
 our @CARP_NOT = qw(Algorithm::AM::Batch);
+
+# Place this accessor here so that Class::Tiny doesn't generate 
+# a getter/setter pair.
+sub test_set {
+    my ($self) = @_;
+    return $self->{test_set};
+}
+
 use Class::Tiny qw(
     training_set
 
@@ -23,6 +32,8 @@ use Class::Tiny qw(
     end_repeat_hook
     end_test_hook
     end_hook
+
+    test_set
 ), {
     exclude_nulls     => 1,
     exclude_given    => 1,
@@ -45,10 +56,16 @@ sub import {
     return;
 }
 
-use Log::Any qw($log);
-
+my %valid_attrs = map {$_ => 1}
+    Class::Tiny->get_all_attributes_for('Algorithm::AM::Batch');
 sub BUILD {
     my ($self, $args) = @_;
+
+    # check for invalid arguments
+    my @invalids = grep {!$valid_attrs{$_}} sort keys %$args;
+    if(@invalids){
+        croak 'Invalid attributes for Algorithm::AM::Batch: ' . join ' ', sort @invalids;
+    }
 
     if(!exists $args->{training_set}){
         croak "Missing required parameter 'training_set'";
@@ -71,6 +88,7 @@ sub BUILD {
             croak "Input $_ should be a subroutine";
         }
     }
+
     return;
 }
 
@@ -247,11 +265,6 @@ sub _make_training_set {
     }
     # $self->_set_excluded_items(\@excluded_items);
     return ($training_set, \@excluded_items);
-}
-
-sub test_set {
-    my ($self) = @_;
-    return $self->{test_set};
 }
 
 sub _set_test_set {

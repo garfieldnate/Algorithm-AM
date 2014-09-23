@@ -6,28 +6,46 @@ our $VERSION = '3.02'; # VERSION
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
+
+# Place this accessor here so that Class::Tiny doesn't generate 
+# a getter/setter pair.
+sub training_set {
+    my ($self) = @_;
+    return $self->{training_set};
+}
+
 use Class::Tiny qw(
     exclude_nulls
     exclude_given
     linear
+    training_set
 ), {
     exclude_nulls     => 1,
     exclude_given    => 1,
     linear      => 0,
 };
 
+my %valid_attrs = map {$_ => 1}
+    Class::Tiny->get_all_attributes_for('Algorithm::AM');
 sub BUILD {
     my ($self, $args) = @_;
+
+    # check for invalid arguments
+    my @invalids = grep {!$valid_attrs{$_}} sort keys %$args;
+    if(@invalids){
+        croak 'Invalid attributes for Algorithm::AM: ' . join ' ', sort @invalids;
+    }
 
     if(!exists $args->{training_set}){
         croak "Missing required parameter 'training_set'";
     }
+
     if('Algorithm::AM::DataSet' ne ref $args->{training_set}){
         croak 'Parameter training_set should ' .
             'be an Algorithm::AM::DataSet';
     }
-    $self->_initialize($args->{training_set});
-    delete $args->{training_set};
+    $self->_initialize();
+    # delete $args->{training_set};
     return;
 }
 
@@ -55,6 +73,7 @@ sub _initialize {
     my ($self) = @_;
 
     my $train = $self->training_set;
+
     # compute sub-lattices sizes here so that lattice space can be
     # allocated in the _xs_initialize method. If certain features are
     # thrown out later, each sub-lattice can only get smaller, so
@@ -289,13 +308,6 @@ sub _context_label {
     # a context label is an array of unsigned shorts in XS
     my $context = pack "S!4", @context_list;
     return $context;
-}
-
-# don't use Class::Tiny for this one because we don't want a
-# setter method
-sub training_set {
-    my ($self) = @_;
-    return $self->{training_set};
 }
 
 1;
