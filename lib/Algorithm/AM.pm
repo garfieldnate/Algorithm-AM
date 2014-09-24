@@ -2,7 +2,7 @@ package Algorithm::AM;
 use strict;
 use warnings;
 # ABSTRACT: Classify data with Analogical Modeling
-our $VERSION = '3.02'; # VERSION
+our $VERSION = '3.03'; # VERSION
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
@@ -25,15 +25,17 @@ use Class::Tiny qw(
     linear      => 0,
 };
 
-my %valid_attrs = map {$_ => 1}
-    Class::Tiny->get_all_attributes_for('Algorithm::AM');
 sub BUILD {
     my ($self, $args) = @_;
 
     # check for invalid arguments
+    my $class = ref $self;
+    my %valid_attrs = map {$_ => 1}
+        Class::Tiny->get_all_attributes_for($class);
     my @invalids = grep {!$valid_attrs{$_}} sort keys %$args;
     if(@invalids){
-        croak 'Invalid attributes for Algorithm::AM: ' . join ' ', sort @invalids;
+        croak "Invalid attributes for $class: " . join ' ',
+            sort @invalids;
     }
 
     if(!exists $args->{training_set}){
