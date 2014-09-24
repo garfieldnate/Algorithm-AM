@@ -1,8 +1,9 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 5;
+plan tests => 7;
 use Test::LongString;
+use Test::Deep;
 # TODO: Remove the use of Algorithm::AM so that the
 # tests aren't co-dependent
 use Algorithm::AM;
@@ -18,6 +19,7 @@ test_statistical_summary($result);
 test_aset_summary($result);
 test_gang_summary($result);
 test_undefined_result($am);
+test_scores($result);
 
 # test that the configuration information is correctly printed by
 # the config_info method after setting internal state through
@@ -279,4 +281,15 @@ sub test_undefined_result {
     );
     my $result = $am->classify($item);
     is($result->result, undef, 'result is undef for unlabeled item');
+}
+
+sub test_scores {
+    my ($result) = @_;
+    is_deeply($result->scores, {'e' => 4, 'r' => 9},
+        'scores') or note explain $result->scores;
+    cmp_deeply($result->scores_normalized,
+        {'e' => num(.3076923, .00001), 'r' => num(.6923077, .00001)},
+        'normalized scores') or
+        note explain $result->scores_normalized;
+
 }

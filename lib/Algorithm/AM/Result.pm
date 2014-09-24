@@ -54,12 +54,24 @@ use Class::Tiny qw(
     training_set
 
     scores
+    scores_normalized
     high_score
     total_points
     winners
     is_tie
     result
-);
+), {
+    'scores_normalized' => sub {
+        my ($self) = @_;
+        my $total_points = $self->total_points;
+        my $scores = $self->scores;
+        my $normalized = {};
+        for my $class (keys %$scores){
+            $normalized->{$class} = $scores->{$class} / $total_points
+        }
+        return $normalized;
+    }
+};
 use Carp 'croak';
 use Algorithm::AM::BigInt 'bigcmp';
 
@@ -642,6 +654,19 @@ Returns the highest score assigned to any of the class labels.
 =head2 C<scores>
 
 Returns a hash mapping all predicted classes to their scores.
+
+=head2 C<scores_normalized>
+
+Returns a hash mapping all predicted classes to their score,
+divided by the total score for all classes. For example,
+if the L</scores> method returns the following:
+
+ {'e' => 4, 'r' => 9}
+
+then this method would return the following (values below are
+rounded):
+
+ {'e' => 0.3076923, 'r' => 0.6923077}
 
 =head2 C<winners>
 
