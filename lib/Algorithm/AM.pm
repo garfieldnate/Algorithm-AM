@@ -7,7 +7,7 @@ use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);
 
-# Place this accessor here so that Class::Tiny doesn't generate 
+# Place this accessor here so that Class::Tiny doesn't generate
 # a getter/setter pair.
 sub training_set {
     my ($self) = @_;
@@ -326,12 +326,56 @@ __END__
 
 =head1 DESCRIPTION
 
-Analogical Modeling is an exemplar-based way to model language usage.
-This module analyzes data sets using Analogical Modeling, an
-exemplar-based approach to modeling language usage or other sticky
-phenomena. This module logs information using L<Log::Any>, so if you
+This module provides an object-oriented interface for
+classifying single items using the analogical modeling algorithm.
+To work with sets of items needing to be classified, see
+L<Algorithm::AM::Batch>.
+
+This module logs information using L<Log::Any>, so if you
 want automatic print-outs you need to set an adaptor. See the
 L</classify> method for more information on logged data.
+
+=head1 BACKGROUND AND TERMINOLOGY
+
+Analogical Modeling (or AM) was developed as an exemplar-based
+approach to modeling language usage, and has also been found useful
+in modeling other "sticky" phenomena. AM is especially suited to this
+because it predicts probabilistic occurrences instead of assigning
+static labels to instances.
+
+The AM algorithm can be called a
+L<probabilistic|http://en.wikipedia.org/wiki/Probabilistic_classification>,
+L<instance-based|http://en.wikipedia.org/wiki/Instance-based_learning>
+classifier. However, the probabilities given for each classification
+are not degrees of certainty, but actual probabilities of occurring
+in real usage. Thus in AM literature the classification is supposed
+to produce dynamic "outcomes", not static "labels". In AM proper,
+the last step of classification is to produce an
+outcome at random based on the calculated probability distribution.
+AM therefore predicts that "sticky" phenomena are "sticky"
+because they vary probabilistically, defying absolute prediction.
+
+In this software, an outcome can be chosen probabilistically using
+L<Algorithm::AM::Result/outcome>. However, in practice, usually only
+the highest-probability prediction(s) are used for classification
+tasks. These can be retrieved via
+L<Algorithm::AM::Result/winners>. The entire outcome probability
+distribution can be retrieved via
+L<Algorithm::AM::Result/scores_normalized>. See
+L<Algorithm::AM::Result> for other types of information available
+after classification. See L<Algorithm::AM::algorithm> for details
+on the actual mechanism of classification.
+
+Outside of the C<outcome> method mentioned above, the rest of the
+software uses more general machine learning terminology. What would
+properly be called an "exemplar" is referred to simply as an "item",
+and, as is customary, "training" and "test" sets are used, even
+though AM never does any actual "training". Training items
+are assigned "class labels" (not "outcomes"), and classification
+results in a set of scores (or probabilities) for different "class
+labels", even though they would properly be called "outcomes".
+Finally, items contain vectors of "features", which were called
+"variables" in previous versions of this software.
 
 =head1 EXPORTS
 
@@ -343,15 +387,15 @@ When this module is imported, it also imports the following:
 
 =item L<Algorithm::AM::DataSet>
 
-Also imports the L<Algorithm::AM::DataSet/dataset_from_file> function.
+Also imports L<Algorithm::AM::DataSet/dataset_from_file>.
 
 =item L<Algorithm::AM::DataSet::Item>
 
-Also imports the L<Algorithm::AM::DataSet::Item/new_item> function.
+Also imports L<Algorithm::AM::DataSet::Item/new_item>.
 
 =item L<Algorithm::AM::BigInt>
 
-Also imports the L<Algorithm::AM::BigInt/bigcmp> function.
+Also imports L<Algorithm::AM::BigInt/bigcmp>.
 
 =back
 
@@ -362,7 +406,7 @@ Also imports the L<Algorithm::AM::BigInt/bigcmp> function.
 =head2 C<new>
 
 Creates a new instance of an analogical modeling classifier. This
-method takes named parameters which set set state described in the
+method takes named parameters which set state described in the
 documentation for the relevant methods. The only required parameter
 is L</training_set>, which should be an instance of
 L<Algorithm::AM::DataSet>, and which defines the set of items used

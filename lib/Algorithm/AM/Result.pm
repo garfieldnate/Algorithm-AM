@@ -78,6 +78,14 @@ use Algorithm::AM::BigInt 'bigcmp';
 # For printing percentages in reports
 my $percentage_format = '%7.3f%%';
 
+=head1 REPORT METHODS
+
+The methods below return human eye-friendly reports about the
+classification. The return value is a reference, so it must be
+dereferenced for printing like so:
+
+ print ${ $result->statistical_summary };
+
 =head2 C<config_info>
 
 Returns a scalar (string) ref containing information about the
@@ -116,12 +124,12 @@ sub config_info {
 # store information needed for computing analogical sets.
 # Set result to tie/correct/incorrect and also is_tie if
 # expected class is provided, and high_score, scores, winners, and
-# total_pointers.
+# total_points.
 sub _process_stats {
     my ($self, $sum, $pointers,
         $itemcontextchainhead, $itemcontextchain, $context_to_class,
         $gang, $active_feats, $contextsize) = @_;
-    my $total_pointers = $pointers->{grandtotal};
+    my $total_points = $pointers->{grandtotal};
     my $max = '';
     my @winners;
     my %scores;
@@ -171,7 +179,7 @@ sub _process_stats {
     $self->high_score($max);
     $self->scores(\%scores);
     $self->winners(\@winners);
-    $self->total_points($total_pointers);
+    $self->total_points($total_points);
     $self->{pointers} = $pointers;
     $self->{itemcontextchainhead} = $itemcontextchainhead;
     $self->{itemcontextchain} = $itemcontextchain;
@@ -195,7 +203,7 @@ test item had a known class.
 sub statistical_summary {
     my ($self) = @_;
     my %scores = %{$self->scores};
-    my $grand_total = $self->total_points;
+    my $total_points = $self->total_points;
 
     # Make a table with information about predictions for different
     # classes. Each row contains a class name, the score,
@@ -204,10 +212,10 @@ sub statistical_summary {
     for my $class (sort keys %scores){
         push @rows, [ $class, $scores{$class},
             sprintf($percentage_format,
-                100 * $scores{$class} / $grand_total) ];
+                100 * $scores{$class} / $total_points) ];
     }
     # add a Total row
-    push @rows, [ 'Total', $grand_total ];
+    push @rows, [ 'Total', $total_points ];
 
     my @table = _make_table(['Class', 'Score', 'Percentage'],
         \@rows);
@@ -237,14 +245,22 @@ sub statistical_summary {
 
 =head2 C<analogical_set>
 
-Returns the analogical set in the form of a hash ref containing
-its items and the scores contributed by each towards a classification
-matching its own class label. The hash structure is like so:
+The analogical set is the set of items from the training set that
+had some effect on the item classification. The analogical effect of
+an item in the analogical set is the score it contributed towards
+a classification matching its own class label.
+
+This method returns the items in the analogical set along with their
+analogical effects, in the following structure:
 
  { 'item_id' => {'item' => item, 'score' => score}
 
-where C<item> is the actual item object. The item_id is used so that
-the analogical effect of a particular item can be found quickly.
+C<item> above is the actual item object. The item_id is used so that
+the analogical effect of a particular item can be found quickly:
+
+ my $set = $result->analogical_set;
+ print 'the item's analogical effect was '
+     . $set->{$item->id}->score;
 
 =cut
 sub analogical_set {
@@ -269,7 +285,7 @@ set.
 sub analogical_set_summary {
     my ($self) = @_;
     my $set = $self->analogical_set;
-    my $total_pointers = $self->total_points;
+    my $total_points = $self->total_points;
 
     # Make a table for the analogical set. Each row contains an
     # item with its class, comment, score, and the percentage
@@ -282,12 +298,12 @@ sub analogical_set_summary {
             $entry->{item}->class,
             $entry->{item}->comment,
             $score,
-            sprintf($percentage_format, 100 * $score / $total_pointers)
+            sprintf($percentage_format, 100 * $score / $total_points)
         ];
     }
     my @table = _make_table(
         ['Class', 'Item', 'Score', 'Percentage'], \@rows);
-    my $info = "Analogical Set\nTotal Frequency = $total_pointers\n";
+    my $info = "Analogical Set\nTotal Frequency = $total_points\n";
     $info .= join '', @table;
     return \$info;
 }
@@ -466,7 +482,7 @@ sub _sort_gangs {## no critic (RequireArgUnpacking)
 sub _calculate_gangs {
     my ($self) = @_;
     my $train = $self->training_set;
-    my $total_pointers = $self->total_points;
+    my $total_points = $self->total_points;
     my $raw_gang = $self->{gang};
     my $gangs = {};
 
@@ -476,7 +492,7 @@ sub _calculate_gangs {
         # for now, store gangs by the supracontext printout
         my $key = join ' ', map {$_ || '-'} @features;
         $gangs->{$key}->{score} = $raw_gang->{$context};
-        $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_pointers;
+        $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_points;
         $gangs->{$key}->{features} = \@features;
 
         my $p = $self->{pointers}->{$context};
@@ -527,7 +543,7 @@ sub _calculate_gangs {
                 $gangs->{$key}->{class}->{$class}->{score} = $p;
                 $gangs->{$key}->{class}->{$class}->{effect} =
                     # score*num_data/total
-                    @{ $data{$class} } * $p / $total_pointers;
+                    @{ $data{$class} } * $p / $total_points;
             }
         }
     }
@@ -636,7 +652,7 @@ for computing analogical sets. See L<Algorithm::AM/linear>.
 Returns the L<data set|Algorithm::AM::DataSet> which was the
 source of classification data.
 
-=head1 CLASSIFICATION INFORMATION
+=head1 RESULT DETAILS
 
 The following methods provide information about the results of
 the classification.
