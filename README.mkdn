@@ -35,7 +35,7 @@ because it predicts probabilistic occurrences instead of assigning
 static labels to instances.
 
 The AM algorithm can be called a
-[probabilistic](http://en.wikipedia.org/wiki/Probabilistic_classification)
+[probabilistic](http://en.wikipedia.org/wiki/Probabilistic_classification),
 [instance-based](http://en.wikipedia.org/wiki/Instance-based_learning)
 classifier. However, the probabilities given for each classification
 are not degrees of certainty, but actual probabilities of occurring
@@ -47,26 +47,29 @@ AM therefore predicts that "sticky" phenomena are "sticky"
 because they vary probabilistically, defying absolute prediction.
 
 In this software, an outcome can be chosen probabilistically using
-["outcome" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#outcome). However, in practice, usually only
+["random\_outcome" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#random_outcome). However, in practice,
+usually only
 the highest-probability prediction(s) are used for classification
 tasks. These can be retrieved via
-["winners" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#winners). The entire outcome probability
-distribution can be retrieved via
+["winners" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#winners), or ["result" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#result)
+if you're just interested in classification accuracy on a test set.
+The entire outcome probability distribution can also be retrieved via
 ["scores\_normalized" in Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result#scores_normalized). See
 [Algorithm::AM::Result](https://metacpan.org/pod/Algorithm::AM::Result) for other types of information available
 after classification. See [Algorithm::AM::algorithm](https://metacpan.org/pod/Algorithm::AM::algorithm) for details
 on the actual mechanism of classification.
 
-Outside of the `outcome` method mentioned above, the rest of the
+Outside of the `random_outcome` method mentioned above, the rest
+of the
 software uses more general machine learning terminology. What would
 properly be called an "exemplar" is referred to simply as an "item",
 and, as is customary, "training" and "test" sets are used, even
 though AM never does any actual "training". Training items
 are assigned "class labels" (not "outcomes"), and classification
 results in a set of scores (or probabilities) for different "class
-labels" (not "outcomes"). Finally, items contain vectors of
-"features", which were called "variables" in previous versions of
-this software.
+labels", even though they would properly be called "outcomes".
+Finally, items contain vectors of "features", which were called
+"variables" in previous versions of this software.
 
 # EXPORTS
 

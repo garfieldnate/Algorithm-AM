@@ -1,5 +1,6 @@
 requires "Carp" => "0";
 requires "Class::Tiny" => "0";
+requires "Crypt::PRNG" => "0";
 requires "Exporter::Easy" => "0";
 requires "Import::Into" => "0";
 requires "Log::Any" => "0";
