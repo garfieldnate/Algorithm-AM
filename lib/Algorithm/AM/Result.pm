@@ -691,7 +691,7 @@ assigned by the classification. Otherwise this returns C<undef>.
 
 This returns one of the class labels predicted for the test item.
 The choice is done probabilistically, with the probability of each
-value given by its L</scores_normalized|normalized score>.
+value given by its L<normalized score|/scores_normalized>.
 
 For a given result object, the return value of this method never
 changes; the value is only chosen once.
