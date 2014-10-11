@@ -356,17 +356,20 @@ AM therefore predicts that "sticky" phenomena are "sticky"
 because they vary probabilistically, defying absolute prediction.
 
 In this software, an outcome can be chosen probabilistically using
-L<Algorithm::AM::Result/outcome>. However, in practice, usually only
+L<Algorithm::AM::Result/random_outcome>. However, in practice,
+usually only
 the highest-probability prediction(s) are used for classification
 tasks. These can be retrieved via
-L<Algorithm::AM::Result/winners>. The entire outcome probability
-distribution can be retrieved via
+L<Algorithm::AM::Result/winners>, or L<Algorithm::AM::Result/result>
+if you're just interested in classification accuracy on a test set.
+The entire outcome probability distribution can also be retrieved via
 L<Algorithm::AM::Result/scores_normalized>. See
 L<Algorithm::AM::Result> for other types of information available
 after classification. See L<Algorithm::AM::algorithm> for details
 on the actual mechanism of classification.
 
-Outside of the C<outcome> method mentioned above, the rest of the
+Outside of the C<random_outcome> method mentioned above, the rest
+of the
 software uses more general machine learning terminology. What would
 properly be called an "exemplar" is referred to simply as an "item",
 and, as is customary, "training" and "test" sets are used, even

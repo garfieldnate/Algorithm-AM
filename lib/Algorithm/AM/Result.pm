@@ -3,6 +3,7 @@ package Algorithm::AM::Result;
 use strict;
 use warnings;
 use Text::Table;
+use Crypt::PRNG qw(rand);
 # ABSTRACT: Store results of an AM classification
 # VERSION;
 
@@ -54,12 +55,14 @@ use Class::Tiny qw(
     training_set
 
     scores
-    scores_normalized
     high_score
     total_points
     winners
     is_tie
     result
+
+    scores_normalized
+    random_outcome
 ), {
     'scores_normalized' => sub {
         my ($self) = @_;
@@ -70,6 +73,27 @@ use Class::Tiny qw(
             $normalized->{$class} = $scores->{$class} / $total_points
         }
         return $normalized;
+    },
+    'random_outcome' => sub {
+        my ($self) = @_;
+        my $score_map = $self->scores_normalized;
+        my @classes = sort keys %$score_map;
+        my @scores = @{$score_map}{@classes};
+        # this portion taken from List::Util::WeightedChoice
+        # create ranges for each of the classes, and pick
+        # a class by choosing a random number in the range.
+        my @ranges = ();
+        my $left = 0;
+        for my $score(@scores){
+            my $right = $left+$score;
+            push @ranges, $right;
+            $left = $right;
+        }
+        my $scoreIndex = rand $left;
+        for( my $i =0; $i< @scores; $i++){
+            my $range = $ranges[$i];
+            return $classes[$i] if $scoreIndex < $range;
+        }
     }
 };
 use Carp 'croak';
@@ -662,6 +686,15 @@ the classification.
 If the class of the test item was known before classification, this
 returns "tie", "correct", or "incorrect", depending on the label
 assigned by the classification. Otherwise this returns C<undef>.
+
+=head2 C<random_outcome>
+
+This returns one of the class labels predicted for the test item.
+The choice is done probabilistically, with the probability of each
+value given by its L</scores_normalized|normalized score>.
+
+For a given result object, the return value of this method never
+changes; the value is only chosen once.
 
 =head2 C<high_score>
 
