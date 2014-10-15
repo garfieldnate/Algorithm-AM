@@ -1,3 +1,5 @@
+#define PERL_NO_GET_CONTEXT
+#define NO_XSLOCKS
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -780,246 +782,247 @@ _fillandcount(...)
    * 3. Otherwise, we count the pointers or occurrences.
    *
    */
+  {
+    AM_SUPRA *p0, *p1, *p2, *p3;
+    AM_SHORT length;
+    AM_SHORT *k;
 
-  AM_SUPRA *p0, *p1, *p2, *p3;
-  AM_SHORT length;
-  AM_SHORT *k;
-
-  /* find intersections */
-  for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
-    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
-    /*Find intersection between p0 and p2*/
-      k = intersect_supras(
-        p0->data + p0->data[0] + 1,
-        p1->data + p1->data[0] + 1,
-        ilist2top
-      );
-      /* If k has not been increased then intersection was empty */
-      if (k == ilist2top)
-        continue;
-      *k = 0;
-
-      for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
-
-        /*Find intersection between previous intersection and p2*/
+    /* find intersections */
+    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
+      for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
+      /*Find intersection between p0 and p2*/
         k = intersect_supras(
-          ilist2top,
-          p2->data + p2->data[0] + 1,
-          ilist3top
+          p0->data + p0->data[0] + 1,
+          p1->data + p1->data[0] + 1,
+          ilist2top
         );
         /* If k has not been increased then intersection was empty */
-        if (k == ilist3top)
+        if (k == ilist2top)
           continue;
         *k = 0;
 
-        for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
+        for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
 
-          /* Find intersection between previous intersection and p3;
-           * check for disqualified supras this time.
-           */
-          length = intersect_supras_final(
-            ilist3top,
-            p3->data + p3->data[0] + 1,
-            intersectlist,
-            subcontext_class
+          /*Find intersection between previous intersection and p2*/
+          k = intersect_supras(
+            ilist2top,
+            p2->data + p2->data[0] + 1,
+            ilist3top
           );
+          /* If k has not been increased then intersection was empty */
+          if (k == ilist3top)
+            continue;
+          *k = 0;
 
-          /* count occurrences */
-          if (length) {
-            AM_SHORT i;
-            AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
-            AM_LONG mask = 0xffff;
+          for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
 
-            count[0]  = p0->count;
+            /* Find intersection between previous intersection and p3;
+             * check for disqualified supras this time.
+             */
+            length = intersect_supras_final(
+              ilist3top,
+              p3->data + p3->data[0] + 1,
+              intersectlist,
+              subcontext_class
+            );
 
-            count[0] *= p1->count;
-            carry(count, 0);
+            /* count occurrences */
+            if (length) {
+              AM_SHORT i;
+              AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
+              AM_LONG mask = 0xffff;
 
-            count[0] *= p2->count;
-            count[1] *= p2->count;
-            carry(count, 0);
-            carry(count, 1);
+              count[0]  = p0->count;
 
-            count[0] *= p3->count;
-            count[1] *= p3->count;
-            count[2] *= p3->count;
-            carry(count, 0);
-            carry(count, 1);
-            carry(count, 2);
-            if(!linear_flag){
-              /* If scoring is pointers (quadratic) instead of linear*/
-              AM_LONG pointercount = 0;
-              for (i = 0; i < length; ++i)
-                pointercount += (AM_LONG) SvUV(*hv_fetch(contextsize,
-                    (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 0));
-              if (pointercount & 0xffff0000) {
-                AM_SHORT pchi = (AM_SHORT) (high_bits(pointercount));
-                AM_SHORT pclo = (AM_SHORT) (low_bits(pointercount));
-                AM_LONG hiprod[6];
-                hiprod[1] = pchi * count[0];
-                hiprod[2] = pchi * count[1];
-                hiprod[3] = pchi * count[2];
-                hiprod[4] = pchi * count[3];
-                count[0] *= pclo;
-                count[1] *= pclo;
-                count[2] *= pclo;
-                count[3] *= pclo;
-                carry(count, 0);
-                carry(count, 1);
-                carry(count, 2);
-                carry(count, 3);
+              count[0] *= p1->count;
+              carry(count, 0);
 
-                count[1] += hiprod[1];
-                count[2] += hiprod[2];
-                count[3] += hiprod[3];
-                count[4] += hiprod[4];
-                carry(count, 1);
-                carry(count, 2);
-                carry(count, 3);
-                carry(count, 4);
-                } else {
-                  count[0] *= pointercount;
-                  count[1] *= pointercount;
-                  count[2] *= pointercount;
-                  count[3] *= pointercount;
+              count[0] *= p2->count;
+              count[1] *= p2->count;
+              carry(count, 0);
+              carry(count, 1);
+
+              count[0] *= p3->count;
+              count[1] *= p3->count;
+              count[2] *= p3->count;
+              carry(count, 0);
+              carry(count, 1);
+              carry(count, 2);
+              if(!linear_flag){
+                /* If scoring is pointers (quadratic) instead of linear*/
+                AM_LONG pointercount = 0;
+                for (i = 0; i < length; ++i)
+                  pointercount += (AM_LONG) SvUV(*hv_fetch(contextsize,
+                      (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 0));
+                if (pointercount & 0xffff0000) {
+                  AM_SHORT pchi = (AM_SHORT) (high_bits(pointercount));
+                  AM_SHORT pclo = (AM_SHORT) (low_bits(pointercount));
+                  AM_LONG hiprod[6];
+                  hiprod[1] = pchi * count[0];
+                  hiprod[2] = pchi * count[1];
+                  hiprod[3] = pchi * count[2];
+                  hiprod[4] = pchi * count[3];
+                  count[0] *= pclo;
+                  count[1] *= pclo;
+                  count[2] *= pclo;
+                  count[3] *= pclo;
                   carry(count, 0);
                   carry(count, 1);
                   carry(count, 2);
                   carry(count, 3);
+
+                  count[1] += hiprod[1];
+                  count[2] += hiprod[2];
+                  count[3] += hiprod[3];
+                  count[4] += hiprod[4];
+                  carry(count, 1);
+                  carry(count, 2);
+                  carry(count, 3);
+                  carry(count, 4);
+                  } else {
+                    count[0] *= pointercount;
+                    count[1] *= pointercount;
+                    count[2] *= pointercount;
+                    count[3] *= pointercount;
+                    carry(count, 0);
+                    carry(count, 1);
+                    carry(count, 2);
+                    carry(count, 3);
+                }
               }
-            }
-            for (i = 0; i < length; ++i) {
-              int j;
-              SV *tempsv;
-              AM_LONG *p;
-              tempsv = *hv_fetch(pointers,
-                  (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 1);
-              if (!SvPOK(tempsv)) {
-                SvUPGRADE(tempsv, SVt_PVNV);
-                SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
-                Zero(SvPVX(tempsv), 8, AM_LONG);
-                SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
-                SvPOK_on(tempsv);
-              }
-              p = (AM_LONG *) SvPVX(tempsv);
-              for (j = 0; j < 7; ++j) {
-                *(p + j) += count[j];
-                carry_pointer(p + j);
-              }
-            }/* end for (i = 0;... */
-          }/* end if (length) */
-        }/* end for (p3 = sptr[3]... */
-      }/* end  for (p2 = sptr[2]... */
-    }/* end  for (p1 = sptr[1]... */
-  }/* end  for (p0 = sptr[0]... */
-  /* clear out the supracontexts */
-  for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
-    Safefree(p0->data);
-  for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
-    Safefree(p1->data);
-  for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
-    Safefree(p2->data);
-  for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
-    Safefree(p3->data);
+              for (i = 0; i < length; ++i) {
+                int j;
+                SV *tempsv;
+                AM_LONG *p;
+                tempsv = *hv_fetch(pointers,
+                    (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 1);
+                if (!SvPOK(tempsv)) {
+                  SvUPGRADE(tempsv, SVt_PVNV);
+                  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
+                  Zero(SvPVX(tempsv), 8, AM_LONG);
+                  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
+                  SvPOK_on(tempsv);
+                }
+                p = (AM_LONG *) SvPVX(tempsv);
+                for (j = 0; j < 7; ++j) {
+                  *(p + j) += count[j];
+                  carry_pointer(p + j);
+                }
+              }/* end for (i = 0;... */
+            }/* end if (length) */
+          }/* end for (p3 = sptr[3]... */
+        }/* end  for (p2 = sptr[2]... */
+      }/* end  for (p1 = sptr[1]... */
+    }/* end  for (p0 = sptr[0]... */
+    /* clear out the supracontexts */
+    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
+      Safefree(p0->data);
+    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
+      Safefree(p1->data);
+    for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
+      Safefree(p2->data);
+    for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
+      Safefree(p3->data);
 
-  /*
-   * compute analogical set and gang effects
-   *
-   * Technically, we don't compute the analogical set; instead, we
-   * compute how many pointers/occurrences there are for each of the
-   * data items in a particular subcontext, and associate that number
-   * with the subcontext label, not directly with the data item.  We can
-   * do this because if two data items are in the same subcontext, they
-   * will have the same number of pointers/occurrences.
-   *
-   * If the user wants the detailed analogical set, it will be created
-   * in AM.pm.
-   *
-   */
-
-  gang = guts->gang;
-  classes = guts->classes;
-  itemcontextchain = guts->itemcontextchain;
-  itemcontextchainhead = guts->itemcontextchainhead;
-  sum = guts->sum;
-  num_classes = guts->num_classes;
-  hv_iterinit(pointers);
-  while (he = hv_iternext(pointers)) {
-    AM_LONG count;
-    AM_SHORT counthi, countlo;
-    AM_BIG_INT p;
-    AM_BIG_INT gangcount;
-    AM_SHORT this_class;
-    SV *dataitem;
-    Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
-
-    tempsv = *hv_fetch(contextsize, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
-    count = (AM_LONG) SvUVX(tempsv);
-    counthi = (AM_SHORT) (high_bits(count));
-    countlo = (AM_SHORT) (low_bits(count));
-
-    /* initialize 0 because it won't be overwritten */
     /*
-     * TODO: multiply through p[7] into gangcount[7]
-     * and warn if there's potential overflow
+     * compute analogical set and gang effects
+     *
+     * Technically, we don't compute the analogical set; instead, we
+     * compute how many pointers/occurrences there are for each of the
+     * data items in a particular subcontext, and associate that number
+     * with the subcontext label, not directly with the data item.  We can
+     * do this because if two data items are in the same subcontext, they
+     * will have the same number of pointers/occurrences.
+     *
+     * If the user wants the detailed analogical set, it will be created
+     * in AM.pm.
+     *
      */
-    gangcount[0] = 0;
-    for (i = 0; i < 7; ++i) {
-      gangcount[i] += countlo * p[i];
-      carry_replace(gangcount, i);
-    }
-    gangcount[7] += countlo * p[7];
 
-    /* TODO: why is element 0 not considered here? */
-    if (counthi) {
-      for (i = 0; i < 6; ++i) {
-        gangcount[i + 1] += counthi * p[i];
-        carry(gangcount, i + 1);
-      }
-    }
-    for (i = 0; i < 7; ++i) {
-      grandtotal[i] += gangcount[i];
-      carry(grandtotal, i);
-    }
-    grandtotal[7] += gangcount[7];
+    gang = guts->gang;
+    classes = guts->classes;
+    itemcontextchain = guts->itemcontextchain;
+    itemcontextchainhead = guts->itemcontextchainhead;
+    sum = guts->sum;
+    num_classes = guts->num_classes;
+    hv_iterinit(pointers);
+    while (he = hv_iternext(pointers)) {
+      AM_LONG count;
+      AM_SHORT counthi, countlo;
+      AM_BIG_INT p;
+      AM_BIG_INT gangcount;
+      AM_SHORT this_class;
+      SV *dataitem;
+      Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
 
-    tempsv = *hv_fetch(gang, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 1);
-    SvUPGRADE(tempsv, SVt_PVNV);
-    sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
-    normalize(tempsv);
-    normalize(HeVAL(he));
+      tempsv = *hv_fetch(contextsize, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      count = (AM_LONG) SvUVX(tempsv);
+      counthi = (AM_SHORT) (high_bits(count));
+      countlo = (AM_SHORT) (low_bits(count));
 
-    tempsv = *hv_fetch(context_to_class, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
-    this_class = (AM_SHORT) SvUVX(tempsv);
-    if (this_class) {
-      AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
+      /* initialize 0 because it won't be overwritten */
+      /*
+       * TODO: multiply through p[7] into gangcount[7]
+       * and warn if there's potential overflow
+       */
+      gangcount[0] = 0;
       for (i = 0; i < 7; ++i) {
-      	*(s + i) += gangcount[i];
-        carry_pointer(s + i);
+        gangcount[i] += countlo * p[i];
+        carry_replace(gangcount, i);
       }
-    } else {
-      dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
-      while (SvIOK(dataitem)) {
-      	IV datanum = SvIVX(dataitem);
-      	IV ocnum = SvIVX(classes[datanum]);
-      	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
-      	for (i = 0; i < 7; ++i) {
-      	  *(s + i) += p[i];
+      gangcount[7] += countlo * p[7];
+
+      /* TODO: why is element 0 not considered here? */
+      if (counthi) {
+        for (i = 0; i < 6; ++i) {
+          gangcount[i + 1] += counthi * p[i];
+          carry(gangcount, i + 1);
+        }
+      }
+      for (i = 0; i < 7; ++i) {
+        grandtotal[i] += gangcount[i];
+        carry(grandtotal, i);
+      }
+      grandtotal[7] += gangcount[7];
+
+      tempsv = *hv_fetch(gang, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 1);
+      SvUPGRADE(tempsv, SVt_PVNV);
+      sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
+      normalize(tempsv);
+      normalize(HeVAL(he));
+
+      tempsv = *hv_fetch(context_to_class, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      this_class = (AM_SHORT) SvUVX(tempsv);
+      if (this_class) {
+        AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
+        for (i = 0; i < 7; ++i) {
+        	*(s + i) += gangcount[i];
           carry_pointer(s + i);
-      	  dataitem = itemcontextchain[datanum];
-      	}
+        }
+      } else {
+        dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
+        while (SvIOK(dataitem)) {
+        	IV datanum = SvIVX(dataitem);
+        	IV ocnum = SvIVX(classes[datanum]);
+        	AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
+        	for (i = 0; i < 7; ++i) {
+        	  *(s + i) += p[i];
+            carry_pointer(s + i);
+        	  dataitem = itemcontextchain[datanum];
+        	}
+        }
       }
     }
-  }
-  for (i = 1; i <= num_classes; ++i) normalize(sum[i])
-    ;
-  tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
-  SvUPGRADE(tempsv, SVt_PVNV);
-  sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
-  normalize(tempsv);
+    for (i = 1; i <= num_classes; ++i) normalize(sum[i])
+      ;
+    tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
+    SvUPGRADE(tempsv, SVt_PVNV);
+    sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
+    normalize(tempsv);
 
-  Safefree(subcontext);
-  Safefree(subcontext_class);
-  Safefree(intersectlist);
-  Safefree(intersectlist2);
-  Safefree(intersectlist3);
+    Safefree(subcontext);
+    Safefree(subcontext_class);
+    Safefree(intersectlist);
+    Safefree(intersectlist2);
+    Safefree(intersectlist3);
+  }
