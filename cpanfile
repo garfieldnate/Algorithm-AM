@@ -79,7 +79,6 @@ on 'develop' => sub {
   requires "Dist::Zilla::Plugin::Repository" => "0";
   requires "Dist::Zilla::Plugin::RunExtraTests" => "0";
   requires "Dist::Zilla::Plugin::ShareDir" => "0";
-  requires "Dist::Zilla::Plugin::Signature" => "0";
   requires "Dist::Zilla::Plugin::Test::CPAN::Changes" => "0";
   requires "Dist::Zilla::Plugin::Test::CPAN::Meta::JSON" => "0";
   requires "Dist::Zilla::Plugin::Test::Compile" => "0";
