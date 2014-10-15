@@ -260,7 +260,7 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  *
  */
 
-normalize(SV *s) {
+normalize(pTHX_ SV *s) {
   AM_LONG dspace[10];
   AM_LONG qspace[10];
   char outspace[55];
@@ -988,8 +988,8 @@ _fillandcount(...)
       tempsv = *hv_fetch(gang, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 1);
       SvUPGRADE(tempsv, SVt_PVNV);
       sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
-      normalize(tempsv);
-      normalize(HeVAL(he));
+      normalize(aTHX_ tempsv);
+      normalize(aTHX_ HeVAL(he));
 
       tempsv = *hv_fetch(context_to_class, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
       this_class = (AM_SHORT) SvUVX(tempsv);
@@ -1013,12 +1013,12 @@ _fillandcount(...)
         }
       }
     }
-    for (i = 1; i <= num_classes; ++i) normalize(sum[i])
+    for (i = 1; i <= num_classes; ++i) normalize(aTHX_ sum[i])
       ;
     tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
     SvUPGRADE(tempsv, SVt_PVNV);
     sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
-    normalize(tempsv);
+    normalize(aTHX_ tempsv);
 
     Safefree(subcontext);
     Safefree(subcontext_class);
