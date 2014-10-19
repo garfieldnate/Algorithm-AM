@@ -1,7 +1,7 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    XS efficiency improvements, and tweaks in an attempt to comply with C89 and fix ActiveState builds.
 3.04      2014-10-11 22:24:48+09:00 Asia/Tokyo
     Add random_outcome method, and improve documentation.
 3.03      2014-09-23 21:22:31+09:00 Asia/Tokyo (TRIAL RELEASE)
