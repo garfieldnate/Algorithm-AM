@@ -5,7 +5,7 @@ use warnings;
 
 use 5.010000;
 
-use ExtUtils::MakeMaker ;
+use ExtUtils::MakeMaker 6.17;
 
 
 
@@ -13,7 +13,7 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Classify data with Analogical Modeling",
   "AUTHOR" => "Theron Stanford <shixilun\@yahoo.com>, Nathan Glenn <garfieldnate\@gmail.com>",
   "CONFIGURE_REQUIRES" => {
-    "ExtUtils::MakeMaker" => 0
+    "ExtUtils::MakeMaker" => "6.17"
   },
   "DISTNAME" => "Algorithm-AM",
   "EXE_FILES" => [],
@@ -35,11 +35,9 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "ExtUtils::MakeMaker" => 0,
     "File::Spec" => 0,
-    "File::Temp" => 0,
     "FindBin" => 0,
-    "IO::Handle" => 0,
-    "IPC::Open3" => 0,
     "Test::Deep" => 0,
     "Test::Exception" => 0,
     "Test::LongString" => 0,
@@ -58,11 +56,9 @@ my %FallbackPrereqs = (
   "Class::Tiny" => 0,
   "Crypt::PRNG" => 0,
   "Exporter::Easy" => 0,
+  "ExtUtils::MakeMaker" => 0,
   "File::Spec" => 0,
-  "File::Temp" => 0,
   "FindBin" => 0,
-  "IO::Handle" => 0,
-  "IPC::Open3" => 0,
   "Import::Into" => 0,
   "Log::Any" => 0,
   "Path::Tiny" => 0,

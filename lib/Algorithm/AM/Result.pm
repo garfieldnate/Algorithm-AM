@@ -2,10 +2,10 @@
 package Algorithm::AM::Result;
 use strict;
 use warnings;
+our $VERSION = '3.05';
+# ABSTRACT: Store results of an AM classification
 use Text::Table;
 use Crypt::PRNG qw(rand);
-# ABSTRACT: Store results of an AM classification
-# VERSION;
 
 =head2 SYNOPSIS
 

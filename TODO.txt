@@ -83,3 +83,25 @@ properly destroy project or AM object on error so that illegal state is not poss
 	- datacap
 - Where the documentation says to see 'the red book' or 'the green book' for details, remove the reference and put the details in the text!
 - Change the POD to use Pod::Weaver properly (=method, etc.).
+
+
+##Parallel Algorithm thoughts
+pseudocode for a distributed lattice
+
+decide which features go in each lattice;
+fill individual lattices without throwing any out because of heterogeneity
+(list of supracontexts) lattice = lattices[0]
+for 1..$#$lattices - 1
+combine(lattice, lattices[$_])
+combine_final(lattice, lattices[$#lattices])
+
+list<Supracontext> combine(lat1, lat2){
+    list<Supra> output;
+    for (Supra s1 : lat1) {
+        for (Supra s2 : lat2) {
+        Item[] data = intersection(s1.data, s2.data);
+        if(data)
+            output.add(new Supra(data));
+        }
+    }
+}

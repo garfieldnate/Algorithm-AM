@@ -1,14 +1,14 @@
 package Algorithm::AM::Batch;
 use strict;
 use warnings;
+our $VERSION = '3.05';
 # ABSTRACT: Classify items in batch mode
-# VERSION
 use feature 'state';
 use Carp;
 use Log::Any qw($log);
 our @CARP_NOT = qw(Algorithm::AM::Batch);
 
-# Place this accessor here so that Class::Tiny doesn't generate 
+# Place this accessor here so that Class::Tiny doesn't generate
 # a getter/setter pair.
 sub test_set {
     my ($self) = @_;

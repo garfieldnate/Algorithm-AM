@@ -1,6 +1,8 @@
 package Algorithm::AM::DataSet::Item;
 use strict;
 use warnings;
+our $VERSION = '3.05';
+# ABSTRACT: A single item for classification training and testing
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM::DataSet);
 use Exporter::Easy (
@@ -11,8 +13,6 @@ use Exporter::Easy (
 # or anything, just unique.
 my $current_id = 'a';
 
-# ABSTRACT: A single item for classification training and testing
-# VERSION;
 
 =head1 SYNOPSIS
 

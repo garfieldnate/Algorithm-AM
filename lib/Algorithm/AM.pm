@@ -1,8 +1,8 @@
 package Algorithm::AM;
 use strict;
 use warnings;
+our $VERSION = '3.05';
 # ABSTRACT: Classify data with Analogical Modeling
-our $VERSION = '3.05'; # VERSION
 use feature 'state';
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM);

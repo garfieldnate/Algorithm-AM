@@ -1,14 +1,14 @@
 package Algorithm::AM::DataSet;
 use strict;
 use warnings;
+our $VERSION = '3.05';
+# ABSTRACT: Manage data used by Algorithm::AM
 use Carp;
 use Algorithm::AM::DataSet::Item;
 use Path::Tiny;
 use Exporter::Easy (
     OK => ['dataset_from_file']
 );
-# ABSTRACT: Manage data used by Algorithm::AM
-# VERSION;
 
 =head1 SYNOPSIS
 
