@@ -765,10 +765,6 @@ _fillandcount(...)
   pointers = guts->pointers;
 
   /*
-   * The two blocks of code in the if statement are identical except for
-   * the counting part -- either pointers or occurrences.  We duplicate
-   * the code for speed; nobody wants to be branching all the time.
-   *
    * The code is in three parts:
    *
    * 1. We successively take one nonempty supracontext from each of the
@@ -935,7 +931,7 @@ _fillandcount(...)
      * will have the same number of pointers/occurrences.
      *
      * If the user wants the detailed analogical set, it will be created
-     * in AM.pm.
+     * in Result.pm.
      *
      */
 

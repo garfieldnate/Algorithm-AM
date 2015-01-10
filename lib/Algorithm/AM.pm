@@ -188,8 +188,9 @@ sub classify {
         my $class = $training_set->_index_for_class(
             $training_set->get_item($index)->class);
         if ( defined $self->{context_to_class}->{$context} ) {
-            $self->{context_to_class}->{$context} = 0
-              if $self->{context_to_class}->{$context} != $class;
+            if($self->{context_to_class}->{$context} != $class){
+                $self->{context_to_class}->{$context} = 0;
+            }
         }
         else {
             $self->{context_to_class}->{$context} = $class;
