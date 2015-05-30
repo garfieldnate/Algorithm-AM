@@ -267,26 +267,6 @@ sub statistical_summary {
     return \$info;
 }
 
-=head2 C<analogical_set>
-
-The analogical set is the set of items from the training set that
-had some effect on the item classification. The analogical effect of
-an item in the analogical set is the score it contributed towards
-a classification matching its own class label.
-
-This method returns the items in the analogical set along with their
-analogical effects, in the following structure:
-
- { 'item_id' => {'item' => item, 'score' => score}
-
-C<item> above is the actual item object. The item_id is used so that
-the analogical effect of a particular item can be found quickly:
-
- my $set = $result->analogical_set;
- print 'the item's analogical effect was '
-     . $set->{$item->id}->score;
-
-=cut
 sub analogical_set {
     my ($self) = @_;
     if(!exists $self->{_analogical_set}){
@@ -357,15 +337,6 @@ sub _calculate_analogical_set {
     return;
 }
 
-=head2 C<gang_effects>
-
-Return a hash describing gang effects. Gang effects are similar to
-analogical sets, but the total effects of entire subcontexts and
-supracontexts are also calculated and printed.
-
-TODO: details, details! Maybe make a gang class to hold this structure.
-
-=cut
 sub gang_effects {
     my ($self) = @_;
     if(!$self->{_gang_effects}){
@@ -686,6 +657,33 @@ the classification.
 If the class of the test item was known before classification, this
 returns "tie", "correct", or "incorrect", depending on the label
 assigned by the classification. Otherwise this returns C<undef>.
+
+=head2 C<gang_effects>
+
+Return a hash describing gang effects. Gang effects are similar to
+analogical sets, but the total effects of entire subcontexts and
+supracontexts are also calculated and printed.
+
+TODO: details, details! Maybe make a gang class to hold this structure.
+
+=head2 C<analogical_set>
+
+The analogical set is the set of items from the training set that
+had some effect on the item classification. The analogical effect of
+an item in the analogical set is the score it contributed towards
+a classification matching its own class label.
+
+This method returns the items in the analogical set along with their
+analogical effects, in the following structure:
+
+ { 'item_id' => {'item' => item, 'score' => score}
+
+C<item> above is the actual item object. The item_id is used so that
+the analogical effect of a particular item can be found quickly:
+
+ my $set = $result->analogical_set;
+ print 'the item's analogical effect was '
+     . $set->{$item->id}->score;
 
 =head2 C<random_outcome>
 
