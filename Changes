@@ -1,6 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+
+3.06      2015-05-31 20:43:59+09:00 Asia/Tokyo
     Added analogize for command line classification
     Fixed POD inaccuracies
 3.05      2014-10-19 20:53:02+09:00 Asia/Tokyo
