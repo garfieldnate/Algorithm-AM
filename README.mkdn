@@ -1,15 +1,7 @@
-# NAME
-
-Algorithm::AM - Classify data with Analogical Modeling
-
-# VERSION
-
-version 3.05
-
 # SYNOPSIS
 
     use Algorithm::AM;
-    my $dataset = dataset_from_file('finnverb');
+    my $dataset = dataset_from_file(path => 'finnverb', format => 'nocommas');
     my $am = Algorithm::AM->new(training_set => $dataset);
     my $result = $am->classify($dataset->get_item(0));
     print @{ $result->winners };
@@ -20,7 +12,8 @@ version 3.05
 This module provides an object-oriented interface for
 classifying single items using the analogical modeling algorithm.
 To work with sets of items needing to be classified, see
-[Algorithm::AM::Batch](https://metacpan.org/pod/Algorithm::AM::Batch).
+[Algorithm::AM::Batch](https://metacpan.org/pod/Algorithm::AM::Batch). To run classification from the command line
+without writing your own Perl code, see [analogize](https://metacpan.org/pod/analogize).
 
 This module logs information using [Log::Any](https://metacpan.org/pod/Log::Any), so if you
 want automatic print-outs you need to set an adaptor. See the
@@ -176,14 +169,3 @@ sample data sets.
 
 The [Wikipedia article](http://en.wikipedia.org/wiki/Analogical_modeling)
 has details and even illustrations on analogical modeling.
-
-# AUTHOR
-
-Theron Stanford <shixilun@yahoo.com>, Nathan Glenn <garfieldnate@gmail.com>
-
-# COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2013 by Royal Skousen.
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.

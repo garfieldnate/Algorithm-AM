@@ -1,7 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    Added analogize for command line classification
+    Fixed POD inaccuracies
 3.05      2014-10-19 20:53:02+09:00 Asia/Tokyo
     XS efficiency improvements, and tweaks in an attempt to comply with C89 and fix ActiveState builds.
 3.04      2014-10-11 22:24:48+09:00 Asia/Tokyo
