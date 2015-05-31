@@ -319,7 +319,7 @@ __END__
 =head1 SYNOPSIS
 
  use Algorithm::AM;
- my $dataset = dataset_from_file('finnverb');
+ my $dataset = dataset_from_file(path => 'finnverb', format => 'nocommas');
  my $am = Algorithm::AM->new(training_set => $dataset);
  my $result = $am->classify($dataset->get_item(0));
  print @{ $result->winners };

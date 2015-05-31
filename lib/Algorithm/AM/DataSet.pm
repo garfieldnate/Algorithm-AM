@@ -16,7 +16,7 @@ use Exporter::Easy (
  use Algorithm::AM::DataSet::Item 'new_item';
  my $dataset = Algorithm::AM::DataSet->new(cardinality => 10);
  # or
- $dataset = dataset_from_file('finnverb');
+ $dataset = dataset_from_file(path => 'finnverb', format => 'nocommas');
  $dataset->add_item(
    new_item(features => [qw(a b c d e f g h i)]));
  my $item = $dataset->get_item(2);

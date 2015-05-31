@@ -281,9 +281,8 @@ __END__
 
 =head1 C<SYNOPSIS>
 
-  use Algorithm::AM;
   use Algorithm::AM::Batch;
-  my $dataset = dataset_from_file('finnverb');
+  my $dataset = dataset_from_file(path => 'finnverb', format => 'nocommas');
   my $batch = Algorithm::AM::Batch->new(
     training_set => $dataset,
     # print the result of each classification as they are provided
