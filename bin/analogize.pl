@@ -1,4 +1,5 @@
 package Analogize;
+# ABSTRACT: classify data with AM from the command line
 use strict;
 use warnings;
 use 5.010;
@@ -7,24 +8,7 @@ use Algorithm::AM::Batch;
 use Path::Tiny;
 # 2.13 needed for aliases
 use Getopt::Long 2.13 qw(GetOptionsFromArray);
-
-my $usage = <<'END';
-usage: analogize --format [--exemplars] [--project] [--test] [--print] [--help]
-  Classify data using analogical modeling
-  Required arguments: --format and either --exemplars or --project
-  --format: specify either commas or nocommas format for exemplar and
-      test data files
-  --exemplars: path to the file containing the examplar/training data
-  --project: path to AM::Parallel project (ignores 'outcome' file)
-  --test: path to the file containing the test data. If none is specified,
-      performs leave-one-out classification with the exemplar set
-  --print: comma-separated list of reports to print. Available options are:
-      config_info, statistical_summary, analogical_set_summary, and
-      gang_summary. See documentation in Algorithm::AM::Result for details.
-  --help: print this help message
-  --?: alias for --help
-  --train/data: aliases for --exemplars
-END
+use Pod::Usage;
 
 run(@ARGV) unless caller;
 
@@ -39,8 +23,8 @@ sub run {
         'test:s',
         'print:s',
         'help|?',
-    ) or croak $usage;
-    return unless _validate_args(%args);
+    ) or pod2usage(2);
+    _validate_args(%args);
 
     my @print_methods;
     if($args{print}){
@@ -89,8 +73,7 @@ sub run {
 sub _validate_args {
     my %args = @_;
     if($args{help}){
-        say $usage;
-        return 0;
+        pod2usage(1);
     }
     my $errors = '';
     if(!$args{exemplars} and !$args{project}){
@@ -98,10 +81,9 @@ sub _validate_args {
     }elsif(($args{exemplars} or $args{test}) and $args{project}){
         $errors .= "Error: --project parameter cannot be used with --exempalrs or --test\n";
     }
-    if(!$args{format}){
+    if(!defined $args{format}){
         $errors .= "Error: missing --format parameter\n";
-    }
-    if($args{format} !~ m/^(?:no)?commas$/){
+    }elsif($args{format} !~ m/^(?:no)?commas$/){
         $errors .=
             "Error: --format parameter must be either 'commas' or 'nocommas'\n";
     }
@@ -120,8 +102,55 @@ sub _validate_args {
         }
     }
     if($errors){
-        say $errors . $usage;
-        return 0;
+        chomp $errors;
+        pod2usage($errors);
     }
-    return 1;
 }
+
+__END__
+
+=head1 SYNOPSIS
+
+analogize --format <format> [--exemplars <file>] [--test <file>]
+[--project <dir>] [--print <info1,info2...>] [--help]
+
+=head1 C<DESCRIPTION>
+
+Classify data with analogical modeling from the command line.
+Required arguments are B<format> and either B<exemplars> or
+B<project>. You can use old AM::Parallel projects (a directory
+containing C<data> and C<test> files) or specify individual data
+and test files. By default, only the accuracy of the predicted
+outcomes is printed. More detail may be printed using the B<print>
+option.
+
+=head1 OPTIONS
+
+=item B<format>
+
+specify either commas or nocommas format for exemplar and test data files
+
+=item B<exemplars>, B<data> or B<train>
+
+path to the file containing the examplar/training data
+
+=item B<project>
+
+path to AM::Parallel project (ignores 'outcome' file)
+
+=item B<test>
+
+path to the file containing the test data. If none is specified,
+performs leave-one-out classification with the exemplar set
+
+=item B<print>
+
+comma-separated list of reports to print. Available options are:
+config_info, statistical_summary, analogical_set_summary, and
+gang_summary. See documentation in L<Algorithm::AM::Result> for details.
+
+=item B<help> or B<?>
+
+print help message
+
+=back
