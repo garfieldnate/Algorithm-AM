@@ -1,7 +1,8 @@
-package Analogize;
+package analogize;
 # ABSTRACT: classify data with AM from the command line
 use strict;
 use warnings;
+our $VERSION = '3.06';
 use 5.010;
 use Carp;
 use Algorithm::AM::Batch;
@@ -10,9 +11,9 @@ use Path::Tiny;
 use Getopt::Long 2.13 qw(GetOptionsFromArray);
 use Pod::Usage;
 
-run(@ARGV) unless caller;
+_run(@ARGV) unless caller;
 
-sub run {
+sub _run {
     my %args = (
         # defaults here...
     );
@@ -125,6 +126,8 @@ outcomes is printed. More detail may be printed using the B<print>
 option.
 
 =head1 OPTIONS
+
+=over
 
 =item B<format>
 
