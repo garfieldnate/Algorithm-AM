@@ -330,7 +330,8 @@ __END__
 This module provides an object-oriented interface for
 classifying single items using the analogical modeling algorithm.
 To work with sets of items needing to be classified, see
-L<Algorithm::AM::Batch>.
+L<Algorithm::AM::Batch>. To run classification from the command line
+without writing your own Perl code, see L<analogize>.
 
 This module logs information using L<Log::Any>, so if you
 want automatic print-outs you need to set an adaptor. See the
