@@ -249,58 +249,8 @@ sub test_analogical_set {
 sub test_gang_effects {
     my ($result) = @_;
     cmp_deeply($result->gang_effects,
-        {
-          '- - 2' => {
-            'data' => {
-              'r' => [
-                all(
-                  isa('Algorithm::AM::DataSet::Item'),
-                  methods(
-                    features => [qw(0 3 2)],
-                    class => 'r',
-                    comment => 'myThirdCommentHere'
-                  )
-                )
-              ]
-            },
-            'effect' => num(.1538, 0.001),
-            'homogenous' => 'r',
-            'class' => {
-              'r' => {
-                'effect' => num(0.1538, 0.001),
-                'score' => '2'
-              }
-            },
-            'score' => 2,
-            'size' => 1,
-            'features' => ['','','2']
-          },
-          '- 1 2' => {
-            'data' => {
-              'r' => [
-                all(
-                  isa('Algorithm::AM::DataSet::Item'),
-                  methods(
-                    features => [qw(2 1 2)],
-                    class => 'r',
-                    comment => 'myFourthCommentHere'
-                  )
-                )
-              ]
-            },
-            'effect' => num(0.2307, 0.001),
-            'homogenous' => 'r',
-            'class' => {
-              'r' => {
-                'effect' => num(0.2307, 0.001),
-                'score' => '3'
-              }
-            },
-            'score' => 3,
-            'size' => 1,
-            'features' => ['','1','2']
-          },
-          '3 1 -' => {
+        [
+          {
             'data' => {
               'r' => [
                 all(
@@ -338,8 +288,58 @@ sub test_gang_effects {
             'score' => 8,
             'size' => 2,
             'features' => ['3','1', '']
-          }
-        },
+          },
+          {
+            'data' => {
+              'r' => [
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(2 1 2)],
+                    class => 'r',
+                    comment => 'myFourthCommentHere'
+                  )
+                )
+              ]
+            },
+            'effect' => num(0.2307, 0.001),
+            'homogenous' => 'r',
+            'class' => {
+              'r' => {
+                'effect' => num(0.2307, 0.001),
+                'score' => '3'
+              }
+            },
+            'score' => 3,
+            'size' => 1,
+            'features' => ['','1','2']
+          },
+          {
+            'data' => {
+              'r' => [
+                all(
+                  isa('Algorithm::AM::DataSet::Item'),
+                  methods(
+                    features => [qw(0 3 2)],
+                    class => 'r',
+                    comment => 'myThirdCommentHere'
+                  )
+                )
+              ]
+            },
+            'effect' => num(.1538, 0.001),
+            'homogenous' => 'r',
+            'class' => {
+              'r' => {
+                'effect' => num(0.1538, 0.001),
+                'score' => '2'
+              }
+            },
+            'score' => 2,
+            'size' => 1,
+            'features' => ['','','2']
+          },
+        ],
     'correct reported gang effects') or
         note explain $result->gang_effects;
 

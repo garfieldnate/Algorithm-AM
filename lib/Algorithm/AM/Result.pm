@@ -383,7 +383,7 @@ sub gang_summary {
     my $current_row = -1;
     # add information for each gang; sort by order of highest to
     # lowest effect
-    foreach my $gang (sort _sort_gangs values %$gangs){
+    foreach my $gang (@$gangs){
         $current_row++;
         $gang_rows[$current_row]++;
         my $features = $gang->{features};
@@ -465,30 +465,22 @@ sub gang_summary {
     return \$return;
 }
 
-# for sorting gangs during report printing;
-# sort first by score and then by class labels
-sub _sort_gangs {## no critic (RequireArgUnpacking)
-    return bigcmp($b->{score}, $a->{score}) ||
-        (join '', sort keys %{ $b->{class} })
-        cmp
-        (join '', sort keys %{ $a->{class} });
-}
-
 sub _calculate_gangs {
     my ($self) = @_;
     my $train = $self->training_set;
     my $total_points = $self->total_points;
     my $raw_gang = $self->{gang};
-    my $gangs = {};
+    my @gangs;
 
     foreach my $context (keys %{$raw_gang})
     {
+        my $gang = {};
         my @features = $self->_unpack_supracontext($context);
         # for now, store gangs by the supracontext printout
         my $key = join ' ', map {$_ || '-'} @features;
-        $gangs->{$key}->{score} = $raw_gang->{$context};
-        $gangs->{$key}->{effect} = $raw_gang->{$context} / $total_points;
-        $gangs->{$key}->{features} = \@features;
+        $gang->{score} = $raw_gang->{$context};
+        $gang->{effect} = $raw_gang->{$context} / $total_points;
+        $gang->{features} = \@features;
 
         my $p = $self->{pointers}->{$context};
         # if the supracontext is homogenous
@@ -496,7 +488,7 @@ sub _calculate_gangs {
             # store a 'homogenous' key that indicates this, besides
             # indicating the unanimous class prediction.
             my $class = $train->_class_for_index($class_index);
-            $gangs->{$key}->{homogenous} = $class;
+            $gang->{homogenous} = $class;
             my @data;
             for (
                 my $index = $self->{itemcontextchainhead}->{$context};
@@ -506,16 +498,16 @@ sub _calculate_gangs {
             {
                 push @data, $train->get_item($index);
             }
-            $gangs->{$key}->{data}->{$class} = \@data;
-            $gangs->{$key}->{size} = scalar @data;
-            $gangs->{$key}->{class}->{$class}->{score} = $p;
-            $gangs->{$key}->{class}->{$class}->{effect} =
-                $gangs->{$key}->{effect};
+            $gang->{data}->{$class} = \@data;
+            $gang->{size} = scalar @data;
+            $gang->{class}->{$class}->{score} = $p;
+            $gang->{class}->{$class}->{effect} =
+                $gang->{effect};
         }
         # for heterogenous supracontexts we have to store data for
         # each class
         else {
-            $gangs->{$key}->{homogenous} = 0;
+            $gang->{homogenous} = 0;
             # first loop through the data and sort by class, also
             # finding the total gang size
             my $size = 0;
@@ -530,19 +522,27 @@ sub _calculate_gangs {
                 push @{ $data{$item->class} }, $item;
                 $size++;
             }
-            $gangs->{$key}->{data} = \%data;
-            $gangs->{$key}->{size} = $size;
+            $gang->{data} = \%data;
+            $gang->{size} = $size;
 
             # then store aggregate statistics for each class
             for my $class (keys %data){
-                $gangs->{$key}->{class}->{$class}->{score} = $p;
-                $gangs->{$key}->{class}->{$class}->{effect} =
+                $gang->{class}->{$class}->{score} = $p;
+                $gang->{class}->{$class}->{effect} =
                     # score*num_data/total
                     @{ $data{$class} } * $p / $total_points;
             }
         }
+        push @gangs, $gang;
     }
-    $self->{_gang_effects} = $gangs;
+
+    # sort by score and then alphabetically by class labels
+    @gangs = sort{
+        bigcmp($b->{score}, $a->{score}) ||
+        (join '', sort keys %{ $b->{class} })
+        cmp
+        (join '', sort keys %{ $a->{class} })} @gangs;
+    $self->{_gang_effects} = \@gangs;
     return;
 }
 
@@ -552,11 +552,11 @@ sub _calculate_gangs {
 # wich have ('a' 'b' whatever) as variable values.
 sub _unpack_supracontext {
     my ($self, $context) = @_;
-    my @context_list   = unpack "S!4", $context;
-    my @alist   = @{$self->{active_feats}};
+    my @context_list = unpack "S!4", $context;
+    my @alist = @{$self->{active_feats}};
     my (@features) = @{ $self->test_item->features };
     my $exclude_nulls = $self->exclude_nulls;
-    my $j       = 1;
+    my $j = 1;
     foreach my $a (reverse @alist) {
         my $partial_context = pop @context_list;
         for ( ; $a ; --$a ) {
