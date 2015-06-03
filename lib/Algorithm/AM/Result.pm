@@ -394,7 +394,7 @@ sub gang_summary {
             undef,
             undef,
             # print undefined feature slots as asterisks
-            map {$_ || '*'} @$features
+            map {length($_) ? $_ : '*'} @$features
         ];
         # add each class in the gang, along with the total number
         # and effect of the gang items supporting it
@@ -477,7 +477,7 @@ sub _calculate_gangs {
         my $gang = {};
         my @features = $self->_unpack_supracontext($context);
         # for now, store gangs by the supracontext printout
-        my $key = join ' ', map {$_ || '-'} @features;
+        my $key = join ' ', map {length($_) ? $_ : '-'} @features;
         $gang->{score} = $raw_gang->{$context};
         $gang->{effect} = $raw_gang->{$context} / $total_points;
         $gang->{features} = \@features;

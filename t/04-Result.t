@@ -4,6 +4,8 @@ use Test::More 0.88;
 plan tests => 8;
 use Test::LongString;
 use Test::Deep;
+use Path::Tiny;
+use FindBin '$Bin';
 # TODO: Remove the use of Algorithm::AM so that the
 # tests aren't co-dependent
 use Algorithm::AM;
@@ -216,7 +218,7 @@ END_SET
 sub test_gang_summary {
     my ($result) = @_;
     subtest 'gang printing' => sub {
-        plan tests => 2;
+        plan tests => 3;
         my $gang = ${$result->gang_summary(0)};
         my $expected = <<'END_GANG';
 +------------+-------+-----------+-------+-------+
@@ -268,6 +270,19 @@ END_GANG
 END_GANG
         is_string_nows($gang, $expected,
             'gang summary with items') or note $gang;
+
+        # now test the printing of 'false' features ('0', etc.)
+        my $mini_finn_data = dataset_from_file(
+            path => path($Bin, 'data', 'finnverb_mini.txt'),
+            format => 'nocommas',
+        );
+        my $am = Algorithm::AM->new(
+            training_set => $mini_finn_data,
+        );
+        $result = $am->classify($mini_finn_data->get_item(0));
+        $gang = ${$result->gang_summary()};
+        ok($gang =~ /\QA A 0 * 0 * 0 * * A\E/,
+            'features with "false" value are printed') or note $gang;
     };
     return;
 }
