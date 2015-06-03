@@ -2,7 +2,7 @@ package analogize;
 # ABSTRACT: classify data with AM from the command line
 use strict;
 use warnings;
-our $VERSION = '3.06';
+our $VERSION = '3.07';
 use 5.010;
 use Carp;
 use Algorithm::AM::Batch;
@@ -47,9 +47,13 @@ sub _run {
         $train = dataset_from_file(
             path => path($args{project})->child('data'),
             format => $args{format});
-        $test = dataset_from_file(
-            path => path($args{project})->child('test'),
-            format => $args{format});
+        if(path($args{project})->child('test')->exists){
+            $test = dataset_from_file(
+                path => path($args{project})->child('test'),
+                format => $args{format});
+        }else{
+            $test = $train;
+        }
     }
     # default to leave-one-out if no test set specified
     $test ||= $train;
