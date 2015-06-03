@@ -66,7 +66,13 @@ sub _run {
             my ($batch, $test_item, $result) = @_;
             ++$count if $result->result eq 'correct';
             say $test_item->comment . ":\t" . $result->result . "\n";
-            say ${ $result->$_ } for @print_methods;
+            for (@print_methods) {
+                if($_ eq 'gang_detailed'){
+                    say ${ $result->gang_summary(1) };
+                }else{
+                    say ${ $result->$_ };
+                }
+            }
         }
     );
     $batch->classify_all($test);
@@ -99,6 +105,7 @@ sub _validate_args {
                 statistical_summary
                 analogical_set_summary
                 gang_summary
+                gang_detailed
             );
         for my $param (split ',', $args{print}){
             if(!exists $allowed{$param}){
@@ -153,8 +160,10 @@ performs leave-one-out classification with the exemplar set
 =item B<print>
 
 comma-separated list of reports to print. Available options are:
-config_info, statistical_summary, analogical_set_summary, and
-gang_summary. See documentation in L<Algorithm::AM::Result> for details.
+config_info, statistical_summary, analogical_set_summary,
+gang_summary, and gang_detailed. See documentation in
+L<Algorithm::AM::Result> for details (gang_detailed is gang_summary
+with list printing on).
 
 =item B<help> or B<?>
 

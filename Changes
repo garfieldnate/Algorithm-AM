@@ -1,6 +1,7 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+    Add detailed gang printing option to analogize
     Fix incorrect gang handling
     Fix for printing gangs with false values as feature names
 3.06      2015-05-31 20:43:59+09:00 Asia/Tokyo
