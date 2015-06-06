@@ -2,7 +2,7 @@ package analogize;
 # ABSTRACT: classify data with AM from the command line
 use strict;
 use warnings;
-our $VERSION = '3.07';
+our $VERSION = '3.08';
 use 5.010;
 use Carp;
 use Algorithm::AM::Batch;
@@ -23,6 +23,8 @@ sub _run {
         'project:s',
         'test:s',
         'print:s',
+        'include_given',
+        'include_nulls',
         'help|?',
     ) or pod2usage(2);
     _validate_args(%args);
@@ -61,6 +63,8 @@ sub _run {
     my $count = 0;
     my $batch = Algorithm::AM::Batch->new(
         training_set => $train,
+        exclude_given => !$args{include_given},
+        exclude_nulls => !$args{include_nulls},
         # print the result of each classification as they are provided
         end_test_hook => sub {
             my ($batch, $test_item, $result) = @_;
@@ -164,6 +168,17 @@ config_info, statistical_summary, analogical_set_summary,
 gang_summary, and gang_detailed. See documentation in
 L<Algorithm::AM::Result> for details (gang_detailed is gang_summary
 with list printing on).
+
+=item B<include_given>
+
+Allow a test item to be included in the data set during classification.
+If false (default), test items will be removed from the dataset during
+classification.
+
+=item B<include_nulls>
+
+Treat null variables in a test item as regular variables. If false (default),
+these variables will be excluded and not considered during classification.
 
 =item B<help> or B<?>
 
