@@ -147,6 +147,7 @@ option.
 =item B<format>
 
 specify either commas or nocommas format for exemplar and test data files
+(C<=> should be used for "null" variables).
 
 =item B<exemplars>, B<data> or B<train>
 
