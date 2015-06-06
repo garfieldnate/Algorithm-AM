@@ -25,6 +25,7 @@ sub _run {
         'print:s',
         'include_given',
         'include_nulls',
+        'linear',
         'help|?',
     ) or pod2usage(2);
     _validate_args(%args);
@@ -62,10 +63,12 @@ sub _run {
 
     my $count = 0;
     my $batch = Algorithm::AM::Batch->new(
-        training_set => $train,
+        linear => $args{linear},
         exclude_given => !$args{include_given},
         exclude_nulls => !$args{include_nulls},
-        # print the result of each classification as they are provided
+
+        training_set => $train,
+        # print the result of each classification at the time it is provided
         end_test_hook => sub {
             my ($batch, $test_item, $result) = @_;
             ++$count if $result->result eq 'correct';
@@ -180,6 +183,11 @@ classification.
 
 Treat null variables in a test item as regular variables. If false (default),
 these variables will be excluded and not considered during classification.
+
+=item B<linear>
+
+Calculate scores using I<occurrences> (linearly) instead of using I<pointers>
+(quadratically).
 
 =item B<help> or B<?>
 
