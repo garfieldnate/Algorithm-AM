@@ -2,7 +2,7 @@
 package Algorithm::AM::Result;
 use strict;
 use warnings;
-our $VERSION = '3.08';
+our $VERSION = '3.09';
 # ABSTRACT: Store results of an AM classification
 use Text::Table;
 use Crypt::PRNG qw(rand);

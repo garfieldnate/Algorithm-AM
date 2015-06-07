@@ -1,6 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+
+3.08      2015-06-07 20:39:47+09:00 Asia/Tokyo
     fixed regression in XS (GH #42)
     added include_nulls, include_given, and linear flags to analogize.pl
 3.07      2015-06-03 21:01:25+09:00 Asia/Tokyo

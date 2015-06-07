@@ -1,7 +1,7 @@
 package Algorithm::AM::Batch;
 use strict;
 use warnings;
-our $VERSION = '3.08';
+our $VERSION = '3.09';
 # ABSTRACT: Classify items in batch mode
 use feature 'state';
 use Carp;
