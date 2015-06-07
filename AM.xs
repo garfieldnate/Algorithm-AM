@@ -41,7 +41,7 @@ typedef AM_LONG AM_BIG_INT[8];
 
 /* carry macro for AM_BIG_INT pointers */
 #define carry_pointer(p) \
-  *(p + 1) += high_bits(*(p + 1)); \
+  *(p + 1) += high_bits(*(p)); \
   *(p) = low_bits(*(p))
 
 #define carry_replace(var, ind) \

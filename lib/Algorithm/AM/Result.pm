@@ -267,6 +267,7 @@ sub statistical_summary {
     return \$info;
 }
 
+#TODO: the keys for this set don't seem to make any sense.
 sub analogical_set {
     my ($self) = @_;
     if(!exists $self->{_analogical_set}){
