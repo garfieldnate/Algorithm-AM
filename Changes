@@ -1,7 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    remove random_outcome (addition was misguided)
+    updated documentation
 3.08      2015-06-07 20:39:47+09:00 Asia/Tokyo
     fixed regression in XS (GH #42)
     added include_nulls, include_given, and linear flags to analogize.pl

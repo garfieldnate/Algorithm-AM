@@ -5,7 +5,6 @@ use warnings;
 our $VERSION = '3.09';
 # ABSTRACT: Store results of an AM classification
 use Text::Table;
-use Crypt::PRNG qw(rand);
 
 =head2 SYNOPSIS
 
@@ -62,7 +61,6 @@ use Class::Tiny qw(
     result
 
     scores_normalized
-    random_outcome
 ), {
     'scores_normalized' => sub {
         my ($self) = @_;
@@ -74,27 +72,6 @@ use Class::Tiny qw(
         }
         return $normalized;
     },
-    'random_outcome' => sub {
-        my ($self) = @_;
-        my $score_map = $self->scores_normalized;
-        my @classes = sort keys %$score_map;
-        my @scores = @{$score_map}{@classes};
-        # this portion taken from List::Util::WeightedChoice
-        # create ranges for each of the classes, and pick
-        # a class by choosing a random number in the range.
-        my @ranges = ();
-        my $left = 0;
-        for my $score(@scores){
-            my $right = $left+$score;
-            push @ranges, $right;
-            $left = $right;
-        }
-        my $scoreIndex = rand $left;
-        for( my $i =0; $i< @scores; $i++){
-            my $range = $ranges[$i];
-            return $classes[$i] if $scoreIndex < $range;
-        }
-    }
 };
 use Carp 'croak';
 use Algorithm::AM::BigInt 'bigcmp';
@@ -685,15 +662,6 @@ the analogical effect of a particular item can be found quickly:
  my $set = $result->analogical_set;
  print 'the item's analogical effect was '
      . $set->{$item->id}->score;
-
-=head2 C<random_outcome>
-
-This returns one of the class labels predicted for the test item.
-The choice is done probabilistically, with the probability of each
-value given by its L<normalized score|/scores_normalized>.
-
-For a given result object, the return value of this method never
-changes; the value is only chosen once.
 
 =head2 C<high_score>
 

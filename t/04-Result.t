@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
-plan tests => 8;
+plan tests => 7;
 use Test::LongString;
 use Test::Deep;
 use Path::Tiny;
@@ -22,7 +22,6 @@ test_aset_summary($result);
 test_gang_summary($result);
 test_undefined_result($am);
 test_scores($result);
-test_random_outcome($result);
 
 # test that the configuration information is correctly printed by
 # the config_info method after setting internal state through
@@ -307,14 +306,4 @@ sub test_scores {
         {'e' => num(.3076923, .00001), 'r' => num(.6923077, .00001)},
         'normalized scores') or
         note explain $result->scores_normalized;
-}
-
-# note that this is not a good test for a randomized method,
-# but that is a very difficult thing to make. The method has been
-# manually verified.
-sub test_random_outcome {
-    my ($result) = @_;
-    my $outcome = $result->random_outcome;
-    ok((grep {$_ eq $outcome} ('e', 'r')),
-        'random_outcome returns a valid class label');
 }
