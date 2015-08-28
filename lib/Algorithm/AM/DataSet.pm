@@ -242,6 +242,8 @@ whitespace. Each feature value must be a single character with no
 separating characters, so here the features are f, e, a, t, u, r,
 e, and s.
 
+Lines beginning with a pound character (C<#>) are ignored.
+
 =cut
 sub dataset_from_file {## no critic (RequireArgUnpacking)
     my (%opts) = (
@@ -311,6 +313,8 @@ sub _read_data_sub {
         # grab the next non-blank line from the file
         while($line = <$data_fh>){
             $line_num++;
+            # skip comments
+            next if $line =~ m/^\s*#/;
             # cross-platform chomp
             $line =~ s/\R$//;
             $line =~ s/^\s+|\s+$//g;
