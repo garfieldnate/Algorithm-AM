@@ -1,6 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
+
+3.09      2015-08-28 20:29:15+09:00 Asia/Tokyo
     removed random_outcome (addition was misguided)
     updated documentation
     added data file comment functionality
