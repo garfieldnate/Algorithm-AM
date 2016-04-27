@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker 6.17;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Classify data with Analogical Modeling",
-  "AUTHOR" => "Theron Sanford <shixilun\@yahoo.com>, Nathan Glenn <garfieldnate\@gmail.com>",
+  "AUTHOR" => "Theron Stanford <shixilun\@yahoo.com>, Nathan Glenn <garfieldnate\@gmail.com>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.17"
   },
