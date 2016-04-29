@@ -121,6 +121,7 @@ sub _validate_args {
         }
     }
     if($errors){
+        $errors .= 'use "analogize --help" for detailed usage information';
         chomp $errors;
         pod2usage($errors);
     }
@@ -131,9 +132,11 @@ __END__
 =head1 SYNOPSIS
 
 analogize --format <format> [--exemplars <file>] [--test <file>]
-[--project <dir>] [--print <info1,info2...>] [--help]
+[--project <dir>] [--print <config_info,statistical_summary,
+analogical_set_summary,gang_summary,gang_detailed>]
+[--help]
 
-=head1 C<DESCRIPTION>
+=head1 DESCRIPTION
 
 Classify data with analogical modeling from the command line.
 Required arguments are B<format> and either B<exemplars> or
@@ -150,47 +153,97 @@ option.
 =item B<format>
 
 specify either commas or nocommas format for exemplar and test data files
-(C<=> should be used for "null" variables).
+(C<=> should be used for "null" variables). See L<Algorithm::AM::DataSet/dataset_from_file>
+for details on the two formats.
 
-=item B<exemplars>, B<data> or B<train>
+=item C<exemplars>, C<data> or C<train>
 
 path to the file containing the examplar/training data
 
-=item B<project>
+=item C<project>
 
-path to AM::Parallel project (ignores 'outcome' file)
+path to an AM::Parallel-style project (ignores 'outcome' file); this
+should be a directory containing a file called C<data> containing known
+exemplars and C<test> containing test exemplars. If the C<test> file does
+not exist, then a leave-one-out scheme is used for testing using the
+exemplars in the C<data> file.
 
-=item B<test>
+=item C<test>
 
 path to the file containing the test data. If none is specified,
-performs leave-one-out classification with the exemplar set
+performs leave-one-out classification with the exemplar set.
 
-=item B<print>
+=item C<print>
 
-comma-separated list of reports to print. Available options are:
-config_info, statistical_summary, analogical_set_summary,
-gang_summary, and gang_detailed. See documentation in
-L<Algorithm::AM::Result> for details (gang_detailed is gang_summary
-with list printing on).
+reports to print, separated by commas (be careful not to add spaces between report names!).
+For example, C<--print analogical_set_summary,gang_summary> would print
+analogical sets and gang summaries.
 
-=item B<include_given>
+Available options are:
+
+=over
+
+=item C<config_info>
+
+Describes the configuration used and some simple information about the data,
+i.e. cardinality, etc.
+
+=item C<statistical_summary>
+
+A statistical summary of the classification results, including
+all predicted outcomes with their scores and percentages and
+the total score for all outcomes. Whether the predicted class is
+correct, incorrect, or a tie is also included, if the test item
+had a known class.
+
+=item C<analogical_set_summary>
+
+The analogical set, showing all items that contributed to the predicted
+outcome, along with the amount contributed by each item (score and
+percentage overall).
+
+=item C<gang_summary>
+
+A summary of the gang effects on the outcome prediction.
+
+=item C<gang_detailed>
+
+Same as C<gang_summary>, but also includes lists of exemplars for each
+gang.
+
+=back
+
+=item C<include_given>
 
 Allow a test item to be included in the data set during classification.
 If false (default), test items will be removed from the dataset during
 classification.
 
-=item B<include_nulls>
+=item C<include_nulls>
 
 Treat null variables in a test item as regular variables. If false (default),
 these variables will be excluded and not considered during classification.
 
-=item B<linear>
+=item C<linear>
 
 Calculate scores using I<occurrences> (linearly) instead of using I<pointers>
 (quadratically).
 
-=item B<help> or B<?>
+=item C<help> or C<?>
 
 print help message
+
+=head2 EXAMPLES
+
+This distribution comes with a sample dataset in the C<datasets/soybean>
+directory. Data exemplars are in C<data> and a single test exemplar is in C<test>.
+The files are in the C<commas> format. The following two commands are equivalent
+and will analyze the test exemplar and output a summary of gang effects to C<gang.txt>:
+
+    analogize --exemplars datasets/soybean/data --test datasets/soybean/test --format commas --print gang_summary > gang.txt
+
+    analogize --project datasets/soybean --format commas --print gang_summary > gang.txt
+
+The resulting files are best viewed in a text editor with word wrap turned I<off>.
 
 =back
