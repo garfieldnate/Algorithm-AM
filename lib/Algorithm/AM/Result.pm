@@ -77,7 +77,7 @@ use Carp 'croak';
 use Algorithm::AM::BigInt 'bigcmp';
 
 # For printing percentages in reports
-my $percentage_format = '%7.3f%%';
+my $percentage_format = '%.3f';
 
 =head1 REPORT METHODS
 
