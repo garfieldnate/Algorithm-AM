@@ -1,7 +1,9 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    Fixed bad typos in citation names
+    Improved analogize documentation (#50)
+    Changed percentage printing format (#56)
 3.09      2015-08-28 20:29:15+09:00 Asia/Tokyo
     removed random_outcome (addition was misguided)
     updated documentation
