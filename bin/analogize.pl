@@ -233,6 +233,8 @@ Calculate scores using I<occurrences> (linearly) instead of using I<pointers>
 
 print help message
 
+=back
+
 =head2 EXAMPLES
 
 This distribution comes with a sample dataset in the C<datasets/soybean>
@@ -245,5 +247,3 @@ and will analyze the test exemplar and output a summary of gang effects to C<gan
     analogize --project datasets/soybean --format commas --print gang_summary > gang.txt
 
 The resulting files are best viewed in a text editor with word wrap turned I<off>.
-
-=back
