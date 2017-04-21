@@ -6,6 +6,9 @@ our $VERSION = '3.11';
 use 5.010;
 use Carp;
 use Algorithm::AM::Batch;
+# Log only warnings by default, since the user chooses the desired reports using
+# the script parameters
+use Log::Any::Adapter ('Stdout', log_level => 'warn');
 use Path::Tiny;
 # 2.13 needed for aliases
 use Getopt::Long 2.13 qw(GetOptionsFromArray);
