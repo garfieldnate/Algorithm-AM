@@ -167,7 +167,7 @@ remains.
 
 # SEE ALSO
 
-The <home page|http://humanities.byu.edu/am/> for Analogical Modeling
+The &lt;home page|http://humanities.byu.edu/am/> for Analogical Modeling
 includes information about current research and publications, as well as
 sample data sets.
 

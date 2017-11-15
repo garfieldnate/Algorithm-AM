@@ -1,7 +1,8 @@
 Revision history for AM-Algorithm
 
 {{$NEXT}}
-
+    Added install information
+    Turned on warning printing for analogize
 3.10      2016-06-05 21:03:55+09:00 Asia/Tokyo
     Fixed bad typos in citation names
     Improved analogize documentation (#50)
