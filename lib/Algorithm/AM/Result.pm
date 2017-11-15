@@ -2,7 +2,7 @@
 package Algorithm::AM::Result;
 use strict;
 use warnings;
-our $VERSION = '3.11';
+our $VERSION = '3.12';
 # ABSTRACT: Store results of an AM classification
 use Text::Table;
 

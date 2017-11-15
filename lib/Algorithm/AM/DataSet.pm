@@ -1,7 +1,7 @@
 package Algorithm::AM::DataSet;
 use strict;
 use warnings;
-our $VERSION = '3.11';
+our $VERSION = '3.12';
 # ABSTRACT: Manage data used by Algorithm::AM
 use Carp;
 use Algorithm::AM::DataSet::Item;
