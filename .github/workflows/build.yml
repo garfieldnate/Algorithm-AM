@@ -19,4 +19,6 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - run: perl -V
-      - run: cpanm -v .
+      # some dependency tests fail, unfortunately
+      - run: cpanm -v --notest --installdeps .
+      - run: cpanm -v --test-only .
