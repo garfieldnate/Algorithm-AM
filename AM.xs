@@ -244,7 +244,7 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
 /*
  * function: normalize(SV *s)
  *
- * s is an SvPV whose PV* is a unsigned long array representing a very
+ * s is an SvPV whose PV* is an unsigned long array representing a very
  * large integer
  *
  * this function modifies s so that its NV is the floating point
@@ -260,7 +260,7 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  *
  */
 
-normalize(pTHX_ SV *s) {
+void normalize(pTHX_ SV *s) {
   AM_LONG dspace[10];
   AM_LONG qspace[10];
   char outspace[55];
@@ -562,7 +562,7 @@ _fillandcount(...)
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(context_to_class);
-  while (he = hv_iternext(context_to_class)) {
+  while ((he = hv_iternext(context_to_class))) {
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
     AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(he));
     for (chunk = 0; chunk < NUM_LATTICES; ++chunk, ++contextptr) {
@@ -942,7 +942,7 @@ _fillandcount(...)
     sum = guts->sum;
     num_classes = guts->num_classes;
     hv_iterinit(pointers);
-    while (he = hv_iternext(pointers)) {
+    while ((he = hv_iternext(pointers))) {
       AM_LONG count;
       AM_SHORT counthi, countlo;
       AM_BIG_INT p;
