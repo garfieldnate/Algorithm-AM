@@ -1,0 +1,5 @@
+# Tell git to ignore the revisions below using the following command:
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# All files reformatted with new editor config
+4d02f77dea58c984df3f24c4c191c243147e452b
