@@ -48,6 +48,12 @@ typedef AM_LONG AM_BIG_INT[8];
   var[ind + 1] = high_bits(var[ind]); \
   var[ind] = low_bits(var[ind])
 
+#define hash_pointer_from_stack(ind) \
+  (HV *) SvRV(ST(ind))
+
+#define array_pointer_from_stack(ind) \
+  AvARRAY((AV *)SvRV(ST(ind)))
+
 /*
  * structure for the supracontexts
  *
@@ -443,17 +449,18 @@ _xs_initialize(...)
  PPCODE:
   /* 9 arguments are passed to the _xs_initialize method: */
   /* $self, the AM object */
-  project = (HV *) SvRV(ST(0));
+  project = hash_pointer_from_stack(0);
   /* For explanations on these, see the comments on AM_guts */
-  lattice_sizes = AvARRAY((AV *) SvRV(ST(1)));
-  guts.classes = AvARRAY((AV *) SvRV(ST(2)));
-  guts.itemcontextchain = AvARRAY((AV *) SvRV(ST(3)));
-  guts.itemcontextchainhead = (HV *) SvRV(ST(4));
-  guts.context_to_class = (HV *) SvRV(ST(5));
-  guts.contextsize = (HV *) SvRV(ST(6));
-  guts.pointers = (HV *) SvRV(ST(7));
-  guts.gang = (HV *) SvRV(ST(8));
-  guts.sum = AvARRAY((AV *) SvRV(ST(9)));
+  lattice_sizes = array_pointer_from_stack(1);
+  guts.classes = array_pointer_from_stack(2);
+  guts.itemcontextchain = array_pointer_from_stack(3);
+  guts.itemcontextchainhead = hash_pointer_from_stack(4);
+  guts.context_to_class = hash_pointer_from_stack(5);
+  guts.contextsize = hash_pointer_from_stack(6);
+  guts.pointers = hash_pointer_from_stack(7);
+  guts.gang = hash_pointer_from_stack(8);
+  guts.sum = array_pointer_from_stack(9);
+  /* Length of guts.sum */
   guts.num_classes = av_len((AV *) SvRV(ST(9)));
 
   /*
