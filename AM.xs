@@ -302,6 +302,8 @@ void normalize(pTHX_ SV *s) {
 
   /* Start at end of outspace and work towards beginning */
   outptr = outspace + (OUTSPACE_SIZE - 1);
+  /* Null char at end of string */
+  *outptr = 0;
   fprintf(stderr, "outspace=%s, outptr=%s", outspace, outptr);
 
   while (1) {
