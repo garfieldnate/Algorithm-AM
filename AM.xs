@@ -5,6 +5,7 @@
 #include "XSUB.h"
 
 #include "ppport.h"
+#include <stdio.h>
 
 #define NUM_LATTICES 4
 
@@ -284,6 +285,7 @@ void normalize(pTHX_ SV *s) {
   /* TODO: is this required to be a certain number of bits? */
   long double nn = 0;
   int j;
+  fprintf(stderr, "calling normalize\n");
 
   /* you can't put the for block in {}, or it doesn't work
    * ask me for details some time
@@ -348,6 +350,7 @@ void normalize(pTHX_ SV *s) {
 unsigned short *intersect_supras(
     AM_SHORT *i, AM_SHORT *j, AM_SHORT *k){
   AM_SHORT *temp;
+  fprintf(stderr, "calling intersect_supras\n");
   while (1) {
     while (*i > *j) {
       --i;
@@ -383,6 +386,7 @@ AM_SHORT intersect_supras_final(
   AM_SHORT class = 0;
   AM_SHORT length = 0;
   AM_SHORT *temp;
+  fprintf(stderr, "calling intersect_supras_final\n");
   while (1) {
     while (*i > *j) {
       --i;
@@ -476,6 +480,7 @@ _xs_initialize(...)
   guts.sum = array_pointer_from_stack(9);
   /* Length of guts.sum */
   guts.num_classes = av_len((AV *) SvRV(ST(9)));
+  fprintf(stderr, "Calling _xs_initialize\n");
 
   /*
    * Since the sublattices are small, we just take a chunk of memory
@@ -536,6 +541,7 @@ _fillandcount(...)
   linear_flag = unsigned_int_from_stack(2);
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
+  fprintf(stderr, "Calling _fillandcount\n");
 
   /*
    * We initialize the memory for the sublattices, including setting up the
