@@ -199,7 +199,7 @@ typedef struct AM_guts {
   HV *pointers;
   /* Maps binary context labels to the size of the gang effect of
    * that context. A gang effect is the number of pointers in
-   * the given context multiplied by the number training items
+   * the given context multiplied by the number of training items
    * contained in the context.
    */
   HV *gang;
@@ -410,7 +410,7 @@ AM_SHORT intersect_supras_final(
   return length;
 }
 
-MODULE = Algorithm::AM		PACKAGE = Algorithm::AM
+MODULE = Algorithm::AM PACKAGE = Algorithm::AM
 
 BOOT:
   {
