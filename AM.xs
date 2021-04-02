@@ -311,7 +311,7 @@ void normalize(pTHX_ SV *s) {
     }
     fprintf(stderr, "got here 2: %zu\n", length);
     if (length == 0) {
-      fprintf(stderr, "setting s/outptr/outlength=%u", outlength);
+      fprintf(stderr, "setting s/outptr/outlength=%u\n", outlength);
       sv_setpvn(s, outptr, outlength);
       break;
     }
@@ -592,7 +592,7 @@ _fillandcount(...)
 
   context_to_class = guts->context_to_class;
   subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
-  fprintf(stderr, "subcontextnumber=%u", subcontextnumber);
+  fprintf(stderr, "subcontextnumber=%u\n", subcontextnumber);
   Newxz(0, subcontext, NUM_LATTICES *(subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
   Newxz(0, subcontext_class, subcontextnumber + 2, AM_SHORT);
