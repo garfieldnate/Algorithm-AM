@@ -307,7 +307,7 @@ void normalize(pTHX_ SV *s) {
     while (length && (*(dividend + length - 1) == 0)) {
       --length;
     }
-    fprintf(stderr, "got here 2: %u\n", length);
+    fprintf(stderr, "got here 2: %zu\n", length);
     if (length == 0) {
       sv_setpvn(s, outptr, outlength);
       break;
@@ -417,10 +417,12 @@ AM_SHORT intersect_supras_final(
         length = 0;
         break;
       } else {
+        fprintf(stderr, "Accessing(1) ilist3top=%u\n", *ilist3top);
         class = subcontext_class[*ilist3top];
       }
     } else {
       /* Do the classes not match? */
+      fprintf(stderr, "Accessing(1) ilist3top=%u\n", *ilist3top);
       if (class != subcontext_class[*ilist3top])
       {
         length = 0;
@@ -586,7 +588,8 @@ _fillandcount(...)
 
   context_to_class = guts->context_to_class;
   subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
-  Newz(0, subcontext, NUM_LATTICES * (subcontextnumber + 1), AM_SHORT);
+  fprintf(stderr, "subcontextnumber=%u", subcontextnumber);
+  Newz(0, subcontext, NUM_LATTICES *(subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
   Newz(0, subcontext_class, subcontextnumber + 1, AM_SHORT);
   subcontext_class += subcontextnumber;
