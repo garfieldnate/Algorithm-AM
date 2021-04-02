@@ -381,26 +381,27 @@ unsigned short *intersect_supras(
   * list.
   */
 AM_SHORT intersect_supras_final(
-    AM_SHORT *i, AM_SHORT *j,
+    AM_SHORT *ilist3top, AM_SHORT *p3subcontexts,
     AM_SHORT *intersect, AM_SHORT *subcontext_class){
   AM_SHORT class = 0;
   AM_SHORT length = 0;
   AM_SHORT *temp;
   fprintf(stderr, "calling intersect_supras_final\n");
   while (1) {
-    while (*i > *j) {
-      --i;
+    fprintf(stderr, "ilist3top=%u, p3subcontexts=%u\n", *ilist3top, *p3subcontexts);
+    while (*ilist3top > *p3subcontexts) {
+      --ilist3top;
     }
-    if (*i == 0) {
+    if (*ilist3top == 0) {
       break;
     }
-    if (*i < *j) {
-      temp = i;
-      i = j;
-      j = temp;
+    if (*ilist3top < *p3subcontexts) {
+      temp = ilist3top;
+      ilist3top = p3subcontexts;
+      p3subcontexts = temp;
       continue;
     }
-    *intersect = *i;
+    *intersect = *ilist3top;
     ++intersect;
     ++length;
 
@@ -411,17 +412,18 @@ AM_SHORT intersect_supras_final(
         length = 0;
         break;
       } else {
-        class = subcontext_class[*i];
+        class = subcontext_class[*ilist3top];
       }
     } else {
       /* Do the classes not match? */
-      if (class != subcontext_class[*i]) {
+      if (class != subcontext_class[*ilist3top])
+      {
         length = 0;
         break;
       }
     }
-    --i;
-    --j;
+    --ilist3top;
+    --p3subcontexts;
   }
   return length;
 }
