@@ -412,6 +412,8 @@ AM_SHORT intersect_supras_final(
 
 MODULE = Algorithm::AM PACKAGE = Algorithm::AM
 
+PROTOTYPES: DISABLE
+
 BOOT:
   {
     AM_LONG ten = 10;
