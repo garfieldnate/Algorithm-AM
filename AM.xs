@@ -54,6 +54,9 @@ typedef AM_LONG AM_BIG_INT[8];
 #define array_pointer_from_stack(ind) \
   AvARRAY((AV *)SvRV(ST(ind)))
 
+/* AM_SUPRAs form a linked list; using for(iter_supra(x, supra)) loops over the list members using the temp variable x */
+#define iter_supras(loop_var, supra_ptr) \
+  loop_var = supra_ptr + supra_ptr->next; loop_var != supra_ptr; loop_var = supra_ptr + loop_var->next
 /*
  * structure for the supracontexts
  *
@@ -652,8 +655,7 @@ _fillandcount(...)
       subcontext[chunk] = context;
 
       if (context == 0) {
-      	for (p = supralist + supralist->next;
-      	     p != supralist; p = supralist + p->next) {
+        for (iter_supras(p, supralist)) {
       	  AM_SHORT *data;
       	  Newz(0, data, p->data[0] + 3, AM_SHORT);
       	  Copy(p->data + 2, data + 3, p->data[0], AM_SHORT);
@@ -793,8 +795,8 @@ _fillandcount(...)
     AM_SHORT *k;
 
     /* find intersections */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next) {
-      for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next) {
+    for (iter_supras(p0, sptr[0])) {
+      for (iter_supras(p1, sptr[1])) {
       /*Find intersection between p0 and p2*/
         k = intersect_supras(
           p0->data + p0->data[0] + 1,
@@ -806,7 +808,7 @@ _fillandcount(...)
           continue;
         *k = 0;
 
-        for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next) {
+        for (iter_supras(p2, sptr[2])) {
 
           /*Find intersection between previous intersection and p2*/
           k = intersect_supras(
@@ -819,7 +821,7 @@ _fillandcount(...)
             continue;
           *k = 0;
 
-          for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next) {
+          for (iter_supras(p3, sptr[3])) {
 
             /* Find intersection between previous intersection and p3;
              * check for disqualified supras this time.
@@ -915,19 +917,24 @@ _fillandcount(...)
                 }
               }/* end for (i = 0;... */
             }/* end if (length) */
-          }/* end for (p3 = sptr[3]... */
-        }/* end  for (p2 = sptr[2]... */
-      }/* end  for (p1 = sptr[1]... */
-    }/* end  for (p0 = sptr[0]... */
+          }/* end for (iter_supras(p3... */
+        }/* end  for (iter_supras(p2... */
+      }/* end  for (iter_supras(p1... */
+    }/* end  for (iter_supras(p0... */
+
     /* clear out the supracontexts */
-    for (p0 = sptr[0] + sptr[0]->next; p0 != sptr[0]; p0 = sptr[0] + p0->next)
+    for (iter_supras(p0, sptr[0])) {
       Safefree(p0->data);
-    for (p1 = sptr[1] + sptr[1]->next; p1 != sptr[1]; p1 = sptr[1] + p1->next)
+    }
+    for (iter_supras(p1, sptr[1])) {
       Safefree(p1->data);
-    for (p2 = sptr[2] + sptr[2]->next; p2 != sptr[2]; p2 = sptr[2] + p2->next)
+    }
+    for (iter_supras(p2, sptr[2])) {
       Safefree(p2->data);
-    for (p3 = sptr[3] + sptr[3]->next; p3 != sptr[3]; p3 = sptr[3] + p3->next)
+    }
+    for (iter_supras(p3, sptr[3])) {
       Safefree(p3->data);
+    }
 
     /*
      * compute analogical set and gang effects
