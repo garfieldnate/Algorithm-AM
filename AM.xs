@@ -273,9 +273,11 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  *
  */
 const int OUTSPACE_SIZE = 55;
+const unsigned int ASCII_0 = 0x30;
 void normalize(pTHX_ SV *s) {
   AM_LONG dspace[10];
   AM_LONG qspace[10];
+  // no need to initialize; we keep track of outlength instead and pass it to sv_setpvn
   char outspace[OUTSPACE_SIZE];
   AM_LONG *dividend, *quotient, *dptr, *qptr;
   char *outptr;
@@ -295,54 +297,57 @@ void normalize(pTHX_ SV *s) {
     /*   2^16    * nn +           p[j-1] */
     nn = 65536.0 * nn + (double) *(p + j - 1);
 
-  dividend = &dspace[0];
-  quotient = &qspace[0];
-  Copy(p, dividend, length, sizeof(AM_LONG));
-  fprintf(stderr, "Got here 1\n");
+  // dividend = &dspace[0];
+  // quotient = &qspace[0];
+  // Copy(p, dividend, length, sizeof(AM_LONG));
+  // fprintf(stderr, "Got here 1\n");
 
-  /* Start at end of outspace and work towards beginning */
-  outptr = outspace + (OUTSPACE_SIZE - 1);
-  /* Null char at end of string */
-  *outptr = 0;
-  fprintf(stderr, "outspace=%s, outptr=%s", outspace, outptr);
+  // /* Start at end of outspace and work towards beginning */
+  // outptr = outspace + (OUTSPACE_SIZE - 1);
+  // /* Null char at end of string */
+  // // *outptr = 0;
+  // // fprintf(stderr, "outspace=%s, outptr=%s", outspace, outptr);
 
-  while (1) {
-    AM_LONG *temp, carry = 0;
-    while (length && (*(dividend + length - 1) == 0)) {
-      --length;
-    }
-    fprintf(stderr, "got here 2: %zu\n", length);
-    if (length == 0) {
-      fprintf(stderr, "setting s/outptr/outlength=%u\n", outlength);
-      sv_setpvn(s, outptr, outlength);
-      break;
-    }
-    dptr = dividend + length - 1;
-    qptr = quotient + length - 1;
-    fprintf(stderr, "got here 3\n");
-    while (dptr >= dividend) {
-      unsigned int i;
-      *dptr += carry << 16;
-      *qptr = 0;
-      for (i = 16; i; ) {
-        --i;
-        if (tens[i] <= *dptr) {
-          *dptr -= tens[i];
-          *qptr += ones[i];
-        }
-      }
-      carry = *dptr;
-      --dptr;
-      --qptr;
-    }
-    fprintf(stderr, "got here 4\n");
-    --outptr;
-    *outptr = (char) (0x30 + *dividend) & 0x00ff;
-    ++outlength;
-    temp = dividend;
-    dividend = quotient;
-    quotient = temp;
-  }
+  // while (1) {
+  //   AM_LONG *temp, carry = 0;
+  //   while (length && (*(dividend + length - 1) == 0)) {
+  //     --length;
+  //   }
+  //   // fprintf(stderr, "got here 2: %zu\n", length);
+  //   if (length == 0)
+  //   {
+  //     // fprintf(stderr, "setting outlength=%u\n", outlength);
+  //     // fprintf(stderr, "setting outptr=%s\n", outptr);
+  //     sv_setpvn(s, outptr, outlength);
+  //     break;
+  //   }
+  //   dptr = dividend + length - 1;
+  //   qptr = quotient + length - 1;
+  //   // fprintf(stderr, "got here 3\n");
+  //   while (dptr >= dividend) {
+  //     unsigned int i;
+  //     *dptr += carry << 16;
+  //     *qptr = 0;
+  //     for (i = 16; i; ) {
+  //       --i;
+  //       if (tens[i] <= *dptr) {
+  //         *dptr -= tens[i];
+  //         *qptr += ones[i];
+  //       }
+  //     }
+  //     carry = *dptr;
+  //     --dptr;
+  //     --qptr;
+  //   }
+  //   fprintf(stderr, "got here 4\n");
+  //   --outptr;
+  //   *outptr = (char)(ASCII_0 + *dividend) & 0x00ff;
+  //   fprintf(stderr, "appending %c\n", *outptr);
+  //   ++outlength;
+  //   temp = dividend;
+  //   dividend = quotient;
+  //   quotient = temp;
+  // }
 
   fprintf(stderr, "got here 5\n");
   SvNVX(s) = nn;
