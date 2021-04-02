@@ -54,6 +54,9 @@ typedef AM_LONG AM_BIG_INT[8];
 #define array_pointer_from_stack(ind) \
   AvARRAY((AV *)SvRV(ST(ind)))
 
+#define unsigned_int_from_stack(ind) \
+  SvUVX(ST(ind))
+
 /* AM_SUPRAs form a linked list; using for(iter_supra(x, supra)) loops over the list members using the temp variable x */
 #define iter_supras(loop_var, supra_ptr) \
   loop_var = supra_ptr + supra_ptr->next; loop_var != supra_ptr; loop_var = supra_ptr + loop_var->next
@@ -528,9 +531,9 @@ _fillandcount(...)
    * perl lattice, and a flag to indicate whether to count occurrences
    * (true) or pointers (false), also known as linear/quadratic.
    */
-  project = (HV *) SvRV(ST(0));
-  lattice_sizes_input = AvARRAY((AV *) SvRV(ST(1)));
-  linear_flag = SvUVX(ST(2));
+  project = hash_pointer_from_stack(0);
+  lattice_sizes_input = array_pointer_from_stack(1);
+  linear_flag = unsigned_int_from_stack(2);
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
 
