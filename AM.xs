@@ -5,7 +5,6 @@
 #include "XSUB.h"
 
 #include "ppport.h"
-#include <stdio.h>
 
 #define NUM_LATTICES 4
 
@@ -272,22 +271,24 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  * ASCII digits from least to most significant
  *
  */
-const int OUTSPACE_SIZE = 55;
+const unsigned int OUTSPACE_SIZE = 55;
 const unsigned int ASCII_0 = 0x30;
+const unsigned int DIVIDE_SPACE = 10;
 void normalize(pTHX_ SV *s) {
-  AM_LONG dspace[10];
-  AM_LONG qspace[10];
+  AM_LONG dspace[DIVIDE_SPACE];
+  AM_LONG qspace[DIVIDE_SPACE];
   // no need to initialize; we keep track of outlength instead and pass it to sv_setpvn
   char outspace[OUTSPACE_SIZE];
   AM_LONG *dividend, *quotient, *dptr, *qptr;
   char *outptr;
   unsigned int outlength = 0;
   AM_LONG *p = (AM_LONG *) SvPVX(s);
+  /* TODO: hopefully that's not longer than DIVIDE_SPACE*/
   STRLEN length = SvCUR(s) / sizeof(AM_LONG);
+  assert(length -1 <= DIVIDE_SPACE);
   /* TODO: is this required to be a certain number of bits? */
   long double nn = 0;
   int j;
-  fprintf(stderr, "calling normalize\n");
 
   /* you can't put the for block in {}, or it doesn't work
    * ask me for details some time
@@ -300,7 +301,6 @@ void normalize(pTHX_ SV *s) {
   dividend = &dspace[0];
   quotient = &qspace[0];
   Copy(p, dividend, length, AM_LONG);
-  fprintf(stderr, "Got here 1\n");
 
   /* Start at end of outspace and work towards beginning */
   outptr = outspace + (OUTSPACE_SIZE - 1);
@@ -310,15 +310,12 @@ void normalize(pTHX_ SV *s) {
     while (length && (*(dividend + length - 1) == 0)) {
       --length;
     }
-    fprintf(stderr, "length is %zu\n", length);
-    if (length == 0)
-    {
+    if (length == 0) {
       sv_setpvn(s, outptr, outlength);
       break;
     }
     dptr = dividend + length - 1;
     qptr = quotient + length - 1;
-    fprintf(stderr, "got here 3\n");
     while (dptr >= dividend) {
       unsigned int i;
       *dptr += carry << 16;
@@ -334,18 +331,14 @@ void normalize(pTHX_ SV *s) {
       --dptr;
       --qptr;
     }
-    fprintf(stderr, "got here 4: %lu\n", *dividend);
     --outptr;
     *outptr = (char)(ASCII_0 + *dividend) & 0x00ff;
-    fprintf(stderr, "appending %c\n", *outptr);
     ++outlength;
     temp = dividend;
     dividend = quotient;
     quotient = temp;
-    fprintf(stderr, "got here 4.5: %lu, %lu\n", *quotient, *dividend);
   }
 
-  fprintf(stderr, "got here 5\n");
   SvNVX(s) = nn;
   SvNOK_on(s);
 }
@@ -361,7 +354,6 @@ void normalize(pTHX_ SV *s) {
 unsigned short *intersect_supras(
     AM_SHORT *i, AM_SHORT *j, AM_SHORT *k){
   AM_SHORT *temp;
-  fprintf(stderr, "calling intersect_supras\n");
   while (1) {
     while (*i > *j) {
       --i;
@@ -397,13 +389,10 @@ AM_SHORT intersect_supras_final(
   AM_SHORT class = 0;
   AM_SHORT length = 0;
   AM_SHORT *temp;
-  fprintf(stderr, "calling intersect_supras_final\n");
   while (1) {
-    fprintf(stderr, "ilist3top=%u, p3subcontexts=%u\n", *ilist3top, *p3subcontexts);
     while (*ilist3top > *p3subcontexts) {
       --ilist3top;
     }
-    fprintf(stderr, "decremented, ilist3top=%u\n", *ilist3top);
     if (*ilist3top == 0) {
       break;
     }
@@ -424,12 +413,10 @@ AM_SHORT intersect_supras_final(
         length = 0;
         break;
       } else {
-        fprintf(stderr, "Accessing(1) ilist3top=%u\n", *ilist3top);
         class = subcontext_class[*ilist3top];
       }
     } else {
       /* Do the classes not match? */
-      fprintf(stderr, "Accessing(1) ilist3top=%u\n", *ilist3top);
       if (class != subcontext_class[*ilist3top])
       {
         length = 0;
@@ -496,7 +483,6 @@ _xs_initialize(...)
   guts.sum = array_pointer_from_stack(9);
   /* Length of guts.sum */
   guts.num_classes = av_len((AV *) SvRV(ST(9)));
-  fprintf(stderr, "Calling _xs_initialize\n");
 
   /*
    * Since the sublattices are small, we just take a chunk of memory
@@ -557,7 +543,6 @@ _fillandcount(...)
   linear_flag = unsigned_int_from_stack(2);
   mg = mg_find((SV *) project, PERL_MAGIC_ext);
   guts = (AM_GUTS *) SvPVX(mg->mg_obj);
-  fprintf(stderr, "Calling _fillandcount\n");
 
   /*
    * We initialize the memory for the sublattices, including setting up the
@@ -595,7 +580,6 @@ _fillandcount(...)
 
   context_to_class = guts->context_to_class;
   subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
-  fprintf(stderr, "subcontextnumber=%u\n", subcontextnumber);
   Newxz(subcontext, NUM_LATTICES *(subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
   Newxz(subcontext_class, subcontextnumber + 2, AM_SHORT);
