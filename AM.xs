@@ -299,7 +299,7 @@ void normalize(pTHX_ SV *s) {
 
   dividend = &dspace[0];
   quotient = &qspace[0];
-  Copy(p, dividend, length, sizeof(AM_LONG));
+  Copy(p, dividend, length, AM_LONG);
   fprintf(stderr, "Got here 1\n");
 
   /* Start at end of outspace and work towards beginning */
