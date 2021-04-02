@@ -298,7 +298,8 @@ void normalize(pTHX_ SV *s) {
   dividend = &dspace[0];
   quotient = &qspace[0];
   Copy(p, dividend, length, sizeof(AM_LONG));
-  /* Magic number here... */
+  fprintf(stderr, "Got here 1\n");
+  /* TODO: Magic number here... */
   outptr = outspace + 54;
 
   while (1) {
@@ -306,12 +307,14 @@ void normalize(pTHX_ SV *s) {
     while (length && (*(dividend + length - 1) == 0)) {
       --length;
     }
+    fprintf(stderr, "got here 2: %u\n", length);
     if (length == 0) {
       sv_setpvn(s, outptr, outlength);
       break;
     }
     dptr = dividend + length - 1;
     qptr = quotient + length - 1;
+    fprintf(stderr, "got here 3\n");
     while (dptr >= dividend) {
       unsigned int i;
       *dptr += carry << 16;
@@ -327,6 +330,7 @@ void normalize(pTHX_ SV *s) {
       --dptr;
       --qptr;
     }
+    fprintf(stderr, "got here 4\n");
     --outptr;
     *outptr = (char) (0x30 + *dividend) & 0x00ff;
     ++outlength;
@@ -335,6 +339,7 @@ void normalize(pTHX_ SV *s) {
     quotient = temp;
   }
 
+  fprintf(stderr, "got here 5\n");
   SvNVX(s) = nn;
   SvNOK_on(s);
 }
