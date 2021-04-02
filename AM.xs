@@ -272,11 +272,11 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  * ASCII digits from least to most significant
  *
  */
-
+const int OUTSPACE_SIZE = 55;
 void normalize(pTHX_ SV *s) {
   AM_LONG dspace[10];
   AM_LONG qspace[10];
-  char outspace[55];
+  char outspace[OUTSPACE_SIZE];
   AM_LONG *dividend, *quotient, *dptr, *qptr;
   char *outptr;
   unsigned int outlength = 0;
@@ -299,8 +299,10 @@ void normalize(pTHX_ SV *s) {
   quotient = &qspace[0];
   Copy(p, dividend, length, sizeof(AM_LONG));
   fprintf(stderr, "Got here 1\n");
-  /* TODO: Magic number here... */
-  outptr = outspace + 54;
+
+  /* Start at end of outspace and work towards beginning */
+  outptr = outspace + (OUTSPACE_SIZE - 1);
+  fprintf(stderr, "outspace=%s, outptr=%s", outspace, outptr);
 
   while (1) {
     AM_LONG *temp, carry = 0;
@@ -309,6 +311,7 @@ void normalize(pTHX_ SV *s) {
     }
     fprintf(stderr, "got here 2: %zu\n", length);
     if (length == 0) {
+      fprintf(stderr, "setting s/outptr/outlength=%u", outlength);
       sv_setpvn(s, outptr, outlength);
       break;
     }
@@ -397,6 +400,7 @@ AM_SHORT intersect_supras_final(
     while (*ilist3top > *p3subcontexts) {
       --ilist3top;
     }
+    fprintf(stderr, "decremented, ilist3top=%u\n", *ilist3top);
     if (*ilist3top == 0) {
       break;
     }
@@ -591,7 +595,7 @@ _fillandcount(...)
   fprintf(stderr, "subcontextnumber=%u", subcontextnumber);
   Newz(0, subcontext, NUM_LATTICES *(subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
-  Newz(0, subcontext_class, subcontextnumber + 1, AM_SHORT);
+  Newz(0, subcontext_class, subcontextnumber + 2, AM_SHORT);
   subcontext_class += subcontextnumber;
   Newz(0, intersectlist, subcontextnumber + 1, AM_SHORT);
   Newz(0, intersectlist2, subcontextnumber + 1, AM_SHORT);
