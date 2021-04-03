@@ -311,7 +311,7 @@ void normalize(pTHX_ SV *s) {
 
   dividend = &dspace[0];
   quotient = &qspace[0];
-  Copy(p, dividend, length, sizeof(AM_LONG));
+  Copy(p, dividend, length, AM_LONG);
 
   while (1) {
     AM_LONG *temp, carry = 0;
