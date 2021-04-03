@@ -2,7 +2,7 @@ package analogize;
 # ABSTRACT: classify data with AM from the command line
 use strict;
 use warnings;
-our $VERSION = '3.12';
+our $VERSION = '3.13';
 use 5.010;
 use Carp;
 use Algorithm::AM::Batch;

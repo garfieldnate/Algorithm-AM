@@ -1,7 +1,7 @@
 package Algorithm::AM::DataSet::Item;
 use strict;
 use warnings;
-our $VERSION = '3.12';
+our $VERSION = '3.13';
 # ABSTRACT: A single item for classification training and testing
 use Carp;
 our @CARP_NOT = qw(Algorithm::AM::DataSet);
