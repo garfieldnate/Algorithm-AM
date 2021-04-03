@@ -1,0 +1,27 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Release Testing
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.32'
+      - run: perl -V
+      # some dependency tests fail, unfortunately
+      - run: cpanm --quiet --notest --skip-satisfied Dist::Zilla
+      - run: dzil authordeps --missing | cpanm --notest
+      - run: dzil listdeps --author --missing | cpanm --notest
+      - run: dzil test --author --release
