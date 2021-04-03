@@ -34,4 +34,7 @@ To release the module:
 
 * update and commit `Changes`
 * run `dzil release` (you'll need the PAUSE username and password)
-* if the release succeeded, run `git push`
+* if the release succeeded:
+    * `git tag <tag>`
+    * `git push --tags`
+    * create release with the given tag on GitHub
