@@ -62,9 +62,12 @@ typedef AM_LONG AM_BIG_INT[8];
 /* AM_SUPRAs form a linked list; using for(iter_supra(x, supra)) loops over the list members using the temp variable x */
 #define iter_supras(loop_var, supra_ptr) \
   loop_var = supra_ptr + supra_ptr->next; loop_var != supra_ptr; loop_var = supra_ptr + loop_var->next
+
+#define sublist_top(supra) \
+  supra->data + supra->data[0] + 1
+
 /*
  * structure for the supracontexts
- *
  */
 
 typedef struct AM_supra {
@@ -357,24 +360,24 @@ void normalize(pTHX_ SV *s) {
   * just the same as the third input.
   */
 unsigned short *intersect_supras(
-    AM_SHORT *i, AM_SHORT *j, AM_SHORT *k){
+    AM_SHORT *intersection_list_top, AM_SHORT *subcontext_list_top, AM_SHORT *k){
   AM_SHORT *temp;
   while (1) {
-    while (*i > *j) {
-      --i;
+    while (*intersection_list_top > *subcontext_list_top) {
+      --intersection_list_top;
     }
-    if (*i == 0) {
+    if (*intersection_list_top == 0) {
       break;
     }
-    if (*i < *j) {
-      temp = i;
-      i = j;
-      j = temp;
+    if (*intersection_list_top < *subcontext_list_top) {
+      temp = intersection_list_top;
+      intersection_list_top = subcontext_list_top;
+      subcontext_list_top = temp;
       continue;
     }
-    *k = *i;
-    --i;
-    --j;
+    *k = *intersection_list_top;
+    --intersection_list_top;
+    --subcontext_list_top;
     --k;
   }
   return k;
@@ -389,25 +392,25 @@ unsigned short *intersect_supras(
   * list.
   */
 AM_SHORT intersect_supras_final(
-    AM_SHORT *i, AM_SHORT *j,
+    AM_SHORT *intersection_list_top, AM_SHORT *subcontext_list_top,
     AM_SHORT *intersect, AM_SHORT *subcontext_class){
   AM_SHORT class = 0;
   AM_SHORT length = 0;
   AM_SHORT *temp;
   while (1) {
-    while (*i > *j) {
-      --i;
+    while (*intersection_list_top > *subcontext_list_top) {
+      --intersection_list_top;
     }
-    if (*i == 0) {
+    if (*intersection_list_top == 0) {
       break;
     }
-    if (*i < *j) {
-      temp = i;
-      i = j;
-      j = temp;
+    if (*intersection_list_top < *subcontext_list_top) {
+      temp = intersection_list_top;
+      intersection_list_top = subcontext_list_top;
+      subcontext_list_top = temp;
       continue;
     }
-    *intersect = *i;
+    *intersect = *intersection_list_top;
     ++intersect;
     ++length;
 
@@ -418,17 +421,17 @@ AM_SHORT intersect_supras_final(
         length = 0;
         break;
       } else {
-        class = subcontext_class[*i];
+        class = subcontext_class[*intersection_list_top];
       }
     } else {
       /* Do the classes not match? */
-      if (class != subcontext_class[*i]) {
+      if (class != subcontext_class[*intersection_list_top]) {
         length = 0;
         break;
       }
     }
-    --i;
-    --j;
+    --intersection_list_top;
+    --subcontext_list_top;
   }
   return length;
 }
@@ -825,8 +828,8 @@ _fillandcount(...)
       for (iter_supras(p1, sptr[1])) {
       /*Find intersection between p0 and p2*/
         k = intersect_supras(
-          p0->data + p0->data[0] + 1,
-          p1->data + p1->data[0] + 1,
+          sublist_top(p0),
+          sublist_top(p1),
           ilist2top
         );
         /* If k has not been increased then intersection was empty */
@@ -840,7 +843,7 @@ _fillandcount(...)
           /*Find intersection between previous intersection and p2*/
           k = intersect_supras(
             ilist2top,
-            p2->data + p2->data[0] + 1,
+            sublist_top(p2),
             ilist3top
           );
           /* If k has not been increased then intersection was empty */
@@ -856,7 +859,7 @@ _fillandcount(...)
              */
             length = intersect_supras_final(
               ilist3top,
-              p3->data + p3->data[0] + 1,
+              sublist_top(p3),
               intersectlist,
               subcontext_class
             );
