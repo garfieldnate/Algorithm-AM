@@ -498,9 +498,9 @@ _xs_initialize(...)
 
   for (i = 0; i < NUM_LATTICES; ++i) {
     UV v = SvUVX(lattice_sizes[i]);
-    Newz(0, guts.lptr[i], 1 << v, AM_SHORT);
-    Newz(0, guts.sptr[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */
-    Newz(0, guts.sptr[i][0].data, 2, AM_SHORT);
+    Newxz(guts.lptr[i], 1 << v, AM_SHORT);
+    Newxz(guts.sptr[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */ /* TODO: what changed? */
+    Newxz(guts.sptr[i][0].data, 2, AM_SHORT);
   }
 
   /* Perl magic invoked here */
@@ -584,14 +584,14 @@ _fillandcount(...)
 
   context_to_class = guts->context_to_class;
   subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
-  Newz(0, subcontext, NUM_LATTICES * (subcontextnumber + 1), AM_SHORT);
+  Newxz(subcontext, NUM_LATTICES * (subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
-  Newz(0, subcontext_class, subcontextnumber + 1, AM_SHORT);
+  Newxz(subcontext_class, subcontextnumber + 1, AM_SHORT);
   subcontext_class += subcontextnumber;
-  Newz(0, intersectlist, subcontextnumber + 1, AM_SHORT);
-  Newz(0, intersectlist2, subcontextnumber + 1, AM_SHORT);
+  Newxz(intersectlist, subcontextnumber + 1, AM_SHORT);
+  Newxz(intersectlist2, subcontextnumber + 1, AM_SHORT);
   ilist2top = intersectlist2 + subcontextnumber;
-  Newz(0, intersectlist3, subcontextnumber + 1, AM_SHORT);
+  Newxz(intersectlist3, subcontextnumber + 1, AM_SHORT);
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(context_to_class);
@@ -678,7 +678,7 @@ _fillandcount(...)
       if (context == 0) {
         for (iter_supras(p, supralist)) {
           AM_SHORT *data;
-          Newz(0, data, p->data[0] + 3, AM_SHORT);
+          Newxz(data, p->data[0] + 3, AM_SHORT);
           Copy(p->data + 2, data + 3, p->data[0], AM_SHORT);
           data[2] = subcontextnumber;
           data[0] = p->data[0] + 1;
@@ -699,7 +699,7 @@ _fillandcount(...)
           c = supralist + ci;
           c->next = supralist->next;
           supralist->next = ci;
-          Newz(0, c->data, 3, AM_SHORT);
+          Newxz(c->data, 3, AM_SHORT);
           c->data[2] = subcontextnumber;
           c->data[0] = 1;
           for (i = 0; i < (1 << active); ++i) {
@@ -734,7 +734,7 @@ _fillandcount(...)
       c->next = p->next;
       p->next = ci;
       c->count = 1;
-      Newz(0, c->data, p->data[0] + 3, AM_SHORT);
+      Newxz(c->data, p->data[0] + 3, AM_SHORT);
       Copy(p->data + 2, c->data + 3, p->data[0], AM_SHORT);
       c->data[2] = subcontextnumber;
       c->data[0] = p->data[0] + 1;
@@ -765,7 +765,7 @@ _fillandcount(...)
             c->next = p->next;
             p->next = ci;
             c->count = 1;
-            Newz(0, c->data, p->data[0] + 3, AM_SHORT);
+            Newxz(c->data, p->data[0] + 3, AM_SHORT);
             Copy(p->data + 2, c->data + 3, p->data[0], AM_SHORT);
             c->data[2] = subcontextnumber;
             c->data[0] = p->data[0] + 1;
