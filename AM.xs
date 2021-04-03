@@ -6,6 +6,8 @@
 
 #include "ppport.h"
 
+#include <assert.h>
+
 #define NUM_LATTICES 4
 
 /*
@@ -271,33 +273,42 @@ AM_LONG ones[16]; /*  1,  1*2,  1*4, ... */
  * ASCII digits from least to most significant
  *
  */
-
+const unsigned int ASCII_0 = 0x30;
+const unsigned int DIVIDE_SPACE = 10;
+const int OUTSPACE_SIZE = 55;
 void normalize(pTHX_ SV *s) {
-  AM_LONG dspace[10];
-  AM_LONG qspace[10];
-  char outspace[55];
+  AM_LONG *p = (AM_LONG *)SvPVX(s);
+
+  AM_LONG dspace[DIVIDE_SPACE];
+  AM_LONG qspace[DIVIDE_SPACE];
   AM_LONG *dividend, *quotient, *dptr, *qptr;
-  char *outptr;
-  unsigned int outlength = 0;
-  AM_LONG *p = (AM_LONG *) SvPVX(s);
+
   STRLEN length = SvCUR(s) / sizeof(AM_LONG);
+  /* length indexes into dspace and qspace */
+  assert(length <= DIVIDE_SPACE);
+
+  /*
+   * outptr iterates outspace from end to beginning, and an ASCII digit is inserted at each location.
+   * No need to 0-terminate since we track the final string length in outlength and pass it to sv_setpvn.
+   */
+  char outspace[OUTSPACE_SIZE];
+  char *outptr;
+  outptr = outspace + (OUTSPACE_SIZE - 1);
+  unsigned int outlength = 0;
+
   /* TODO: is this required to be a certain number of bits? */
   long double nn = 0;
   int j;
 
-  /* you can't put the for block in {}, or it doesn't work
-   * ask me for details some time
-   * TODO: is this still necessary?
-   */
-  for (j = 8; j; --j)
+  /* nn will be assigned to the NV */
+  for (j = 8; j; --j) {
     /*   2^16    * nn +           p[j-1] */
     nn = 65536.0 * nn + (double) *(p + j - 1);
+  }
 
   dividend = &dspace[0];
   quotient = &qspace[0];
   Copy(p, dividend, length, sizeof(AM_LONG));
-  /* Magic number here... */
-  outptr = outspace + 54;
 
   while (1) {
     AM_LONG *temp, carry = 0;
@@ -326,7 +337,7 @@ void normalize(pTHX_ SV *s) {
       --qptr;
     }
     --outptr;
-    *outptr = (char) (0x30 + *dividend) & 0x00ff;
+    *outptr = (char)(ASCII_0 + *dividend) & 0x00ff;
     ++outlength;
     temp = dividend;
     dividend = quotient;
