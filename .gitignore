@@ -14,3 +14,4 @@ Algorithm-AM-*/
 amcpresults
 /*.tar.gz
 .build/
+.vscode
