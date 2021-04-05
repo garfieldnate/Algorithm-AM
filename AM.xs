@@ -174,7 +174,7 @@ typedef struct AM_guts {
    * Let i be an integer from 0 to 3; this represents which of the
    * four sublattices we are considering.
    *
-   * Let lattice = lptr[i] and supralist = sptr[i]; then lattice and
+   * Let lattice = lattice_list[i] and supralist = supra_list[i]; then lattice and
    * supralist taken together tell us which subcontexts are in a
    * particular supracontext.  If s is the label of a supracontext,
    * then it contains the subcontexts listed in
@@ -182,8 +182,8 @@ typedef struct AM_guts {
    *
    */
 
-  AM_SHORT *lptr[NUM_LATTICES];
-  AM_SUPRA *sptr[NUM_LATTICES];
+  AM_SHORT *lattice_list[NUM_LATTICES];
+  AM_SUPRA *supra_list[NUM_LATTICES];
 
   /* array ref containing number of active features in
    * each lattice (currently we us four lattices)
@@ -197,15 +197,15 @@ typedef struct AM_guts {
   SV **itemcontextchain;
   /* TODO: ??? */
   HV *itemcontextchainhead;
-  /* Maps subcontext binary labels to class indices */
+  /* Maps subcontext binary labels to class indices (or 0 if subcontext is heterogeneous) */
   HV *context_to_class;
-  /* Maps binary context labels to the number of training items
+  /* Maps subcontext binary labels to the number of training items
    * contained in that subcontext
    */
-  HV *contextsize;
+  HV *context_size;
   /* Maps binary context labels to the number of pointers to each,
    * or to the number of pointers to class label if heterogenous.
-   * The key 'grandtotal' maps to the total number of pointers.
+   * The key "grand_total" maps to the total number of pointers.
    */
   HV *pointers;
   /* Maps binary context labels to the size of the gang effect of
@@ -231,13 +231,13 @@ typedef struct AM_guts {
  * TODO: explain the necessity
  */
 
-static int AMguts_mgFree(pTHX_ SV *sv, MAGIC *mg) {
+static int AMguts_mgFree(pTHX_ SV *sv, MAGIC *magic) {
   int i;
-  AM_GUTS *guts = (AM_GUTS *) SvPVX(mg->mg_obj);
+  AM_GUTS *guts = (AM_GUTS *) SvPVX(magic->mg_obj);
   for (i = 0; i < NUM_LATTICES; ++i) {
-    Safefree(guts->lptr[i]);
-    Safefree(guts->sptr[i][0].data);
-    Safefree(guts->sptr[i]);
+    Safefree(guts->lattice_list[i]);
+    Safefree(guts->supra_list[i][0].data);
+    Safefree(guts->supra_list[i]);
   }
   return 0;
 }
@@ -292,7 +292,7 @@ void normalize(pTHX_ SV *s) {
 
   /*
    * outptr iterates outspace from end to beginning, and an ASCII digit is inserted at each location.
-   * No need to 0-terminate since we track the final string length in outlength and pass it to sv_setpvn.
+   * No need to 0-terminate, since we track the final string length in outlength and pass it to sv_setpvn.
    */
   char outspace[OUTSPACE_SIZE];
   char *outptr;
@@ -301,10 +301,9 @@ void normalize(pTHX_ SV *s) {
 
   /* TODO: is this required to be a certain number of bits? */
   long double nn = 0;
-  int j;
 
   /* nn will be assigned to the NV */
-  for (j = 8; j; --j) {
+  for (int j = 8; j; --j) {
     /*   2^16    * nn +           p[j-1] */
     nn = 65536.0 * nn + (double) *(p + j - 1);
   }
@@ -472,7 +471,7 @@ _xs_initialize(...)
   AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
   SV **lattice_sizes;
   SV *svguts;
-  MAGIC *mg;
+  MAGIC *magic;
   int i;
  PPCODE:
   /* 9 arguments are passed to the _xs_initialize method: */
@@ -484,7 +483,7 @@ _xs_initialize(...)
   guts.itemcontextchain = array_pointer_from_stack(3);
   guts.itemcontextchainhead = hash_pointer_from_stack(4);
   guts.context_to_class = hash_pointer_from_stack(5);
-  guts.contextsize = hash_pointer_from_stack(6);
+  guts.context_size = hash_pointer_from_stack(6);
   guts.pointers = hash_pointer_from_stack(7);
   guts.gang = hash_pointer_from_stack(8);
   guts.sum = array_pointer_from_stack(9);
@@ -501,9 +500,9 @@ _xs_initialize(...)
 
   for (i = 0; i < NUM_LATTICES; ++i) {
     UV v = SvUVX(lattice_sizes[i]);
-    Newxz(guts.lptr[i], 1 << v, AM_SHORT);
-    Newxz(guts.sptr[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */ /* TODO: what changed? */
-    Newxz(guts.sptr[i][0].data, 2, AM_SHORT);
+    Newxz(guts.lattice_list[i], 1 << v, AM_SHORT);
+    Newxz(guts.supra_list[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */ /* TODO: what changed? */
+    Newxz(guts.supra_list[i][0].data, 2, AM_SHORT);
   }
 
   /* Perl magic invoked here */
@@ -511,8 +510,8 @@ _xs_initialize(...)
   svguts = newSVpv((char *) &guts, sizeof(AM_GUTS));
   sv_magic((SV *) project, svguts, PERL_MAGIC_ext, NULL, 0);
   SvRMAGICAL_off((SV *) project);
-  mg = mg_find((SV *) project, PERL_MAGIC_ext);
-  mg->mg_virtual = &AMguts_vtab;
+  magic = mg_find((SV *) project, PERL_MAGIC_ext);
+  magic->mg_virtual = &AMguts_vtab;
   mg_magical((SV *) project);
 
 void
@@ -521,22 +520,22 @@ _fillandcount(...)
   HV *project;
   UV linear_flag;
   AM_GUTS *guts;
-  MAGIC *mg;
+  MAGIC *magic;
   SV **lattice_sizes_input;
   AM_SHORT lattice_sizes[NUM_LATTICES];
-  AM_SHORT **lptr;
-  AM_SUPRA **sptr;
-  AM_SHORT nptr[NUM_LATTICES];/* this helps us manage the free list in sptr[i] */
+  AM_SHORT **lattice_list;
+  AM_SUPRA **supra_list;
+  AM_SHORT nptr[NUM_LATTICES];/* this helps us manage the free list in supra_list[i] */
   AM_SHORT subcontextnumber;
   AM_SHORT *subcontext;
   AM_SHORT *subcontext_class;
   SV **classes, **itemcontextchain, **sum;
-  HV *itemcontextchainhead, *context_to_class, *contextsize, *pointers, *gang;
+  HV *itemcontextchainhead, *context_to_class, *context_size, *pointers, *gang;
   IV num_classes;
-  HE *he;
-  AM_BIG_INT grandtotal = {0, 0, 0, 0, 0, 0, 0, 0};
+  HE *hash_entry;
+  AM_BIG_INT grand_total = {0, 0, 0, 0, 0, 0, 0, 0};
   SV *tempsv;
-  int chunk, i;
+  int sublattice_index;
   AM_SHORT gaps[16];
   AM_SHORT *intersect, *intersectlist;
   AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
@@ -548,8 +547,8 @@ _fillandcount(...)
   project = hash_pointer_from_stack(0);
   lattice_sizes_input = array_pointer_from_stack(1);
   linear_flag = unsigned_int_from_stack(2);
-  mg = mg_find((SV *) project, PERL_MAGIC_ext);
-  guts = (AM_GUTS *) SvPVX(mg->mg_obj);
+  magic = mg_find((SV *) project, PERL_MAGIC_ext);
+  guts = (AM_GUTS *) SvPVX(magic->mg_obj);
 
   /*
    * We initialize the memory for the sublattices, including setting up the
@@ -557,17 +556,17 @@ _fillandcount(...)
    *
    */
 
-  lptr = guts->lptr;
-  sptr = guts->sptr;
-  for (chunk = 0; chunk < NUM_LATTICES; ++chunk) {
+  lattice_list = guts->lattice_list;
+  supra_list = guts->supra_list;
+  for (sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index) {
     /* Extract numeric values for the specified lattice_sizes */
-    lattice_sizes[chunk] = (AM_SHORT) SvUVX(lattice_sizes_input[chunk]);
+    lattice_sizes[sublattice_index] = (AM_SHORT) SvUVX(lattice_sizes_input[sublattice_index]);
     /* TODO: explain the lines below */
-    Zero(lptr[chunk], 1 << lattice_sizes[chunk], AM_SHORT);
-    sptr[chunk][0].next = 0;
-    nptr[chunk] = 1;
-    for (i = 1; i < 1 << (lattice_sizes[chunk] + 1); ++i) {/* CHANGED (TODO: changed what?) */
-      sptr[chunk][i].next = (AM_SHORT) i + 1;
+    Zero(lattice_list[sublattice_index], 1 << lattice_sizes[sublattice_index], AM_SHORT);
+    supra_list[sublattice_index][0].next = 0;
+    nptr[sublattice_index] = 1;
+    for (int i = 1; i < 1 << (lattice_sizes[sublattice_index] + 1); ++i) {/* CHANGED (TODO: changed what?) */
+      supra_list[sublattice_index][i].next = (AM_SHORT) i + 1;
     }
   }
 
@@ -598,18 +597,15 @@ _fillandcount(...)
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(context_to_class);
-  while ((he = hv_iternext(context_to_class))) {
-    AM_SHORT *contextptr = (AM_SHORT *) HeKEY(he);
-    AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(he));
-    for (chunk = 0; chunk < NUM_LATTICES; ++chunk, ++contextptr) {
-      AM_SHORT active = lattice_sizes[chunk];
-      AM_SHORT *lattice = lptr[chunk];
-      AM_SUPRA *supralist = sptr[chunk];
-      AM_SHORT nextsupra = nptr[chunk];
+  while ((hash_entry = hv_iternext(context_to_class))) {
+    AM_SHORT *contextptr = (AM_SHORT *) HeKEY(hash_entry);
+    AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(hash_entry));
+    for (sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index, ++contextptr) {
+      AM_SHORT active = lattice_sizes[sublattice_index];
+      AM_SHORT *lattice = lattice_list[sublattice_index];
+      AM_SUPRA *supralist = supra_list[sublattice_index];
+      AM_SHORT nextsupra = nptr[sublattice_index];
       AM_SHORT context = *contextptr;
-      AM_SUPRA *p, *c;
-      AM_SHORT pi, ci;
-      AM_SHORT d, t, tt, numgaps = 0;
 
       /* We want to add subcontextnumber to the appropriate
        * supracontexts in the four smaller lattices.
@@ -676,9 +672,10 @@ _fillandcount(...)
        * and set lattice[d] = 11.
        */
 
-      subcontext[chunk] = context;
+      subcontext[sublattice_index] = context;
 
       if (context == 0) {
+        AM_SUPRA *p;
         for (iter_supras(p, supralist)) {
           AM_SHORT *data;
           Newxz(data, p->data[0] + 3, AM_SHORT);
@@ -697,15 +694,15 @@ _fillandcount(...)
            */
 
           AM_SHORT count = 0;
-          ci = nptr[chunk];
-          nptr[chunk] = supralist[ci].next;
-          c = supralist + ci;
+          AM_SHORT ci = nptr[sublattice_index];
+          nptr[sublattice_index] = supralist[ci].next;
+          AM_SUPRA *c = supralist + ci;
           c->next = supralist->next;
           supralist->next = ci;
           Newxz(c->data, 3, AM_SHORT);
           c->data[2] = subcontextnumber;
           c->data[0] = 1;
-          for (i = 0; i < (1 << active); ++i) {
+          for (int i = 0; i < (1 << active); ++i) {
             if (lattice[i] == 0) {
               lattice[i] = ci;
               ++count;
@@ -717,22 +714,24 @@ _fillandcount(...)
       }
 
       /* set up traversal using Gray code */
-      d = context;
-      for (i = 1 << (active - 1); i; i >>= 1) {
+      AM_SHORT d = context;
+      AM_SHORT numgaps = 0;
+      for (int i = 1 << (active - 1); i; i >>= 1) {
         if (!(i & context)) {
           gaps[numgaps++] = i;
         }
       }
-      t = 1 << numgaps;
+      AM_SHORT t = 1 << numgaps;
 
-      p = supralist + (pi = lattice[context]);
+      AM_SHORT pi = lattice[context];
+      AM_SUPRA *p = supralist + pi;
       if (pi) {
         --(p->count);
       }
-      ci = nextsupra;
+      AM_SHORT ci = nextsupra;
       nextsupra = supralist[ci].next;
       p->touched = 1;
-      c = supralist + ci;
+      AM_SUPRA *c = supralist + ci;
       c->touched = 0;
       c->next = p->next;
       p->next = ci;
@@ -745,6 +744,8 @@ _fillandcount(...)
 
       /* traverse */
       while (--t) {
+        AM_SHORT tt;
+        int i;
         /* find the rightmost 1 in t; from HAKMEM, I believe */
         for (i = 0, tt = ~t & (t - 1); tt; tt >>= 1, ++i) {
           ;
@@ -782,6 +783,7 @@ _fillandcount(...)
 
       p = supralist;
       p->touched = 0;
+      int i;
       do {
         if (supralist[i = p->next].count == 0) {
           Safefree(supralist[i].data);
@@ -793,15 +795,15 @@ _fillandcount(...)
           p->touched = 0;
         }
       } while (p->next);
-      nptr[chunk] = nextsupra;
-    } /*end for(chunk = 0...*/
+      nptr[sublattice_index] = nextsupra;
+    } /*end for(sublattice_index = 0...*/
     subcontext -= NUM_LATTICES;
     *subcontext_class = class;
     --subcontext_class;
     --subcontextnumber;
-  } /*end while (he = hv_iternext(...*/
+  } /*end while (hash_entry = hv_iternext(...*/
 
-  contextsize = guts->contextsize;
+  context_size = guts->context_size;
   pointers = guts->pointers;
 
   /*
@@ -819,15 +821,13 @@ _fillandcount(...)
    *
    */
   {
-    AM_SUPRA *p0, *p1, *p2, *p3;
-    AM_SHORT length;
-    AM_SHORT *k;
-
     /* find intersections */
-    for (iter_supras(p0, sptr[0])) {
-      for (iter_supras(p1, sptr[1])) {
-      /*Find intersection between p0 and p2*/
-        k = intersect_supras(
+    AM_SUPRA * p0;
+    for (iter_supras(p0, supra_list[0])) {
+      AM_SUPRA *p1;
+      for (iter_supras(p1, supra_list[1])) {
+        /* Find intersection between p0 and p1 */
+        AM_SHORT *k = intersect_supras(
           sublist_top(p0),
           sublist_top(p1),
           ilist2top
@@ -838,7 +838,8 @@ _fillandcount(...)
         }
         *k = 0;
 
-        for (iter_supras(p2, sptr[2])) {
+        AM_SUPRA *p2;
+        for (iter_supras(p2, supra_list[2])) {
 
           /*Find intersection between previous intersection and p2*/
           k = intersect_supras(
@@ -852,12 +853,13 @@ _fillandcount(...)
           }
           *k = 0;
 
-          for (iter_supras(p3, sptr[3])) {
+          AM_SUPRA *p3;
+          for (iter_supras(p3, supra_list[3])) {
 
             /* Find intersection between previous intersection and p3;
              * check for disqualified supras this time.
              */
-            length = intersect_supras_final(
+            AM_SHORT length = intersect_supras_final(
               ilist3top,
               sublist_top(p3),
               intersectlist,
@@ -866,7 +868,6 @@ _fillandcount(...)
 
             /* count occurrences */
             if (length) {
-              AM_SHORT i;
               AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
               AM_LONG mask = 0xffff;
 
@@ -889,8 +890,8 @@ _fillandcount(...)
               if(!linear_flag){
                 /* If scoring is pointers (quadratic) instead of linear*/
                 AM_LONG pointercount = 0;
-                for (i = 0; i < length; ++i) {
-                  pointercount += (AM_LONG) SvUV(*hv_fetch(contextsize,
+                for (int i = 0; i < length; ++i) {
+                  pointercount += (AM_LONG) SvUV(*hv_fetch(context_size,
                       (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 0));
                 }
                 if (pointercount & 0xffff0000) {
@@ -929,8 +930,7 @@ _fillandcount(...)
                     carry(count, 3);
                 }
               }
-              for (i = 0; i < length; ++i) {
-                int j;
+              for (int i = 0; i < length; ++i) {
                 SV *tempsv;
                 AM_LONG *p;
                 tempsv = *hv_fetch(pointers,
@@ -943,7 +943,7 @@ _fillandcount(...)
                   SvPOK_on(tempsv);
                 }
                 p = (AM_LONG *) SvPVX(tempsv);
-                for (j = 0; j < 7; ++j) {
+                for (int j = 0; j < 7; ++j) {
                   *(p + j) += count[j];
                   carry_pointer(p + j);
                 }
@@ -955,17 +955,18 @@ _fillandcount(...)
     } /* end  for (iter_supras(p0... */
 
     /* clear out the supracontexts */
-    for (iter_supras(p0, sptr[0])) {
-      Safefree(p0->data);
+    AM_SUPRA *p;
+    for (iter_supras(p, supra_list[0])) {
+      Safefree(p->data);
     }
-    for (iter_supras(p1, sptr[1])) {
-      Safefree(p1->data);
+    for (iter_supras(p, supra_list[1])) {
+      Safefree(p->data);
     }
-    for (iter_supras(p2, sptr[2])) {
-      Safefree(p2->data);
+    for (iter_supras(p, supra_list[2])) {
+      Safefree(p->data);
     }
-    for (iter_supras(p3, sptr[3])) {
-      Safefree(p3->data);
+    for (iter_supras(p, supra_list[3])) {
+      Safefree(p->data);
     }
 
     /*
@@ -990,16 +991,16 @@ _fillandcount(...)
     sum = guts->sum;
     num_classes = guts->num_classes;
     hv_iterinit(pointers);
-    while ((he = hv_iternext(pointers))) {
+    while ((hash_entry = hv_iternext(pointers))) {
       AM_LONG count;
       AM_SHORT counthi, countlo;
       AM_BIG_INT p;
       AM_BIG_INT gangcount;
       AM_SHORT this_class;
-      SV *dataitem;
-      Copy(SvPVX(HeVAL(he)), p, 8, AM_LONG);
+      SV *exemplar;
+      Copy(SvPVX(HeVAL(hash_entry)), p, 8, AM_LONG);
 
-      tempsv = *hv_fetch(contextsize, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      tempsv = *hv_fetch(context_size, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
       count = (AM_LONG) SvUVX(tempsv);
       counthi = (AM_SHORT) (high_bits(count));
       countlo = (AM_SHORT) (low_bits(count));
@@ -1010,7 +1011,7 @@ _fillandcount(...)
        * and warn if there's potential overflow
        */
       gangcount[0] = 0;
-      for (i = 0; i < 7; ++i) {
+      for (int i = 0; i < 7; ++i) {
         gangcount[i] += countlo * p[i];
         carry_replace(gangcount, i);
       }
@@ -1018,51 +1019,51 @@ _fillandcount(...)
 
       /* TODO: why is element 0 not considered here? */
       if (counthi) {
-        for (i = 0; i < 6; ++i) {
+        for (int i = 0; i < 6; ++i) {
           gangcount[i + 1] += counthi * p[i];
           carry(gangcount, i + 1);
         }
       }
-      for (i = 0; i < 7; ++i) {
-        grandtotal[i] += gangcount[i];
-        carry(grandtotal, i);
+      for (int i = 0; i < 7; ++i) {
+        grand_total[i] += gangcount[i];
+        carry(grand_total, i);
       }
-      grandtotal[7] += gangcount[7];
+      grand_total[7] += gangcount[7];
 
-      tempsv = *hv_fetch(gang, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 1);
+      tempsv = *hv_fetch(gang, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 1);
       SvUPGRADE(tempsv, SVt_PVNV);
       sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
       normalize(aTHX_ tempsv);
-      normalize(aTHX_ HeVAL(he));
+      normalize(aTHX_ HeVAL(hash_entry));
 
-      tempsv = *hv_fetch(context_to_class, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      tempsv = *hv_fetch(context_to_class, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
       this_class = (AM_SHORT) SvUVX(tempsv);
       if (this_class) {
         AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
-        for (i = 0; i < 7; ++i) {
+        for (int i = 0; i < 7; ++i) {
           *(s + i) += gangcount[i];
           carry_pointer(s + i);
         }
       } else {
-        dataitem = *hv_fetch(itemcontextchainhead, HeKEY(he), NUM_LATTICES * sizeof(AM_SHORT), 0);
-        while (SvIOK(dataitem)) {
-          IV datanum = SvIVX(dataitem);
+        exemplar = *hv_fetch(itemcontextchainhead, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+        while (SvIOK(exemplar)) {
+          IV datanum = SvIVX(exemplar);
           IV ocnum = SvIVX(classes[datanum]);
           AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
-          for (i = 0; i < 7; ++i) {
+          for (int i = 0; i < 7; ++i) {
             *(s + i) += p[i];
             carry_pointer(s + i);
-            dataitem = itemcontextchain[datanum];
+            exemplar = itemcontextchain[datanum];
           }
         }
       }
     }
-    for (i = 1; i <= num_classes; ++i) {
+    for (int i = 1; i <= num_classes; ++i) {
       normalize(aTHX_ sum[i]);
     }
-    tempsv = *hv_fetch(pointers, "grandtotal", 10, 1);
+    tempsv = *hv_fetch(pointers, "grand_total", 11, 1);
     SvUPGRADE(tempsv, SVt_PVNV);
-    sv_setpvn(tempsv, (char *) grandtotal, 8 * sizeof(AM_LONG));
+    sv_setpvn(tempsv, (char *) grand_total, 8 * sizeof(AM_LONG));
     normalize(aTHX_ tempsv);
 
     Safefree(subcontext);

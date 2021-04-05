@@ -39,7 +39,7 @@ information.
 ## @itemcontextchain
 ## %itemcontextchainhead
 ## %context_to_class
-## %contextsize
+## %context_size
 use Class::Tiny qw(
     exclude_nulls
     given_excluded
@@ -129,8 +129,8 @@ sub config_info {
 sub _process_stats {
     my ($self, $sum, $pointers,
         $itemcontextchainhead, $itemcontextchain, $context_to_class,
-        $gang, $active_feats, $contextsize) = @_;
-    my $total_points = $pointers->{grandtotal};
+        $gang, $active_feats, $context_size) = @_;
+    my $total_points = $pointers->{grand_total};
     my $max = '';
     my @winners;
     my %scores;
@@ -187,7 +187,7 @@ sub _process_stats {
     $self->{context_to_class} = $context_to_class;
     $self->{gang} = $gang;
     $self->{active_feats} = $active_feats;
-    $self->{contextsize} = $contextsize;
+    $self->{context_size} = $context_size;
     return;
 }
 
@@ -460,7 +460,7 @@ sub _calculate_gangs {
         $gang->{effect} = $raw_gang->{$context} / $total_points;
         $gang->{features} = \@features;
 
-        my $p = $self->{pointers}->{$context};
+        my $num_class_pointers = $self->{pointers}->{$context};
         # if the supracontext is homogenous
         if ( my $class_index = $self->{context_to_class}->{$context} ) {
             # store a 'homogenous' key that indicates this, besides
@@ -478,7 +478,7 @@ sub _calculate_gangs {
             }
             $gang->{data}->{$class} = \@data;
             $gang->{size} = scalar @data;
-            $gang->{class}->{$class}->{score} = $p;
+            $gang->{class}->{$class}->{score} = $num_class_pointers;
             $gang->{class}->{$class}->{effect} =
                 $gang->{effect};
         }
@@ -505,10 +505,10 @@ sub _calculate_gangs {
 
             # then store aggregate statistics for each class
             for my $class (keys %data){
-                $gang->{class}->{$class}->{score} = $p;
+                $gang->{class}->{$class}->{score} = $num_class_pointers;
                 $gang->{class}->{$class}->{effect} =
                     # score*num_data/total
-                    @{ $data{$class} } * $p / $total_points;
+                    @{ $data{$class} } * $num_class_pointers / $total_points;
             }
         }
         push @gangs, $gang;

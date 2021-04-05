@@ -93,7 +93,7 @@ sub _initialize {
         qw(
             itemcontextchainhead
             context_to_class
-            contextsize
+            context_size
             pointers
             gang
         )
@@ -109,7 +109,7 @@ sub _initialize {
         $self->{itemcontextchain},
         $self->{itemcontextchainhead},
         $self->{context_to_class},
-        $self->{contextsize},
+        $self->{context_size},
         $self->{pointers},
         $self->{gang},
         $self->{sum}
@@ -153,7 +153,7 @@ sub classify {
     # the XS code has access to the existing reference,
     # but will be accessing the wrong variable if we
     # change it.
-    %{$self->{contextsize}}             = ();
+    %{$self->{context_size}}             = ();
     %{$self->{itemcontextchainhead}}    = ();
     %{$self->{context_to_class}}      = ();
     %{$self->{pointers}}                = ();
@@ -176,7 +176,7 @@ sub classify {
             $test_item->features,
             $self->exclude_nulls
         );
-        $self->{contextsize}->{$context}++;
+        $self->{context_size}->{$context}++;
         # TODO: explain itemcontextchain and itemcontextchainhead
         $self->{itemcontextchain}->[$index] =
             $self->{itemcontextchainhead}->{$context};
@@ -227,7 +227,7 @@ sub classify {
         $lattice_sizes, $self->linear ? 1 : 0);
     $result->end_time([ (localtime)[0..2] ]);
 
-    unless ($self->{pointers}->{'grandtotal'}) {
+    unless ($self->{pointers}->{'grand_total'}) {
         #TODO: is this tested yet?
         if($log->is_warn){
             $log->warn('No training items considered. ' .
@@ -246,7 +246,7 @@ sub classify {
         $self->{context_to_class},
         $self->{gang},
         $lattice_sizes,
-        $self->{contextsize}
+        $self->{context_size}
     );
     return $result;
 }
