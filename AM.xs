@@ -435,6 +435,19 @@ AM_SHORT intersect_supras_final(
   return length;
 }
 
+/* clear out the supracontexts */
+void clear_supras(AM_SUPRA **supra_list, int supras_length)
+{
+  AM_SUPRA *p;
+  for (int i = 0; i < supras_length; i++)
+  {
+    for (iter_supras(p, supra_list[i]))
+    {
+      Safefree(p->data);
+    }
+  }
+}
+
 MODULE = Algorithm::AM PACKAGE = Algorithm::AM
 
 PROTOTYPES: DISABLE
@@ -954,20 +967,7 @@ _fillandcount(...)
       } /* end  for (iter_supras(p1... */
     } /* end  for (iter_supras(p0... */
 
-    /* clear out the supracontexts */
-    AM_SUPRA *p;
-    for (iter_supras(p, supra_list[0])) {
-      Safefree(p->data);
-    }
-    for (iter_supras(p, supra_list[1])) {
-      Safefree(p->data);
-    }
-    for (iter_supras(p, supra_list[2])) {
-      Safefree(p->data);
-    }
-    for (iter_supras(p, supra_list[3])) {
-      Safefree(p->data);
-    }
+    clear_supras(supra_list, 4);
 
     /*
      * compute analogical set and gang effects
