@@ -95,7 +95,7 @@ sub _initialize {
             context_to_class
             context_size
             pointers
-            gang
+            raw_gang
         )
     );
 
@@ -111,7 +111,7 @@ sub _initialize {
         $self->{context_to_class},
         $self->{context_size},
         $self->{pointers},
-        $self->{gang},
+        $self->{raw_gang},
         $self->{sum}
     );
     return;
@@ -157,7 +157,7 @@ sub classify {
     %{$self->{itemcontextchainhead}}    = ();
     %{$self->{context_to_class}}      = ();
     %{$self->{pointers}}                = ();
-    %{$self->{gang}}                    = ();
+    %{$self->{raw_gang}}                    = ();
     @{$self->{itemcontextchain}}        = ();
     # big ints are used in AM.xs; these consist of an
     # array of 8 unsigned longs
@@ -244,7 +244,7 @@ sub classify {
         $self->{itemcontextchainhead},
         $self->{itemcontextchain},
         $self->{context_to_class},
-        $self->{gang},
+        $self->{raw_gang},
         $lattice_sizes,
         $self->{context_size}
     );

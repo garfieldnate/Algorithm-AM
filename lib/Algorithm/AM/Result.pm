@@ -129,7 +129,7 @@ sub config_info {
 sub _process_stats {
     my ($self, $sum, $pointers,
         $itemcontextchainhead, $itemcontextchain, $context_to_class,
-        $gang, $active_feats, $context_size) = @_;
+        $raw_gang, $active_feats, $context_size) = @_;
     my $total_points = $pointers->{grand_total};
     my $max = '';
     my @winners;
@@ -185,7 +185,7 @@ sub _process_stats {
     $self->{itemcontextchainhead} = $itemcontextchainhead;
     $self->{itemcontextchain} = $itemcontextchain;
     $self->{context_to_class} = $context_to_class;
-    $self->{gang} = $gang;
+    $self->{raw_gang} = $raw_gang;
     $self->{active_feats} = $active_feats;
     $self->{context_size} = $context_size;
     return;
@@ -447,7 +447,7 @@ sub _calculate_gangs {
     my ($self) = @_;
     my $train = $self->training_set;
     my $total_points = $self->total_points;
-    my $raw_gang = $self->{gang};
+    my $raw_gang = $self->{raw_gang};
     my @gangs;
 
     foreach my $context (keys %{$raw_gang})

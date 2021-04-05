@@ -209,11 +209,11 @@ typedef struct AM_guts {
    */
   HV *pointers;
   /* Maps binary context labels to the size of the gang effect of
-   * that context. A gang effect is the number of pointers in
-   * the given context multiplied by the number of training items
+   * that subcontext. A gang effect is the number of pointers in
+   * the given subcontext multiplied by the number of training items
    * contained in the context.
    */
-  HV *gang;
+  HV *raw_gang;
   /* number of pointers to each class label;
    * keys are class indices and values are numbers
    * of pointers (AM_BIG_INT).
@@ -498,7 +498,7 @@ _xs_initialize(...)
   guts.context_to_class = hash_pointer_from_stack(5);
   guts.context_size = hash_pointer_from_stack(6);
   guts.pointers = hash_pointer_from_stack(7);
-  guts.gang = hash_pointer_from_stack(8);
+  guts.raw_gang = hash_pointer_from_stack(8);
   guts.sum = array_pointer_from_stack(9);
   /* Length of guts.sum */
   guts.num_classes = av_len((AV *) SvRV(ST(9)));
@@ -543,7 +543,7 @@ _fillandcount(...)
   AM_SHORT *subcontext;
   AM_SHORT *subcontext_class;
   SV **classes, **itemcontextchain, **sum;
-  HV *itemcontextchainhead, *context_to_class, *context_size, *pointers, *gang;
+  HV *itemcontextchainhead, *context_to_class, *context_size, *pointers, *raw_gang;
   IV num_classes;
   HE *hash_entry;
   AM_BIG_INT grand_total = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -970,7 +970,7 @@ _fillandcount(...)
     clear_supras(supra_list, 4);
 
     /*
-     * compute analogical set and gang effects
+     * compute analogical set and raw gang effects
      *
      * Technically, we don't compute the analogical set; instead, we
      * compute how many pointers/occurrences there are for each of the
@@ -984,7 +984,7 @@ _fillandcount(...)
      *
      */
 
-    gang = guts->gang;
+    raw_gang = guts->raw_gang;
     classes = guts->classes;
     itemcontextchain = guts->itemcontextchain;
     itemcontextchainhead = guts->itemcontextchainhead;
@@ -1030,7 +1030,7 @@ _fillandcount(...)
       }
       grand_total[7] += gangcount[7];
 
-      tempsv = *hv_fetch(gang, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 1);
+      tempsv = *hv_fetch(raw_gang, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 1);
       SvUPGRADE(tempsv, SVt_PVNV);
       sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
       normalize(aTHX_ tempsv);
