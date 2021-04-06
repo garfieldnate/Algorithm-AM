@@ -395,7 +395,6 @@ AM_SHORT intersect_supras_final(
     AM_SHORT *intersect, AM_SHORT *subcontext_class){
   AM_SHORT class = 0;
   AM_SHORT length = 0;
-  AM_SHORT *temp;
   while (1) {
     while (*intersection_list_top > *subcontext_list_top) {
       --intersection_list_top;
@@ -404,7 +403,7 @@ AM_SHORT intersect_supras_final(
       break;
     }
     if (*intersection_list_top < *subcontext_list_top) {
-      temp = intersection_list_top;
+      AM_SHORT *temp = intersection_list_top;
       intersection_list_top = subcontext_list_top;
       subcontext_list_top = temp;
       continue;
@@ -479,19 +478,14 @@ BOOT:
 
 void
 _xs_initialize(...)
- PREINIT:
-  HV *project;
-  AM_GUTS guts; /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
-  SV **lattice_sizes;
-  SV *svguts;
-  MAGIC *magic;
-  int i;
  PPCODE:
+  /* NOT A POINTER THIS TIME! (let memory allocate automatically) */
+  AM_GUTS guts;
   /* 9 arguments are passed to the _xs_initialize method: */
   /* $self, the AM object */
-  project = hash_pointer_from_stack(0);
+  HV *self = hash_pointer_from_stack(0);
   /* For explanations on these, see the comments on AM_guts */
-  lattice_sizes = array_pointer_from_stack(1);
+  SV **lattice_sizes = array_pointer_from_stack(1);
   guts.classes = array_pointer_from_stack(2);
   guts.itemcontextchain = array_pointer_from_stack(3);
   guts.itemcontextchainhead = hash_pointer_from_stack(4);
@@ -511,7 +505,7 @@ _xs_initialize(...)
    *
    */
 
-  for (i = 0; i < NUM_LATTICES; ++i) {
+  for (int i = 0; i < NUM_LATTICES; ++i) {
     UV v = SvUVX(lattice_sizes[i]);
     Newxz(guts.lattice_list[i], 1 << v, AM_SHORT);
     Newxz(guts.supra_list[i], 1 << (v + 1), AM_SUPRA); /* CHANGED */ /* TODO: what changed? */
@@ -520,58 +514,37 @@ _xs_initialize(...)
 
   /* Perl magic invoked here */
 
-  svguts = newSVpv((char *) &guts, sizeof(AM_GUTS));
-  sv_magic((SV *) project, svguts, PERL_MAGIC_ext, NULL, 0);
-  SvRMAGICAL_off((SV *) project);
-  magic = mg_find((SV *) project, PERL_MAGIC_ext);
+  SV *svguts = newSVpv((char *)&guts, sizeof(AM_GUTS));
+  sv_magic((SV *) self, svguts, PERL_MAGIC_ext, NULL, 0);
+  SvRMAGICAL_off((SV *) self);
+  MAGIC *magic = mg_find((SV *)self, PERL_MAGIC_ext);
   magic->mg_virtual = &AMguts_vtab;
-  mg_magical((SV *) project);
+  mg_magical((SV *) self);
 
 void
 _fillandcount(...)
- PREINIT:
-  HV *project;
-  UV linear_flag;
-  AM_GUTS *guts;
-  MAGIC *magic;
-  SV **lattice_sizes_input;
-  AM_SHORT lattice_sizes[NUM_LATTICES];
-  AM_SHORT **lattice_list;
-  AM_SUPRA **supra_list;
-  AM_SHORT nptr[NUM_LATTICES];/* this helps us manage the free list in supra_list[i] */
-  AM_SHORT subcontextnumber;
-  AM_SHORT *subcontext;
-  AM_SHORT *subcontext_class;
-  SV **classes, **itemcontextchain, **sum;
-  HV *itemcontextchainhead, *context_to_class, *context_size, *pointers, *raw_gang;
-  IV num_classes;
-  HE *hash_entry;
-  AM_BIG_INT grand_total = {0, 0, 0, 0, 0, 0, 0, 0};
-  SV *tempsv;
-  int sublattice_index;
-  AM_SHORT gaps[16];
-  AM_SHORT *intersect, *intersectlist;
-  AM_SHORT *intersectlist2, *intersectlist3, *ilist2top, *ilist3top;
  PPCODE:
-  /* Input args are the AM object ($self), number of features
-   * perl lattice, and a flag to indicate whether to count occurrences
+  /* Input args are the AM object ($self), number of features in each
+   * lattice, and a flag to indicate whether to count occurrences
    * (true) or pointers (false), also known as linear/quadratic.
    */
-  project = hash_pointer_from_stack(0);
-  lattice_sizes_input = array_pointer_from_stack(1);
-  linear_flag = unsigned_int_from_stack(2);
-  magic = mg_find((SV *) project, PERL_MAGIC_ext);
-  guts = (AM_GUTS *) SvPVX(magic->mg_obj);
+  HV *self = hash_pointer_from_stack(0);
+  SV **lattice_sizes_input = array_pointer_from_stack(1);
+  UV linear_flag = unsigned_int_from_stack(2);
+  MAGIC *magic = mg_find((SV *)self, PERL_MAGIC_ext);
+  AM_GUTS *guts = (AM_GUTS *)SvPVX(magic->mg_obj);
 
   /*
    * We initialize the memory for the sublattices, including setting up the
    * linked lists.
-   *
    */
 
-  lattice_list = guts->lattice_list;
-  supra_list = guts->supra_list;
-  for (sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index) {
+  AM_SHORT **lattice_list = guts->lattice_list;
+  AM_SUPRA **supra_list = guts->supra_list;
+  /* this helps us manage the free list in supra_list[i] */
+  AM_SHORT nptr[NUM_LATTICES];
+  AM_SHORT lattice_sizes[NUM_LATTICES];
+  for (int sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index) {
     /* Extract numeric values for the specified lattice_sizes */
     lattice_sizes[sublattice_index] = (AM_SHORT) SvUVX(lattice_sizes_input[sublattice_index]);
     /* TODO: explain the lines below */
@@ -597,12 +570,17 @@ _fillandcount(...)
    *
    */
 
-  context_to_class = guts->context_to_class;
-  subcontextnumber = (AM_SHORT) HvUSEDKEYS(context_to_class);
-  Newxz(subcontext, NUM_LATTICES * (subcontextnumber + 1), AM_SHORT);
+  HV *context_to_class = guts->context_to_class;
+  AM_SHORT subcontextnumber = (AM_SHORT)HvUSEDKEYS(context_to_class);
+  AM_SHORT *subcontext;
+  Newxz(subcontext, NUM_LATTICES *(subcontextnumber + 1), AM_SHORT);
   subcontext += NUM_LATTICES * subcontextnumber;
+  AM_SHORT *subcontext_class;
   Newxz(subcontext_class, subcontextnumber + 1, AM_SHORT);
   subcontext_class += subcontextnumber;
+
+  AM_SHORT *intersectlist, *intersectlist2, *intersectlist3;
+  AM_SHORT *ilist2top, *ilist3top;
   Newxz(intersectlist, subcontextnumber + 1, AM_SHORT);
   Newxz(intersectlist2, subcontextnumber + 1, AM_SHORT);
   ilist2top = intersectlist2 + subcontextnumber;
@@ -610,10 +588,11 @@ _fillandcount(...)
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(context_to_class);
+  HE *hash_entry;
   while ((hash_entry = hv_iternext(context_to_class))) {
     AM_SHORT *contextptr = (AM_SHORT *) HeKEY(hash_entry);
     AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(hash_entry));
-    for (sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index, ++contextptr) {
+    for (int sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index, ++contextptr) {
       AM_SHORT active = lattice_sizes[sublattice_index];
       AM_SHORT *lattice = lattice_list[sublattice_index];
       AM_SUPRA *supralist = supra_list[sublattice_index];
@@ -686,7 +665,7 @@ _fillandcount(...)
        */
 
       subcontext[sublattice_index] = context;
-
+      AM_SHORT gaps[16];
       if (context == 0) {
         AM_SUPRA *p;
         for (iter_supras(p, supralist)) {
@@ -816,8 +795,8 @@ _fillandcount(...)
     --subcontextnumber;
   } /*end while (hash_entry = hv_iternext(...*/
 
-  context_size = guts->context_size;
-  pointers = guts->pointers;
+  HV *context_size = guts->context_size;
+  HV *pointers = guts->pointers;
 
   /*
    * The code is in three parts:
@@ -984,32 +963,29 @@ _fillandcount(...)
      *
      */
 
-    raw_gang = guts->raw_gang;
-    classes = guts->classes;
-    itemcontextchain = guts->itemcontextchain;
-    itemcontextchainhead = guts->itemcontextchainhead;
-    sum = guts->sum;
-    num_classes = guts->num_classes;
+    HV *raw_gang = guts->raw_gang;
+    SV **classes = guts->classes;
+    SV **itemcontextchain = guts->itemcontextchain;
+    HV *itemcontextchainhead = guts->itemcontextchainhead;
+    SV **sum = guts->sum;
+    IV num_classes = guts->num_classes;
+    AM_BIG_INT grand_total = {0, 0, 0, 0, 0, 0, 0, 0};
     hv_iterinit(pointers);
     while ((hash_entry = hv_iternext(pointers))) {
-      AM_LONG count;
-      AM_SHORT counthi, countlo;
       AM_BIG_INT p;
-      AM_BIG_INT gangcount;
-      AM_SHORT this_class;
-      SV *exemplar;
       Copy(SvPVX(HeVAL(hash_entry)), p, 8, AM_LONG);
 
-      tempsv = *hv_fetch(context_size, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
-      count = (AM_LONG) SvUVX(tempsv);
-      counthi = (AM_SHORT) (high_bits(count));
-      countlo = (AM_SHORT) (low_bits(count));
+      SV *tempsv = *hv_fetch(context_size, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      AM_LONG count = (AM_LONG)SvUVX(tempsv);
+      AM_SHORT counthi = (AM_SHORT)(high_bits(count));
+      AM_SHORT countlo = (AM_SHORT)(low_bits(count));
 
       /* initialize 0 because it won't be overwritten */
       /*
        * TODO: multiply through p[7] into gangcount[7]
        * and warn if there's potential overflow
        */
+      AM_BIG_INT gangcount;
       gangcount[0] = 0;
       for (int i = 0; i < 7; ++i) {
         gangcount[i] += countlo * p[i];
@@ -1037,7 +1013,8 @@ _fillandcount(...)
       normalize(aTHX_ HeVAL(hash_entry));
 
       tempsv = *hv_fetch(context_to_class, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
-      this_class = (AM_SHORT) SvUVX(tempsv);
+
+      AM_SHORT this_class = (AM_SHORT) SvUVX(tempsv);
       if (this_class) {
         AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
         for (int i = 0; i < 7; ++i) {
@@ -1045,7 +1022,7 @@ _fillandcount(...)
           carry_pointer(s + i);
         }
       } else {
-        exemplar = *hv_fetch(itemcontextchainhead, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      SV *exemplar = *hv_fetch(itemcontextchainhead, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
         while (SvIOK(exemplar)) {
           IV datanum = SvIVX(exemplar);
           IV ocnum = SvIVX(classes[datanum]);
@@ -1061,7 +1038,7 @@ _fillandcount(...)
     for (int i = 1; i <= num_classes; ++i) {
       normalize(aTHX_ sum[i]);
     }
-    tempsv = *hv_fetch(pointers, "grand_total", 11, 1);
+    SV *tempsv = *hv_fetch(pointers, "grand_total", 11, 1);
     SvUPGRADE(tempsv, SVt_PVNV);
     sv_setpvn(tempsv, (char *) grand_total, 8 * sizeof(AM_LONG));
     normalize(aTHX_ tempsv);
