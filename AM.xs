@@ -313,7 +313,6 @@ void normalize(pTHX_ SV *s) {
   Copy(p, dividend, length, AM_LONG);
 
   while (1) {
-    AM_LONG *temp, carry = 0;
     while (length && (*(dividend + length - 1) == 0)) {
       --length;
     }
@@ -323,6 +322,7 @@ void normalize(pTHX_ SV *s) {
     }
     dptr = dividend + length - 1;
     qptr = quotient + length - 1;
+    AM_LONG carry = 0;
     while (dptr >= dividend) {
       unsigned int i;
       *dptr += carry << 16;
@@ -341,7 +341,7 @@ void normalize(pTHX_ SV *s) {
     --outptr;
     *outptr = (char)(ASCII_0 + *dividend) & 0x00ff;
     ++outlength;
-    temp = dividend;
+    AM_LONG *temp = dividend;
     dividend = quotient;
     quotient = temp;
   }
@@ -360,7 +360,6 @@ void normalize(pTHX_ SV *s) {
   */
 unsigned short *intersect_supras(
     AM_SHORT *intersection_list_top, AM_SHORT *subcontext_list_top, AM_SHORT *k){
-  AM_SHORT *temp;
   while (1) {
     while (*intersection_list_top > *subcontext_list_top) {
       --intersection_list_top;
@@ -369,7 +368,7 @@ unsigned short *intersect_supras(
       break;
     }
     if (*intersection_list_top < *subcontext_list_top) {
-      temp = intersection_list_top;
+      AM_SHORT *temp = intersection_list_top;
       intersection_list_top = subcontext_list_top;
       subcontext_list_top = temp;
       continue;
@@ -588,10 +587,10 @@ _fillandcount(...)
   ilist3top = intersectlist3 + subcontextnumber;
 
   hv_iterinit(context_to_class);
-  HE *hash_entry;
-  while ((hash_entry = hv_iternext(context_to_class))) {
-    AM_SHORT *contextptr = (AM_SHORT *) HeKEY(hash_entry);
-    AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(hash_entry));
+  HE *context_to_class_entry;
+  while ((context_to_class_entry = hv_iternext(context_to_class))) {
+    AM_SHORT *contextptr = (AM_SHORT *) HeKEY(context_to_class_entry);
+    AM_SHORT class = (AM_SHORT) SvUVX(HeVAL(context_to_class_entry));
     for (int sublattice_index = 0; sublattice_index < NUM_LATTICES; ++sublattice_index, ++contextptr) {
       AM_SHORT active = lattice_sizes[sublattice_index];
       AM_SHORT *lattice = lattice_list[sublattice_index];
@@ -793,7 +792,7 @@ _fillandcount(...)
     *subcontext_class = class;
     --subcontext_class;
     --subcontextnumber;
-  } /*end while (hash_entry = hv_iternext(...*/
+  } /*end while (context_to_class_entry = hv_iternext(...*/
 
   HV *context_size = guts->context_size;
   HV *pointers = guts->pointers;
@@ -923,21 +922,19 @@ _fillandcount(...)
                 }
               }
               for (int i = 0; i < length; ++i) {
-                SV *tempsv;
-                AM_LONG *p;
-                tempsv = *hv_fetch(pointers,
+                SV *final_pointers_sv = *hv_fetch(pointers,
                     (char *) (subcontext + (NUM_LATTICES * intersectlist[i])), 8, 1);
-                if (!SvPOK(tempsv)) {
-                  SvUPGRADE(tempsv, SVt_PVNV);
-                  SvGROW(tempsv, 8 * sizeof(AM_LONG) + 1);
-                  Zero(SvPVX(tempsv), 8, AM_LONG);
-                  SvCUR_set(tempsv, 8 * sizeof(AM_LONG));
-                  SvPOK_on(tempsv);
+                if (!SvPOK(final_pointers_sv)) {
+                  SvUPGRADE(final_pointers_sv, SVt_PVNV);
+                  SvGROW(final_pointers_sv, 8 * sizeof(AM_LONG) + 1);
+                  Zero(SvPVX(final_pointers_sv), 8, AM_LONG);
+                  SvCUR_set(final_pointers_sv, 8 * sizeof(AM_LONG));
+                  SvPOK_on(final_pointers_sv);
                 }
-                p = (AM_LONG *) SvPVX(tempsv);
+                AM_LONG *final_pointers = (AM_LONG *) SvPVX(final_pointers_sv);
                 for (int j = 0; j < 7; ++j) {
-                  *(p + j) += count[j];
-                  carry_pointer(p + j);
+                  *(final_pointers + j) += count[j];
+                  carry_pointer(final_pointers + j);
                 }
               } /* end for (i = 0;... */
             } /* end if (length) */
@@ -971,12 +968,13 @@ _fillandcount(...)
     IV num_classes = guts->num_classes;
     AM_BIG_INT grand_total = {0, 0, 0, 0, 0, 0, 0, 0};
     hv_iterinit(pointers);
-    while ((hash_entry = hv_iternext(pointers))) {
+    HE * pointers_entry;
+    while ((pointers_entry = hv_iternext(pointers))) {
       AM_BIG_INT p;
-      Copy(SvPVX(HeVAL(hash_entry)), p, 8, AM_LONG);
+      Copy(SvPVX(HeVAL(pointers_entry)), p, 8, AM_LONG);
 
-      SV *tempsv = *hv_fetch(context_size, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
-      AM_LONG count = (AM_LONG)SvUVX(tempsv);
+      SV *num_examplars = *hv_fetch(context_size, HeKEY(pointers_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      AM_LONG count = (AM_LONG)SvUVX(num_examplars);
       AM_SHORT counthi = (AM_SHORT)(high_bits(count));
       AM_SHORT countlo = (AM_SHORT)(low_bits(count));
 
@@ -1006,15 +1004,15 @@ _fillandcount(...)
       }
       grand_total[7] += gangcount[7];
 
-      tempsv = *hv_fetch(raw_gang, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 1);
-      SvUPGRADE(tempsv, SVt_PVNV);
-      sv_setpvn(tempsv, (char *) gangcount, 8 * sizeof(AM_LONG));
-      normalize(aTHX_ tempsv);
-      normalize(aTHX_ HeVAL(hash_entry));
+      normalize(aTHX_ HeVAL(pointers_entry));
 
-      tempsv = *hv_fetch(context_to_class, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      SV* gang_pointers = *hv_fetch(raw_gang, HeKEY(pointers_entry), NUM_LATTICES * sizeof(AM_SHORT), 1);
+      SvUPGRADE(gang_pointers, SVt_PVNV);
+      sv_setpvn(gang_pointers, (char *) gangcount, 8 * sizeof(AM_LONG));
+      normalize(aTHX_ gang_pointers);
 
-      AM_SHORT this_class = (AM_SHORT) SvUVX(tempsv);
+      SV* this_class_sv = *hv_fetch(context_to_class, HeKEY(pointers_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      AM_SHORT this_class = (AM_SHORT) SvUVX(this_class_sv);
       if (this_class) {
         AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
         for (int i = 0; i < 7; ++i) {
@@ -1022,7 +1020,7 @@ _fillandcount(...)
           carry_pointer(s + i);
         }
       } else {
-      SV *exemplar = *hv_fetch(itemcontextchainhead, HeKEY(hash_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
+      SV *exemplar = *hv_fetch(itemcontextchainhead, HeKEY(pointers_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
         while (SvIOK(exemplar)) {
           IV datanum = SvIVX(exemplar);
           IV ocnum = SvIVX(classes[datanum]);
@@ -1038,10 +1036,11 @@ _fillandcount(...)
     for (int i = 1; i <= num_classes; ++i) {
       normalize(aTHX_ sum[i]);
     }
-    SV *tempsv = *hv_fetch(pointers, "grand_total", 11, 1);
-    SvUPGRADE(tempsv, SVt_PVNV);
-    sv_setpvn(tempsv, (char *) grand_total, 8 * sizeof(AM_LONG));
-    normalize(aTHX_ tempsv);
+
+    SV *grand_total_entry = *hv_fetch(pointers, "grand_total", 11, 1);
+    SvUPGRADE(grand_total_entry, SVt_PVNV);
+    sv_setpvn(grand_total_entry, (char *) grand_total, 8 * sizeof(AM_LONG));
+    normalize(aTHX_ grand_total_entry);
 
     Safefree(subcontext);
     Safefree(subcontext_class);
