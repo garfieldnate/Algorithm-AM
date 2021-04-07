@@ -860,7 +860,6 @@ _fillandcount(...)
             /* count occurrences */
             if (length) {
               AM_BIG_INT count = {0, 0, 0, 0, 0, 0, 0, 0};
-              AM_LONG mask = 0xffff;
 
               count[0]  = p0->count;
 
