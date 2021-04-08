@@ -204,7 +204,7 @@ typedef struct AM_guts {
    */
   HV *context_size;
   /* Maps binary context labels to the number of pointers to each,
-   * or to the number of pointers to class label if heterogenous.
+   * or to the number of pointers to each class label if heterogenous.
    * The key "grand_total" maps to the total number of pointers.
    */
   HV *pointers;
