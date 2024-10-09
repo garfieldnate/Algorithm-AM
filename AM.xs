@@ -1013,6 +1013,7 @@ _fillandcount(...)
       SV* this_class_sv = *hv_fetch(context_to_class, HeKEY(pointers_entry), NUM_LATTICES * sizeof(AM_SHORT), 0);
       AM_SHORT this_class = (AM_SHORT) SvUVX(this_class_sv);
       if (this_class) {
+        SV_CHECK_THINKFIRST(sum[this_class]);
         AM_LONG *s = (AM_LONG *) SvPVX(sum[this_class]);
         for (int i = 0; i < 7; ++i) {
           *(s + i) += gangcount[i];
@@ -1023,6 +1024,7 @@ _fillandcount(...)
         while (SvIOK(exemplar)) {
           IV datanum = SvIVX(exemplar);
           IV ocnum = SvIVX(classes[datanum]);
+          SV_CHECK_THINKFIRST(sum[ocnum]);
           AM_LONG *s = (AM_LONG *) SvPVX(sum[ocnum]);
           for (int i = 0; i < 7; ++i) {
             *(s + i) += p[i];
